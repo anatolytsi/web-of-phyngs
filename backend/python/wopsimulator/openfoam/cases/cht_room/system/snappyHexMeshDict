@@ -1,0 +1,125 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2106                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#includeEtc "caseDicts/mesh/generation/snappyHexMeshDict.cfg"
+
+castellatedMesh true;
+snap            true;
+addLayers       false;
+
+geometry
+{
+    fluid
+    {
+        type triSurfaceMesh;
+        file "roomHeater.stl";
+
+        regions
+        {
+            inlet           { name inlet; }
+            outlet          { name outlet; }
+            walls           { name walls; }
+//            table_footprint { name table_footprint; }
+            table           { name table; }
+        }
+    }
+    
+    fluidToHeater {
+        type triSurfaceMesh;
+        file "fluidToHeater.stl";
+    }
+    
+//    table {
+//        type triSurfaceMesh;
+//        file "table.stl";
+//        regions
+//        {
+//            table       { name table; }
+//        }
+//    }
+}
+
+castellatedMeshControls
+{
+
+    refinementSurfaces
+    {
+        fluid 
+        {
+            level (0 0);
+            regions
+            {
+                inlet           { level (1 1); patchInfo { type wall; } }
+                outlet          { level (1 1); patchInfo { type wall; } }
+//                inlet           { level (1 1); patchInfo { type patch; } }
+//                outlet          { level (1 1); patchInfo { type patch; } }
+                walls           { level (0 0); patchInfo { type wall; } }
+                table           { level (2 2); patchInfo { type wall; } }
+//                table_footprint { level (2 2); patchInfo { type wall; } }
+            }
+        }
+        fluidToHeater
+        {
+            level           (1 1);
+            faceZone        fluidToHeater;
+            cellZone        heater;
+            cellZoneInside  insidePoint;
+//            insidePoint     (1.5 2.05 0.5);
+            insidePoint     (1.5 0.21 0.2);
+//            insidePoint     (0.001 0.001 0.001);
+        }
+//        table
+//        {
+//            level (2 2);
+//        }
+//        heater
+//        { 
+//            level (2 2);
+//            cellZone heater;
+//        } // Note: better: levels 3 3
+//        inlet{ level (0 0);}
+//        outlet{ level (0 0);}
+//        room{ level (0 0);}
+//        desk{ level (1 1);}
+    }
+
+    nCellsBetweenLevels 1;
+
+    refinementRegions
+    {
+        // Note: for better mesh quality utilize this refinement region
+        // AMI{ mode inside; levels ((1E15 3));}
+    }
+
+//    locationInMesh (0 -0.05 0);
+
+//    locationInMesh (0.01 0.01 0.01);
+    locationInMesh (2 3 1.5);
+}
+
+addLayersControls
+{
+    relativeSizes       true;
+    minThickness        1;
+    finalLayerThickness 1;
+    expansionRatio      1;
+    layers
+    {}
+}
+
+
+// ************************************************************************* //
+
