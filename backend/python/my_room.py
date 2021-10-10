@@ -1,6 +1,6 @@
 import time
 
-from wop.wopsimulator.loader import create_case, load_case
+from wopsimulator.loader import create_case, load_case
 
 
 def main():
