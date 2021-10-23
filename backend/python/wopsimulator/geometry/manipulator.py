@@ -1,5 +1,4 @@
 import os
-import sys
 import math
 import re
 from typing import Union, List
@@ -149,6 +148,24 @@ class Box(TriSurface):
         self.faces.update({'back': Surface(ll4)})
         self.faces.update({'right': Surface(ll5)})
         self.faces.update({'left': Surface(ll6)})
+
+    def cut_surface(self, other):
+        """
+        Finds a proper face to cut a surface from
+        :param other: surface class to cut
+        """
+        if not isinstance(other, Surface):
+            raise AttributeError('Subtraction of surfaces can only be done between surfaces')
+        matching_face = None
+        other_x, other_y, other_z = other.get_used_coords()
+        for name, face in self.faces.items():
+            face_x, face_y, face_z = face.get_used_coords()
+            if face_x == other_x or face_y == other_y or face_z == other_z:
+                matching_face = name
+        if matching_face:
+            self.faces[matching_face].cut(other)
+        else:
+            raise ValueError('Tried to cut surface from box with no matching coordinates')
 
 
 class STL(TriSurface):
@@ -576,13 +593,17 @@ def main():
     # box = Model('box name', 'stl', stl_path='box name.stl')
     # box.show()
     box = Model('box name', 'box', [4, 4, 4], location=[10, 0, 0])
-    surface = Model('surface', 'surface', [2, 0, 2], location=[11, 0, 1])
+    surface_right = Model('surface_right', 'surface', [2, 0, 2], location=[11, 0, 1])
+    surface_left = Model('surface_left', 'surface', [2, 0, 2], location=[11, 4, 1])
     # box.show()
-    box.geometry.faces['right'].cut(surface.geometry)
+    box.geometry.cut_surface(surface_right.geometry)
+    box.geometry.cut_surface(surface_left.geometry)
+    # box.geometry.faces['right'].cut(surface.geometry)
+    # box.geometry.faces['front'].cut(surface.geometry)
     # # box.show()
     # # box.translate([0, 0, 100])
     # # box.show()
-    box.rotate([45, 45, 45])
+    # box.rotate([45, 45, 45])
     box.show()
     # # box.rotate([0, 0, -45])
     # # box.rotate([0, -45, 0])

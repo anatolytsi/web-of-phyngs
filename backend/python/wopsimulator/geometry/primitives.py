@@ -422,6 +422,20 @@ class Surface:
         self.num = self._inst_number
         self._produced = False
 
+    def get_used_coords(self):
+        """
+        Determines the coordinates used by the surface
+        :return: sets for each coordinate [x, y, z]
+        """
+        x, y, z = set(), set(), set()
+        for ll in self.loops:
+            for l in ll.lines:
+                for p in l.points:
+                    x.add(p.coords.x)
+                    y.add(p.coords.y)
+                    z.add(p.coords.z)
+        return x, y, z
+
     def cut(self, other):
         """
         Cuts a surface from current current surface
