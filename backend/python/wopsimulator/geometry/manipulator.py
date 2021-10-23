@@ -167,6 +167,19 @@ class Box(TriSurface):
         else:
             raise ValueError('Tried to cut surface from box with no matching coordinates')
 
+    def get_used_coords(self):
+        """
+        Determines the coordinates used by the box
+        :return: sets for each coordinate [x, y, z]
+        """
+        faces_x, faces_y, faces_z = set(), set(), set()
+        for face in self.faces.values():
+            face_x, face_y, face_z = face.get_used_coords()
+            faces_x.add(face_x)
+            faces_y.add(face_y)
+            faces_z.add(face_z)
+        return faces_x, faces_y, faces_z
+
 
 class STL(TriSurface):
     """
