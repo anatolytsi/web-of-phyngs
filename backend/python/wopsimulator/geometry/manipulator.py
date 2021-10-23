@@ -6,9 +6,6 @@ from typing import Union, List
 
 import gmsh
 
-# SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-# sys.path.append(os.path.dirname(SCRIPT_DIR))
-
 if 'DEBUG_GEO' in os.environ:
     import sys
 
