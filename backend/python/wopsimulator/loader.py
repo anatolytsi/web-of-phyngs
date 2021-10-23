@@ -5,10 +5,12 @@ import os
 import json
 from pathlib import Path
 
+CUR_FILE_DIR = os.path.dirname(os.path.realpath(__file__))
+PY_BACKEND_DIR = os.path.realpath(f'{CUR_FILE_DIR}/../')
+
 from .cht_room import ChtRoom
 from .openfoam.common.filehandling import force_remove_dir, copy_tree
 
-CUR_FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG_PATH_KEY = 'path'
 CONFIG_TYPE_KEY = 'type'
 CASE_TYPES = {
@@ -16,7 +18,7 @@ CASE_TYPES = {
 }
 
 
-def load_case(case_name: str, config_path: str = './wop-config.json'):
+def load_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/wop-config.json'):
     """
     Loads case from wop-config.json
     :param case_name: name of the loaded case
@@ -39,8 +41,8 @@ def load_case(case_name: str, config_path: str = './wop-config.json'):
     raise ValueError(f'Case "{case_name}" is not defined in the config "{config_path}"')
 
 
-def create_case(case_name: str, case_type: str, case_dir_path: str = './',
-                config_path: str = './wop-config.json', replace_old: bool = False):
+def create_case(case_name: str, case_type: str, case_dir_path: str = PY_BACKEND_DIR,
+                config_path: str = f'{PY_BACKEND_DIR}/wop-config.json', replace_old: bool = False):
     """
     Creates a new WoP Simulator case by finding a OpenFOAM case template by a specified type, copying it to a path
     specified, and adding all this data to a wop-config.json.
@@ -87,7 +89,7 @@ def create_case(case_name: str, case_type: str, case_dir_path: str = './',
     return case_cls, case_path
 
 
-def remove_case(case_name: str, config_path: str = './wop-config.json', remove_case_dir: bool = False):
+def remove_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/wop-config.json', remove_case_dir: bool = False):
     """
     Removes case from wop-config.json (optionally OpenFOAM case dir as well)
     :param case_name: name of the case to remove
