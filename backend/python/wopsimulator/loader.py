@@ -65,6 +65,7 @@ def create_case(case_name: str, case_type: str, case_dir_path: str = './',
         config = {}
 
     # Get the case path, check if it already exists and the copy case
+    case_name = case_name if '.case' in case_name else f'{case_name}.case'
     case_path = f'{case_dir_path}{"/" if case_dir_path[-1] != "/" else ""}{case_name}'
     if case_name in config.keys() or os.path.exists(case_path):
         if replace_old:

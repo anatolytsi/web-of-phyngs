@@ -1,6 +1,6 @@
 {
     "my_room": {
         "type": "cht_room",
-        "path": "./my_room"
+        "path": "./my_room.case"
     }
 }
