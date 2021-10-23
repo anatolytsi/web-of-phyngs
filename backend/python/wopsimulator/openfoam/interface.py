@@ -11,7 +11,7 @@ from PyFoam.Execution.BasicRunner import BasicRunner
 from .boundaries.boundary_conditions import get_boundary_condition_class_by_field
 from .common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern, force_remove_dir, \
     remove_files_in_dir_with_pattern, copy_tree
-from .probes.probes import Probes
+from .probes.probes import ProbeParser
 
 
 class OpenFoamInterface:
@@ -43,7 +43,7 @@ class OpenFoamInterface:
         self.solver_mutex = Lock()
         self.solver_is_blocking = is_blocking
         self.solver_is_running = False
-        self.monitor = Probes(self.case_dir)
+        self.probe_parser = ProbeParser(self.case_dir)
 
     def remove_processor_dirs(self):
         """
@@ -283,7 +283,7 @@ class OpenFoamInterface:
         :return: None
         """
         self.start_solving()
-        self.monitor.start_parsing()
+        self.probe_parser.start()
         if self.solver_is_blocking:
             self.solver_mutex.acquire()
             self.solver_mutex.release()
@@ -294,4 +294,4 @@ class OpenFoamInterface:
         :return: None
         """
         self.stop_solving()
-        self.monitor.stop_parsing()
+        self.probe_parser.stop()
