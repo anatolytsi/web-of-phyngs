@@ -3,6 +3,8 @@ OpenFOAM python interface
 """
 import os
 import time
+import subprocess
+from abc import ABC, abstractmethod
 from multiprocessing import Process, cpu_count
 from threading import Thread, Lock
 
@@ -28,7 +30,8 @@ def get_latest_time(case_dir: str) -> float or int:
     except IndexError:
         return 0
 
-class OpenFoamInterface:
+
+class OpenFoamInterface(ABC):
     """
     OpenFOAM Interface class. Serves as a wrapper of OpenFOAM commands
     """
@@ -267,6 +270,7 @@ class OpenFoamInterface:
                 #     cls_instance = cls_obj(self.case_dir)
                 #     self.boundaries.update({field: cls_instance})
 
+    @abstractmethod
     def setup(self):
         """
         Setups case, should be overridden by child classes
