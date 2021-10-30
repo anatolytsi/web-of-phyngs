@@ -49,7 +49,7 @@ class OpenFoamInterface(ABC):
         self.is_run_parallel = is_run_parallel
         self.available_cores = cpu_count()
         self.case_is_decomposed = False
-        if self.available_cores > num_of_cores > 0:
+        if self.available_cores >= num_of_cores > 0:
             self.num_of_cores = num_of_cores
         else:
             raise ValueError('Incorrect number of cores')
