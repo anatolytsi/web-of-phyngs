@@ -175,6 +175,8 @@ class OpenFoamInterface(ABC):
         Runs OpenFOAM case decomposition for parallel run, described in system/decomposeParDict
         :param all_regions: flag to decompose all regions (used for multi-region cases like cht)
         :param copy_zero: copy zero state
+        :param latest_time: flag to only decompose from the latest time
+        :param force: flag to clear processor folders before decomposing
         :return: None
         """
         if self.case_is_decomposed:
