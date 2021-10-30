@@ -169,34 +169,47 @@ class OpenFoamInterface(ABC):
         print('Quiting thread solver')
         self.solver_mutex.release()
 
-    def run_decompose(self, all_regions: bool = False, copy_zero: bool = False):
+    def run_decompose(self, all_regions: bool = False, copy_zero: bool = False, latest_time: bool = False,
+                      force: bool = False):
         """
         Runs OpenFOAM case decomposition for parallel run, described in system/decomposeParDict
         :param all_regions: flag to decompose all regions (used for multi-region cases like cht)
         :param copy_zero: copy zero state
         :return: None
         """
-        if not self.case_is_decomposed:
-            cmd = 'decomposePar'
-            argv = [cmd, '-case', self.case_dir]
-            if all_regions:
-                argv.insert(1, '-allRegions')
-            if copy_zero:
-                argv.insert(1, '-copyZero')
-            self.run_command(argv)
-            self.case_is_decomposed = True
+        if self.case_is_decomposed:
+            latest_time = True
+            force = True
+        cmd = 'decomposePar'
+        argv = [cmd, '-case', self.case_dir]
+        if all_regions:
+            argv.insert(1, '-allRegions')
+        if copy_zero:
+            argv.insert(1, '-copyZero')
+        if latest_time:
+            argv.insert(1, '-latestTime')
+        if force:
+            argv.insert(1, '-force')
+        self.run_command(argv)
+        self.case_is_decomposed = True
 
-    def run_reconstruct(self, all_regions: bool = False):
+    def run_reconstruct(self, all_regions: bool = False, latest_time: bool = False, fields: list = None):
         """
         Runs OpenFOAM case reconstruction after a parallel run, described in system/decomposeParDict
         :param all_regions: flag to reconstruct all regions (used for multi-region cases like cht)
+        :param latest_time: flag to only reconstruct from the latest time
+        :param fields: fields to be reconstructed, e.g., ['U', 'T', 'p']
         :return: None
         """
         # TODO: check if case is decomposed
         cmd = 'reconstructPar'
-        argv = [cmd, '-case', self.case_dir]
+        argv = [cmd, '-newTimes', '-case', self.case_dir]
         if all_regions:
             argv.insert(1, '-allRegions')
+        if latest_time:
+            argv.insert(1, '-latestTime')
+        if fields:
+            argv.insert(1, f'({" ".join(fields)})')
         self.run_command(argv)
 
     def run_block_mesh(self):
@@ -218,14 +231,17 @@ class OpenFoamInterface(ABC):
         argv = [cmd, '-case', self.case_dir, '-overwrite']
         self.run_command(argv, is_parallel=self.is_setup_parallel, cores=self.num_of_cores)
 
-    def run_split_mesh_regions(self, cell_zones_only: bool = False):
+    def run_split_mesh_regions(self, cell_zones: bool = False, cell_zones_only: bool = False):
         """
         Runs OpenFOAM command to split mesh regions for a produced mesh
-        :param cell_zones_only: TODO: look it up :)
+        :param cell_zones: split additionally cellZones off into separate regions
+        :param cell_zones_only: use cellZones only to split mesh into regions; do not use walking
         :return: None
         """
         cmd = 'splitMeshRegions'
         argv = [cmd, '-case', self.case_dir, '-overwrite']
+        if cell_zones:
+            argv.insert(1, '-cellZones')
         if cell_zones_only:
             argv.insert(1, '-cellZonesOnly')
         self.run_command(argv, is_parallel=self.is_setup_parallel, cores=self.num_of_cores)
@@ -284,7 +300,7 @@ class OpenFoamInterface(ABC):
         :return:
         """
         if self.is_run_parallel:
-            self.run_decompose(all_regions=True, copy_zero=True)
+            self.run_decompose(all_regions=True, latest_time=True, force=True)
             self.solver_process = Process(target=self.run_solver_parallel, args=(True,))
             self.solver_process.start()
         else:
