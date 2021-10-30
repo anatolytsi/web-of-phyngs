@@ -197,7 +197,8 @@ class Probe:
 
 class ProbeParser(Thread):
     """
-    Probe parser class, which represents a probe results parsing thread
+    Probe parser class, which represents a probe
+    results parsing thread
     """
 
     def __init__(self, case_dir, period: int = 0.001):
@@ -238,14 +239,15 @@ class ProbeParser(Thread):
 
     def _parse_region(self, region):
         """
-        Checks the postProcessing folder for probes data. Opens the corresponding fields data, parses last line
+        Checks the postProcessing folder for probes data
+        Opens the corresponding fields data, parses last line
         and saves it to corresponding probe.
         """
         path_to_probes_data = f'{self._case_dir}/postProcessing/probes/{region}'
         scalar_pattern = f'^\\s*({NUMBER_PATTERN})\\s+'
         vector_pattern = f'^\\s*({NUMBER_PATTERN})\\s+'
         for _ in range(self._num_of_probes + 1):
-            scalar_pattern += f'({NUMBER_PATTERN})\\s+'
+            scalar_pattern += f'({NUMBER_PATTERN})\\s*'
             vector_pattern += f'{VECTOR_PATTERN}\\s*'
         scalar_pattern = re.compile(scalar_pattern)
         vector_pattern = re.compile(vector_pattern)
@@ -299,7 +301,8 @@ class ProbeParser(Thread):
 
     def remove_unused(self):
         """
-        Removes unused probes and fields from a probe dictionary, counts the amount of used probes
+        Removes unused probes and fields from a probe dictionary,
+        counts the amount of used probes
         """
         probe_dict = f'{self._case_dir}/system/probes'
         if not os.path.exists(probe_dict):
@@ -317,9 +320,7 @@ class ProbeParser(Thread):
         self._num_of_probes = len(probe_locations)
 
     def run(self):
-        """
-        Thread function to parse data
-        """
+        """Thread function to parse data"""
         if not Probe._instances:
             # No probes were initialized
             return
@@ -335,9 +336,7 @@ class ProbeParser(Thread):
         self._mutex.release()
 
     def stop(self):
-        """
-        Stops parsing thread
-        """
+        """Stops parsing thread"""
         self.running = False
         self._mutex.acquire()
         self._mutex.release()
