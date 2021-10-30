@@ -291,6 +291,7 @@ class OpenFoamInterface:
         :return: None
         """
         self.start_solving()
+        self.probe_parser = ProbeParser(self.case_dir)
         self.probe_parser.start()
         if self.solver_is_blocking:
             self.solver_mutex.acquire()
@@ -301,5 +302,5 @@ class OpenFoamInterface:
         Stops solver and monitor threads
         :return: None
         """
-        self.stop_solving()
         self.probe_parser.stop()
+        self.stop_solving()
