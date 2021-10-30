@@ -318,6 +318,7 @@ class OpenFoamInterface(ABC):
             self.solver_process.terminate()
             # FIXME: somehow get when the process is really terminated and only then proceed
             time.sleep(1)  # Safe delay to make sure a full stop happened
+            self.run_reconstruct(all_regions=True)
         else:
             self.solver.stopWithoutWrite()
         self.solver_mutex.acquire()
