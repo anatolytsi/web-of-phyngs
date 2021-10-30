@@ -12,6 +12,8 @@ from .boundaries.boundary_conditions import BoundaryCondition
 from .common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern, force_remove_dir, \
     remove_files_in_dir_with_pattern, copy_tree
 from .probes.probes import ProbeParser
+from .system.snappyhexmesh import SnappyHexMeshDict
+
 
 
 class OpenFoamInterface:
@@ -44,6 +46,7 @@ class OpenFoamInterface:
         self.solver_is_blocking = is_blocking
         self.solver_is_running = False
         self.probe_parser = ProbeParser(self.case_dir)
+        self.snappy_dict = SnappyHexMeshDict(self.case_dir)
 
     def remove_processor_dirs(self):
         """
@@ -195,6 +198,7 @@ class OpenFoamInterface:
         Runs OpenFOAM command to snap additional mesh to a background mesh as described in system/snappyHexMeshDict
         :return: None
         """
+        self.snappy_dict.save()
         cmd = 'snappyHexMesh'
         argv = [cmd, '-case', self.case_dir, '-overwrite']
         self.run_command(argv, is_parallel=self.is_setup_parallel, cores=self.num_of_cores)
