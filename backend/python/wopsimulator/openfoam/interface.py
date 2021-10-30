@@ -8,7 +8,7 @@ from threading import Thread, Lock
 
 from PyFoam.Execution.BasicRunner import BasicRunner
 
-from .boundaries.boundary_conditions import get_boundary_condition_class_by_field
+from .boundaries.boundary_conditions import BoundaryCondition
 from .common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern, force_remove_dir, \
     remove_files_in_dir_with_pattern, copy_tree
 from .probes.probes import ProbeParser
@@ -225,23 +225,31 @@ class OpenFoamInterface:
         Gets initial boundary conditions for current case
         :return: None
         """
-        boundaries_dir = os.listdir(f'{self.case_dir}/0')
-        region_dirs = [obj for obj in boundaries_dir if os.path.isdir(f'{self.case_dir}/0/{obj}')]
+        fields_dir = os.listdir(f'{self.case_dir}/0')
+        region_dirs = [obj for obj in fields_dir if os.path.isdir(f'{self.case_dir}/0/{obj}')]
         # Check if there are any folders in initial boundary dir
         # If there folders there, then the case is multi-regional
         if any(region_dirs):
             for region in region_dirs:
                 self.boundaries.update({region: {}})
                 region_dir = os.listdir(f'{self.case_dir}/0/{region}')
-                for boundary in region_dir:
-                    cls_obj = get_boundary_condition_class_by_field(boundary)
-                    if cls_obj:
-                        cls_instance = cls_obj(self.case_dir, region=region)
-                        self.boundaries[region].update({boundary: cls_instance})
+                for field in region_dir:
+                    cls_instance = BoundaryCondition(field, self.case_dir, region=region)
+                    if cls_instance:
+                        self.boundaries[region].update({field: cls_instance})
+                    # cls_obj = get_bc_class(field)
+                    # if cls_obj:
+                    #     cls_instance = cls_obj(self.case_dir, region=region)
+                    #     self.boundaries[region].update({field: cls_instance})
         else:
-            for boundary in boundaries_dir:
-                cls_instance = get_boundary_condition_class_by_field(boundary)(self.case_dir)
-                self.boundaries.update({boundary: {cls_instance}})
+            for field in fields_dir:
+                cls_instance = BoundaryCondition(field, self.case_dir)
+                if cls_instance:
+                    self.boundaries.update({field: cls_instance})
+                # cls_obj = get_bc_class(field)
+                # if cls_obj:
+                #     cls_instance = cls_obj(self.case_dir)
+                #     self.boundaries.update({field: cls_instance})
 
     def setup(self):
         """

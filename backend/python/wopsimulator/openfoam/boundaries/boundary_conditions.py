@@ -1,13 +1,13 @@
+"""Boundary conditions script with corresponding field classes"""
 import re
 import os
+from dataclasses import dataclass
+from typing import Union, List, Callable
 
-from .boundary_types import GeometricBoundary, GeneralBoundary, InletBoundary, OutletBoundary, WallBoundary, \
-    CoupledBoundary, GEOMETRIC_BOUNDARY_TYPES, GENERAL_BOUNDARY_TYPES, INLET_BOUNDARY_TYPES, OUTLET_BOUNDARY_TYPES, \
-    WALL_BOUNDARY_TYPES, COUPLED_BOUNDARY_TYPES
-from ..common.filehandling import get_numerated_dirs
-from ..common.parsing import NUMBER_PATTERN, VECTOR_PATTERN
-
-BOUNDARY_NEXT_PLACEHOLDER = '// next'
+from backend.python.wopsimulator.openfoam.common.parsing import INTERNAL_FIELD_PATTERN, BOUNDARY_FIELD_PATTERN, \
+    LIST_OR_VALUE_PATTERN, SPECIFIC_FIELD_PATTERN, SPECIFIC_FIELD_VALUES_PATTERN, SPECIAL_CHARACTERS
+from backend.python.wopsimulator.openfoam.common.parsing import NUMBER_PATTERN, VECTOR_PATTERN, FIELD_NAME_PATTERN
+from backend.python.wopsimulator.openfoam.boundaries.boundary_types import Boundary, BoundaryBase
 
 BOUNDARY_CONDITION_FILE_TEMPLATE = \
     r"""/*--------------------------------*- C++ -*----------------------------------*\
@@ -21,7 +21,7 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       %s;%s
+    class       %s;
     object      %s;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -30,7 +30,6 @@ dimensions      %s;
 
 boundaryField
 {
-%s
     #includeEtc "caseDicts/setConstraintTypes"
 }
 
@@ -38,480 +37,438 @@ boundaryField
 """
 
 
+@dataclass
+class InternalField(BoundaryBase):
+    """Internal field dataclass, individual for each boundary conditions file"""
+    value: Union[float, str, List[float]]
+    value_uniform: bool = False
+    _save_callback: Callable = None
+    _modified: bool = False
+
+    def save(self):
+        """Save an internal field via callback"""
+        if self._modified:
+            self._save_callback()
+            self._modified = False
+
+    def __str__(self):
+        """Internal field string representation"""
+        value = self.value if not isinstance(self.value, list) else f'({" ".join(self.value)})'
+        return f'internalField {"uniform " if self.value_uniform else ""}{value};\n'
+
+
 class BoundaryConditionBase:
+    """
+    Boundary condition base class. Provides common
+    functionality to all boundary condition classes
+    of all fields (e.g. T)
+    """
     _case_dir = ''
-    _filepath = ''
-    _filepath_latest = ''
-    _file_lines = {}
 
     def __init__(self, case_dir, field, field_class, dimensions, region=None):
-        # TODO: add a possibility to init from template?
+        """
+        Boundary condition base initialization function
+        :param case_dir: case directory
+        :param field: probe field (e.g., T)
+        :param region: region to probe
+        :param field_class: field class (volScalarField or volVectorField),
+        specified in the file header
+        :param dimensions: field dimensions specified in the file [kg m s K mol A cd]
+        :param region: region for multiregion case (e.g. CHT)
+        """
         self._case_dir = case_dir
-        self._filepath = f'{case_dir}/0/{(region + "/") if region else ""}{field}'
+        self._filepath = f'{case_dir}/%d/{(region + "/") if region else ""}{field}'
         self._field = field
         self._region = region
-        self.initial = {}
-        self.latest = {}
-        self.latest_timestep = 0
-        if os.path.exists(self._filepath):
-            self._parse_file(self._filepath, self.initial)
+        self._time = 0
+        # Parse file if exists or create a new one
+        if os.path.exists(self._filepath % 0):
+            self._file_parse()
         else:
-            self._create_file(field_class, dimensions)
-
-    def __getitem__(self, item):
-        return self.__dict__[item]
+            self._file_create(field_class, dimensions)
 
     @staticmethod
-    def _get_class_by_boundary_type(boundary_type):
-        if boundary_type in GEOMETRIC_BOUNDARY_TYPES:
-            return GeometricBoundary
-        if boundary_type in GENERAL_BOUNDARY_TYPES:
-            return GeneralBoundary
-        elif boundary_type in INLET_BOUNDARY_TYPES:
-            return InletBoundary
-        elif boundary_type in OUTLET_BOUNDARY_TYPES:
-            return OutletBoundary
-        elif boundary_type in WALL_BOUNDARY_TYPES:
-            return WallBoundary
-        elif boundary_type in COUPLED_BOUNDARY_TYPES:
-            return CoupledBoundary
-        else:
-            raise ValueError('TODO error')
-
-    # def _parser(self, filepath, func, **kwargs):
-
-    def _parse_file(self, filepath, boundary_dict, add_placeholder=True):
-        lines = open(filepath).readlines()
-        boundaries_found = False
-        new_boundary = True
-        # name_pattern = re.compile('^ *([a-zA-Z]+(_[a-zA-Z]+)*|\"\.\*\")\s*$')
-        name_pattern = re.compile('^ *([a-zA-Z][a-zA-Z0-9_.-]*|\"\.\*\")\s*$')
-        type_pattern = re.compile('^\s*type\s*(\w*|\w*:*\w*);\s*$')
-        parameter_pattern = re.compile(
-            f'^\s*(\w+)\s*(uniform)?\s*(\$?\w*|{NUMBER_PATTERN}\(?\)?|{VECTOR_PATTERN});\s*$')
-        internal_field_pattern = re.compile(
-            f'^\s*(internalField)\s*(uniform)?\s*(\$?\w*|{NUMBER_PATTERN}\(?\)?|{VECTOR_PATTERN});')
-        # list_pattern = re.compile('(internalField|value)\s*((nonuniform)?\s+List<(scalar|vector)>)')
-        list_pattern = re.compile('(internalField|value)\s*((nonuniform)?\s+List<(scalar|vector)>) *(\d*)?')
-        list_start_found = False
-        list_found = False
-        list_name = ''
-        name = ''
-        num_of_lines = 0
-        cls_instance = None
-        placeholder_found = False
-        end_reached = False
-        new_lines = []
-        for line in lines:
-            if not end_reached:
-                if BOUNDARY_NEXT_PLACEHOLDER in line:
-                    placeholder_found = True
-                internal_field_match = internal_field_pattern.search(line)
-                if internal_field_match:
-                    boundary_dict.update({'internalField': {}})
-                    if internal_field_match.group(2):
-                        boundary_dict['internalField'].update({'is_uniform': True})
-                    else:
-                        boundary_dict['internalField'].update({'is_uniform': False})
-                    if not internal_field_match.group(3):
-                        if internal_field_match.group(4).isnumeric() and internal_field_match.group(5).isnumeric() and \
-                                internal_field_match.group(6).isnumeric():
-                            value = [
-                                float(internal_field_match.group(4)),
-                                float(internal_field_match.group(5)),
-                                float(internal_field_match.group(6))
-                            ]
-                        else:
-                            value = [
-                                internal_field_match.group(4),
-                                internal_field_match.group(5),
-                                internal_field_match.group(6)
-                            ]
-                    else:
-                        if internal_field_match.group(3).isnumeric():
-                            value = float(internal_field_match.group(3))
-                        else:
-                            value = internal_field_match.group(3)
-                    boundary_dict['internalField'].update({'value': value})
-                if list_found:
-                    if '(' in line:
-                        list_start_found = True
-                    elif ')' in line:
-                        list_start_found = False
-                        list_found = False
-                    elif list_start_found:
-                        val = line.strip()
-                        # scalar_pattern = re.compile(NUMBER_PATTERN)
-                        # scalar_match = scalar_pattern.search(val)
-                        vector_pattern = re.compile(VECTOR_PATTERN)
-                        vector_match = vector_pattern.search(val)
-                        if vector_match:
-                            value = [vector_match.group(i) for i in range(1, 4)]
-                        else:
-                            value = float(val)
-                        if name:
-                            cls_instance.__dict__.update({list_name: value})
-                        else:
-                            boundary_dict[list_name] = value
-                list_match = list_pattern.search(line)
-                if list_match:
-                    if list_match.group(5):
-                        # TODO: vector inline list!
-                        list_name = list_match.group(1)
-                        list_length = int(list_match.group(5))
-                        inline_list_pattern_str = f'({NUMBER_PATTERN}) *' * list_length
-                        inline_list_pattern = re.compile(f'\({inline_list_pattern_str}\)')
-                        inline_list_match = inline_list_pattern.search(line)
-                        inline_list_values = [float(inline_list_match.group(i)) for i in range(1, list_length + 1)]
-                        value_avg = sum(inline_list_values) / list_length
-                        if name:
-                            cls_instance.__dict__.update({list_name: value_avg})
-                        else:
-                            boundary_dict[list_name] = value_avg
-                    else:
-                        list_found = True
-                        list_name = list_match.group(1)
-                if boundaries_found:
-                    if line.strip()[:2] == '//' and BOUNDARY_NEXT_PLACEHOLDER not in line:
-                        continue
-                    name_match = name_pattern.match(line)
-                    if name_match:
-                        name = name_match.group(1)
-                        name = name if name != '".*"' else 'other_boundaries'
-                        new_boundary = True
-                    if new_boundary:
-                        type_match = type_pattern.match(line)
-                        parameter_match = parameter_pattern.match(line)
-                        if '}' in line:
-                            new_boundary = False
-                            self._file_lines.update({name: num_of_lines})
-                            boundary_dict.update({name: cls_instance})
-                            name = None
-                            cls_instance = None
-                            num_of_lines = 0
-                            new_lines.append(line)
-                            continue
-                        num_of_lines += 1
-                        if type_match:
-                            b_type = type_match.group(1)
-                            cls_instance = self._get_class_by_boundary_type(b_type)(None, empty_instance=True)
-                            cls_instance.__dict__.update({'type': b_type})
-                        elif parameter_match:
-                            if parameter_match.group(2):
-                                cls_instance.__dict__.update({'is_uniform': True})
-                            if not parameter_match.group(3):
-                                if parameter_match.group(4).isnumeric() and parameter_match.group(5).isnumeric() and \
-                                        parameter_match.group(6).isnumeric():
-                                    cls_instance.__dict__.update({
-                                        parameter_match.group(1): [
-                                            float(parameter_match.group(4)),
-                                            float(parameter_match.group(5)),
-                                            float(parameter_match.group(6))
-                                        ]
-                                    })
-                                else:
-                                    cls_instance.__dict__.update({
-                                        parameter_match.group(1): [
-                                            parameter_match.group(4),
-                                            parameter_match.group(5),
-                                            parameter_match.group(6)
-                                        ]
-                                    })
-                            else:
-                                if parameter_match.group(3).isnumeric():
-                                    value = float(parameter_match.group(3))
-                                else:
-                                    value = parameter_match.group(3)
-                                cls_instance.__dict__.update({parameter_match.group(1): value})
-                    elif '}' in line:
-                        if not placeholder_found:
-                            new_lines.append(f'{BOUNDARY_NEXT_PLACEHOLDER}\n')
-                            end_reached = True
-                        else:
-                            break
-                if 'boundaryField' in line:
-                    boundaries_found = True
-            new_lines.append(line)
-        if not placeholder_found and add_placeholder:
-            with open(filepath, 'w') as f:
-                f.writelines(new_lines)
-
-    def _create_file(self, field_class, dimensions):
-        with open(self._filepath, 'w') as f:
-            location = ''
-            if self._field == 'cellToRegion':
-                location = f'\n{" " * 4}location{" " * 4}"0/{self._region}";'
-            f.writelines(BOUNDARY_CONDITION_FILE_TEMPLATE % (field_class, location, self._field, dimensions,
-                                                             BOUNDARY_NEXT_PLACEHOLDER))
-
-    def _add_boundary_to_file(self, name):
-        if (boundary := self.initial[name]) is not None:
-            boundary_data = str(boundary)
-            boundary_data = boundary_data.replace('\n', f'\n{" " * 4}')
-            name = name if name != "other_boundaries" else '".*"'
-            boundary_data = f'{" " * 4}{name}{boundary_data}'
-            lines = open(self._filepath).readlines()
-            new_line = []
-            placeholder_found = False
-            for idx, line in enumerate(lines):
-                if BOUNDARY_NEXT_PLACEHOLDER in line:
-                    placeholder_found = True
-                    if lines[idx - 1][0] != '\n':
-                        new_line.append('\n')
-                    new_line.append(f'{boundary_data}\n')
-                    num_of_lines = boundary_data.count('\n')
-                    self._file_lines.update({name: num_of_lines})
-                new_line.append(line)
-            if not placeholder_found:
-                raise Exception(f'Error adding boundary to file "{self._filepath}"\n'
-                                f'Placeholder "{BOUNDARY_NEXT_PLACEHOLDER}" not detected.')
-            with open(self._filepath, 'w') as f:
-                f.writelines(new_line)
-
-    def _remove_boundary_from_file(self, name):
-        lines = open(self._filepath).readlines()
-        num_of_lines = self._file_lines[name] + 1
-        new_lines = []
-        name_found = False
-        for idx, line in enumerate(lines):
-            if not name_found and f'{name}\n' in line:
-                new_lines.pop(idx - 1)
-                name_found = True
-            if name_found and num_of_lines:
-                num_of_lines -= 1
+    def _get_internal_field(lines_str: str):
+        """
+        Function to get internal field and it's parameters from a file converted to one string
+        :param lines_str: file lines as one string
+        :return: internalField dictionary
+        """
+        # Find an internal field pattern
+        internal_field_match = re.search(INTERNAL_FIELD_PATTERN, lines_str, flags=re.MULTILINE)
+        if not internal_field_match:
+            return {}
+        # Check if parsed internal field is a list or a value
+        # Note that only the LAST VALUE from the list is taken and NOT the WHOLE LIST!
+        if lst_type := internal_field_match.group(7):
+            lst_str = internal_field_match.group(9)
+            lst_size = int(internal_field_match.group(8))
+            if lst_type == 'vector':
+                values = re.findall(VECTOR_PATTERN, lst_str, flags=re.MULTILINE)
+                value = [float(val) for val in values[-1]]
             else:
-                new_lines.append(line)
-        with open(self._filepath, 'w') as f:
-            f.writelines(new_lines)
-
-    def _change_latest_boundaries(self):
-        # TODO: parse the last boundary file and replace the old values with the new values.
-        pass
-
-    def update_latest_boundaries(self, latest_timestep, is_run_parallel=False):
-        # TODO: account for processors
-        # TODO: parse the latest boundary file and get the values to the "latest" dict
-        self.latest_timestep = latest_timestep
-        if is_run_parallel:
-            processor_dirs = get_numerated_dirs(self._case_dir, 'processor')
-            for processor_dir in processor_dirs:
-                self._filepath_latest = f'{self._case_dir}/{processor_dir}/{latest_timestep}/{self._region}/{self._field}'
-                if os.path.exists(self._filepath_latest):
-                    self._parse_file(self._filepath_latest, self.latest, add_placeholder=False)
-                # lines = open(self._filepath).readlines()
-                # if any('boundaryField' in line for line in lines):
-                #     break
-                # raise Exception('no boundary field found in processor dirs!')
+                value = float(re.findall(f'\\s({NUMBER_PATTERN})\\n', lst_str, flags=re.MULTILINE)[-1])
+            value = {
+                'value': value
+            }
         else:
-            self._filepath_latest = f'{self._case_dir}/{latest_timestep}/{self._region}/{self._field}'
-            if os.path.exists(self._filepath_latest):
-                self._parse_file(self._filepath_latest, self.latest, add_placeholder=False)
-
-    def _save_latest_boundaries(self, filepath):
-        if not os.path.exists(filepath):
-            return
-        lines = open(filepath).readlines()
-        boundaries_found = False
-        name_pattern = re.compile('^ *([a-zA-Z][a-zA-Z0-9_.-]*|\"\.\*\")\s*$')
-        type_pattern = re.compile('^\s*type\s*(\w*|\w*:*\w*);\s*$')
-        parameter_pattern = re.compile(
-            f'^\s*(\w+)\s*((uniform\s*)?(\$?\w*|{NUMBER_PATTERN}\(?\)?|'
-            f'\({NUMBER_PATTERN}\s*{NUMBER_PATTERN}\s*{NUMBER_PATTERN}\)));\s*$')
-        # value_list_pattern = re.compile('(value)\s*((nonuniform)?\s+List<(scalar|vector)>)')
-        list_pattern = re.compile('(internalField|value)\s*((nonuniform)?\s+List<(scalar|vector)>) *(\d*)?')
-        end_reached = False
-        list_name = ''
-        list_found = False
-        list_start_found = False
-        new_lines = []
-        current_boundary = None
-        read_attr = []
-        offset = 0
-        for idx, line in enumerate(lines):
-            idx += offset  # check if works as intended
-            new_lines.append(line)
-            if not end_reached:
-                # value_list_match = value_list_pattern.search(line)
-                list_match = list_pattern.search(line)
-                if list_found:
-                    if '(' in line:
-                        list_start_found = True
-                    elif ')' in line:
-                        list_start_found = False
-                        list_found = False
-                        list_name = ''
-                    elif list_start_found:
-                        if list_name in self.latest:
-                            new_lines[idx] = f'{self.latest[list_name]}\n'
-                        else:
-                            new_lines[idx] = f'{current_boundary[list_name]}\n'
-                if list_match:
-                    if list_match.group(5):
-                        list_name = list_match.group(1)
-                        list_length = int(list_match.group(5))
-                        if list_name in self.latest:
-                            value_str = str(self.latest[list_name])
-                        else:
-                            value_str = str(current_boundary[list_name])
-                        value_list_string = ' '.join([value_str for _ in range(list_length)])
-                        new_lines[idx] = f'{new_lines[idx][:list_match.end()]}({value_list_string});\n'
-                    else:
-                        list_found = True
-                        list_name = list_match.group(1)
-                if boundaries_found:
-                    name_match = name_pattern.match(line)
-                    if name_match:
-                        name = name_match.group(1)
-                        name = name if name != '".*"' else 'other_boundaries'
-                        current_boundary = self.latest[name]  # It should be there, but maybe can check for error
-                    if current_boundary:
-                        type_match = type_pattern.match(line)
-                        parameter_match = parameter_pattern.match(line)
-                        if '}' in line:
-                            if remaining_attr := list(set(current_boundary.__dict__.keys()) - set(read_attr)):
-                                for attr_name in remaining_attr:
-                                    if attr_name == 'type' or attr_name == 'is_uniform' or attr_name == 'value':
-                                        continue
-                                    # TODO: needs to be tested!
-                                    attr = current_boundary.__dict__[attr_name]
-                                    new_lines.insert(idx, f'{" " * 8}{attr_name} {attr};\n')
-                                    offset += 1
-                            current_boundary = None
-                            read_attr = []
-                            continue
-                        if type_match:
-                            b_type = type_match.group(1)
-                            new_lines[idx] = new_lines[idx].replace(b_type, current_boundary['type'])
-                        elif parameter_match:
-                            value_name = parameter_match.group(1)
-                            if value_name in current_boundary.__dict__.keys():
-                                read_attr.append(value_name)
-                                old_value = parameter_match.group(2)
-                                value_name_small = value_name.lower()
-                                new_value = ''
-                                if 'is_uniform' in current_boundary.__dict__.keys() and current_boundary[
-                                    'is_uniform'] and \
-                                        'value' != value_name_small and \
-                                        ('value' in value_name_small or 'gradient' in value_name_small) and \
-                                        (old_value.split(' ')[-1].isnumeric() or '(' in old_value):
-                                    new_value = 'uniform '
-                                if isinstance((value := current_boundary[value_name]), list):
-                                    new_value += f'({" ".join([str(num) for num in value])})'
-                                else:
-                                    new_value += f'{value}'
-                                new_lines[idx] = new_lines[idx].replace(old_value, new_value)
-                            else:
-                                # This values is no longer used, delete it
-                                new_lines.pop(idx)
-                                offset -= 1
-                        # elif value_list_match and 'value' in current_boundary.__dict__:
-                        # elif list_match and ('value' in current_boundary.__dict__ or 'value' in self.latest):
-                    elif '}' in line:
-                        end_reached = True
-                if 'boundaryField' in line:
-                    boundaries_found = True
-        with open(filepath, 'w') as f:
-            f.writelines(new_lines)
-
-    def save_latest_boundaries(self, is_run_parallel=False):
-        # TODO: get latest boundaries and replace the lines in the latest file. Again, to replace I need to parse each
-        #  string and if it is a match - replace the necessary data there
-        if is_run_parallel:
-            processor_dirs = get_numerated_dirs(self._case_dir, 'processor')
-            for processor_dir in processor_dirs:
-                filepath = f'{self._case_dir}/{processor_dir}/{self.latest_timestep}/{self._region}/{self._field}'
-                self._save_latest_boundaries(filepath)
-        else:
-            self._save_latest_boundaries(self._filepath_latest)
-
-    def add_initial_boundary(self, name, boundary_type, **kwargs):
-        if name in self.initial:
-            self._remove_boundary_from_file(name)
-        cls_instance = self._get_class_by_boundary_type(boundary_type)(boundary_type, **kwargs)
-        self.__dict__.update({name: cls_instance})
-        self._add_boundary_to_file(name)
-
-    def save_initial_internal_field(self):
-        lines = open(self._filepath).readlines()
-        new_lines = []
-        internal_field_pattern = re.compile(
-            f'^\s*(internalField)\s*(uniform)?\s*(\$?\w*|{NUMBER_PATTERN}\(?\)?|{VECTOR_PATTERN});')
-        for idx, line in enumerate(lines):
-            new_lines.append(line)
-            internal_field_match = internal_field_pattern.search(line)
-            if internal_field_match and internal_field_match.group(1):
-                if isinstance(self.initial['internalField']['value'], list):
-                    value = f'({" ".join(self.initial["internalField"]["value"])[:-1]})'
+            if internal_field_match.group(4):
+                value = [float(internal_field_match.group(i)) for i in range(4, 7)]
+            else:
+                if (val := internal_field_match.group(3)).isnumeric():
+                    value = float(val)
                 else:
-                    value = self.initial['internalField']['value']
-                new_lines[idx] = f'internalField{" " * 4}' \
-                                 f'{"uniform " if self.initial["internalField"]["is_uniform"] else ""}' \
-                                 f'{value};\n'
-        with open(self._filepath, 'w') as f:
-            f.writelines(new_lines)
+                    value = val
+            value = {
+                'value': value,
+                'value_uniform': True if internal_field_match.group(2) else False
+            }
+        return {'internalField': value}
 
-    def save_initial_boundary(self, name):
-        if name not in self.initial:
-            raise Exception('TODO: EXCEPTION')
-        self._remove_boundary_from_file(name)
-        self._add_boundary_to_file(name)
+    @staticmethod
+    def _get_boundary_fields(lines_str: str):
+        """
+        Function to get boundary fields and their parameters from a file converted to one string
+        :param lines_str: file lines as one string
+        :return: dictionary of boundary type dictionaries
+        """
+        # Find boundary fields and separate them into separate strings
+        fields = re.search(BOUNDARY_FIELD_PATTERN, lines_str, flags=re.MULTILINE).group(1)
+        fields = re.findall(f'{FIELD_NAME_PATTERN}{{\\s*([^}}]*)}}\\s*', fields, flags=re.MULTILINE)
+        boundary_fields = {}
+        for name, val_str in fields:
+            f_contents = re.findall(f'{FIELD_NAME_PATTERN}{LIST_OR_VALUE_PATTERN}', val_str, flags=re.MULTILINE)
+            boundary_fields.update({name: {}})
+            for f_content in f_contents:
+                val_name = f_content[0]
+                # Check if parsed field is a list or a value
+                # Note that only the LAST VALUE from the list is taken and NOT the WHOLE LIST!
+                if lst_type := f_content[7]:
+                    if lst_type == 'vector':
+                        vectors = re.findall(VECTOR_PATTERN, f_content[9], flags=re.MULTILINE)
+                        val = [float(val) for val in vectors[-1]]
+                    else:
+                        temp = re.findall(f'\\s({NUMBER_PATTERN})\\n', f_content[9], flags=re.MULTILINE)
+                        if temp and temp[-1]:
+                            val = float(temp[-1])
+                else:
+                    if f_content[4]:
+                        val = [float(f_content[i]) for i in range(4, 7)]
+                    else:
+                        if f_content[3].isnumeric():
+                            val = float(f_content[3])
+                        else:
+                            val = f_content[3]
+                if f_content[2]:
+                    boundary_fields[name].update({f'{val_name}_uniform': True})
+                boundary_fields[name].update({val_name: val})
 
-    def delete_initial_boundary(self, name):
-        self._remove_boundary_from_file(name)
-        del self.__dict__[name]
-        del self._file_lines[name]
+        return boundary_fields
+
+    def _file_parse(self):
+        """Parses boundary condition file"""
+        filepath = self._filepath % self._time
+        lines = open(filepath).readlines()
+        lines_str = ''.join(lines)
+        # Parse and initialize internal field if it exists
+        internal_field_dict = self._get_internal_field(lines_str)
+        if internal_field_dict:
+            self.__dict__.update({'internalField': InternalField(**internal_field_dict['internalField'])})
+            self['internalField'].attach_callback(self._file_update_internal_field)
+        # Parse boundary fields and initialize them
+        boundary_fields_dict = self._get_boundary_fields(lines_str)
+        boundary_fields = {}
+        for name, fields in boundary_fields_dict.items():
+            if 'type' in fields:
+                field_type = fields['type']
+                del fields['type']
+                boundary_fields.update({name: Boundary(field_type, **fields)})
+                boundary_fields[name].attach_callback(self.save_boundary)
+        self.__dict__.update(boundary_fields)
+
+    def _file_create(self, field_class, dimensions):
+        """Create a new field boundary condition file"""
+        filepath = self._filepath % self._time
+        with open(filepath, 'w') as f:
+            f.writelines(BOUNDARY_CONDITION_FILE_TEMPLATE % (field_class, self._field, dimensions))
+
+    def _file_write_decorator(func):
+        """
+        File write decorator, used to decorate function that do changes to file
+        Declared as inside a class in order to have access to class specific functions
+        """
+
+        def wrapper(self, *args, **kwargs):
+            filepath = self._filepath % self._time
+            lines = open(filepath).readlines()
+            lines_str = ''.join(lines)
+            lines_str = func(self, *args, **kwargs, lines_str=lines_str)
+            with open(filepath, 'w') as f:
+                f.writelines(lines_str)
+
+        return wrapper
+
+    @_file_write_decorator
+    def _file_add_internal_field(self, lines_str=None):
+        """
+        Adds internalField to file
+        Should only be used if internal field is not present in file
+        :param lines_str: file lines as one string
+        :return: modified file lines as one string
+        """
+        if 'internalField' not in self.__dict__:
+            raise Exception(f'Internal field is not defined')
+        return re.sub(r'boundaryField', f'{self["internalField"]}\nboundaryField', lines_str)
+
+    @_file_write_decorator
+    def _file_update_internal_field(self, lines_str=None):
+        """
+        Update internalField in file
+        Should only be used if internal field is present in file
+        :param lines_str: file lines as one string
+        :return: modified file lines as one string
+        """
+        internal_field_match = re.search(INTERNAL_FIELD_PATTERN, lines_str, flags=re.MULTILINE)
+        string_orig = internal_field_match.group()
+        string_new = string_orig[:]
+        if lst_type := internal_field_match.group(7):
+            lst_str = internal_field_match.group(9)
+            value = self['internalField'].value
+            if lst_type == 'vector':
+                lst_str_new = re.sub(VECTOR_PATTERN, f'({value[0]} {value[1]} {value[2]})\n', lst_str)
+            else:
+                lst_str_new = re.sub(f'\\s*{NUMBER_PATTERN}\\n', f'\n{value}', lst_str) + '\n'
+            string_new = string_new.replace(lst_str, lst_str_new)
+        else:
+            value = self['internalField'].value
+            if not internal_field_match.group(2) and self['internalField'].value_uniform:
+                string_new = string_new.replace('internalField', 'internalField uniform')
+            elif internal_field_match.group(2) and not self['internalField'].value_uniform:
+                string_new = string_new.replace('internalField uniform', 'internalField')
+            if internal_field_match.group(4):
+                string = f'({value[0]} {value[1]} {value[2]})'
+            else:
+                string = f'{value}'
+            string_new = string_new.replace(internal_field_match.group(3), string)
+        return lines_str.replace(string_orig, string_new)
+
+    @_file_write_decorator
+    def _file_add_boundary(self, name, lines_str=None):
+        """
+        Adds boundary with a specified name to file
+        :param name: boundary name to add
+        :param lines_str: file lines as one string
+        :return: modified file lines as one string
+        """
+        if name not in self.__dict__:
+            raise Exception(f'Boundary {name} is not in use')
+        string = str(self[name]).replace('\n', f'\n{" " * 4}')
+        return re.sub(r'boundaryField\s*{', f'boundaryField\n{{\n{" " * 4}{name}{string}\n', lines_str)
+
+    @_file_write_decorator
+    def _file_remove_boundary(self, name, lines_str=None):
+        """
+        Removes boundary with a specified name from file
+        :param name: boundary name to remove
+        :param lines_str: file lines as one string
+        :return: modified file lines as one string
+        """
+        find_name = ''.join([f'\\{c}' if c in SPECIAL_CHARACTERS else c for c in name])
+        field_pattern = f'{SPECIFIC_FIELD_PATTERN % find_name}\n*'
+        return re.sub(field_pattern, '', lines_str)
+
+    @_file_write_decorator
+    def _file_update_boundary(self, name, lines_str=None):
+        """
+        Updates boundary with a specified name in file
+        :param name: boundary name to update
+        :param lines_str: file lines as one string
+        :return: modified file lines as one string
+        """
+        field_pattern = SPECIFIC_FIELD_VALUES_PATTERN % name
+        boundary_field_str = re.search(field_pattern, lines_str, flags=re.MULTILINE).group()
+        values = re.findall(f'{FIELD_NAME_PATTERN}{LIST_OR_VALUE_PATTERN}', boundary_field_str, flags=re.MULTILINE)
+        new_boundary_field_str = boundary_field_str[:]
+        for value in values:
+            val_name = value[0]
+            if lst_type := value[7]:
+                new_value = self[name][val_name]
+                if lst_type == 'vector':
+                    lst_str_new = re.sub(VECTOR_PATTERN, f'({new_value[0]} {new_value[1]} {new_value[2]})\n', value[9])
+                else:
+                    lst_str_new = re.sub(f'\\s*{NUMBER_PATTERN}\\n', f'\n{new_value}', value[9]) + '\n'
+                lines_str = lines_str.replace(value[9], lst_str_new)
+            else:
+                new_value = self[name][val_name]
+                append_uniform = False
+                old_value_line = re.search(f'.*{val_name}.*', boundary_field_str, flags=re.MULTILINE).group()
+                if value[2] and f'{val_name}_uniform' in self[name] and not self[name][f'{val_name}_uniform']:
+                    old_value_line = old_value_line.replace('uniform ', '')
+                elif not value[2] and f'{val_name}_uniform' in self[name] and self[name][f'{val_name}_uniform']:
+                    append_uniform = True
+                string = f'{"uniform " if append_uniform else ""}'
+                if value[4]:
+                    string += f'({new_value[0]} {new_value[1]} {new_value[2]})'
+                    new_value_line = re.sub(VECTOR_PATTERN, string, old_value_line)
+                else:
+                    string += f'{new_value}'
+                    if value[3].isnumeric():
+                        new_value_line = re.sub(f'{NUMBER_PATTERN};', f'{string};', old_value_line)
+                    else:
+                        new_value_line = old_value_line.replace(value[3], string)
+                new_boundary_field_str = new_boundary_field_str.replace(old_value_line, new_value_line)
+        return lines_str.replace(boundary_field_str, new_boundary_field_str)
+
+    def save_boundary(self, name=None, inst=None):
+        """
+        Saves boundary with a specified name or instance in file
+        Either a boundary name or directly a boundary instance must be provided
+        :param name: boundary name to save
+        :param inst: boundary instance to save
+        """
+        if inst and not name:
+            name = [name for name in self.__dict__ if self[name] == inst][0]
+        else:
+            raise AttributeError('Either name or instance has to be specified')
+        self._file_update_boundary(name)
+
+    def update_time(self, current_time):
+        """
+        Updates boundary conditions according to provided time
+        :param current_time: time, must correspond to a timed result folder
+        """
+        if self._time != current_time:
+            self._time = current_time
+            self._file_parse()
+
+    def save(self):
+        """Saves all modified boundaries of a boundary condition"""
+        for b_condition_name in self:
+            self[b_condition_name].save()
+
+    def __getitem__(self, item):
+        """Allow to access attributes of a class as in dictionary"""
+        return self.__dict__[item]
+
+    def __setitem__(self, key, value):
+        """
+        Allow to set attributes of a class as in dictionary
+        If a boundary is redefine with new boundary type class
+        and the types are different - a boundary is replaced and
+        rewritten in the file. Otherwise, the boundary values
+        are simply updated with new values
+        """
+        if key == 'internalField':
+            need_add = False
+            if 'internalField' not in self.__dict__:
+                need_add = True
+            self.__dict__['internalField'] = value
+            self['internalField'].attach_callback(self._file_update_internal_field)
+            if need_add:
+                self._file_add_internal_field()
+            else:
+                self._file_update_internal_field()
+        else:
+            if key in self.__dict__:
+                if self[key].type == value.type:
+                    # If type is the same - simply update values with new once
+                    for value_name in self[key]:
+                        if value[value_name] is not None:
+                            self[key][value_name] = value[value_name]
+                    return
+                self._file_remove_boundary(key)
+            else:
+                if self._time != 0:
+                    raise Exception('New boundaries can only be added on time 0 (initial)')
+            self.__dict__[key] = value
+            self[key].attach_callback(self.save_boundary)
+            self._file_add_boundary(key)
+
+    def __iter__(self):
+        """Allow to iterate over attribute names of a class"""
+        for each in [b for b in self.__dict__ if '_' not in b[0]]:
+            yield each
+
+    def __delitem__(self, key):
+        """
+        Allow to delete individual attributes of a class
+        An internal field cannot be deleted
+        """
+        if key != 'internalField':
+            del self.__dict__[key]
+            self._file_remove_boundary(key)
 
 
 class BoundaryConditionT(BoundaryConditionBase):
+    """Temperature boundary condition"""
+
     def __init__(self, case_dir, region=None):
-        super(BoundaryConditionT, self).__init__(case_dir, 'T', 'volScalarField', '[0 0 0 1 0 0 0]', region)
+        super(BoundaryConditionT, self).__init__(case_dir, 'T', 'volScalarField',
+                                                 '[0 0 0 1 0 0 0]', region)
 
 
 class BoundaryConditionAlphat(BoundaryConditionBase):
-    def __init__(self, case_dir, region=None):
-        super(BoundaryConditionAlphat, self).__init__(case_dir, 'alphat', 'volScalarField', '[1 -1 -1 0 0 0 0]', region)
+    """Turbulent Thermal Diffusivity boundary condition"""
 
-
-class BoundaryConditionCellToRegion(BoundaryConditionBase):
     def __init__(self, case_dir, region=None):
-        super(BoundaryConditionCellToRegion, self).__init__(case_dir, 'cellToRegion', 'volScalarField',
-                                                            '[0 0 0 0 0 0 0]', region)
+        super(BoundaryConditionAlphat, self).__init__(case_dir, 'alphat', 'volScalarField',
+                                                      '[1 -1 -1 0 0 0 0]', region)
 
 
 class BoundaryConditionEpsilon(BoundaryConditionBase):
+    """Turbulent Kinetic Energy Dissipation Rate boundary condition"""
+
     def __init__(self, case_dir, region=None):
         super(BoundaryConditionEpsilon, self).__init__(case_dir, 'epsilon', 'volScalarField',
                                                        '[0 2 -3 0 0 0 0]', region)
 
 
 class BoundaryConditionK(BoundaryConditionBase):
+    """Turbulent Kinetic Energy boundary condition"""
+
     def __init__(self, case_dir, region=None):
-        super(BoundaryConditionK, self).__init__(case_dir, 'k', 'volScalarField', '[0 2 -2 0 0 0 0]', region)
+        super(BoundaryConditionK, self).__init__(case_dir, 'k', 'volScalarField',
+                                                 '[0 2 -2 0 0 0 0]', region)
 
 
 class BoundaryConditionNut(BoundaryConditionBase):
+    """Turbulent Viscosity boundary condition"""
+
     def __init__(self, case_dir, region=None):
-        super(BoundaryConditionNut, self).__init__(case_dir, 'nut', 'volScalarField', '[0 2 -1 0 0 0 0]', region)
+        super(BoundaryConditionNut, self).__init__(case_dir, 'nut', 'volScalarField',
+                                                   '[0 2 -1 0 0 0 0]', region)
 
 
 class BoundaryConditionOmega(BoundaryConditionBase):
+    """Turbulence Specific Dissipation Rate boundary condition"""
+
     def __init__(self, case_dir, region=None):
-        super(BoundaryConditionOmega, self).__init__(case_dir, 'omega', 'volScalarField', '[0 0 -1 0 0 0 0]', region)
+        super(BoundaryConditionOmega, self).__init__(case_dir, 'omega', 'volScalarField',
+                                                     '[0 0 -1 0 0 0 0]', region)
 
 
 class BoundaryConditionP(BoundaryConditionBase):
+    """Pressure boundary condition"""
+
     def __init__(self, case_dir, region=None):
-        super(BoundaryConditionP, self).__init__(case_dir, 'p', 'volScalarField', '[1 -1 -2 0 0 0 0]', region)
+        super(BoundaryConditionP, self).__init__(case_dir, 'p', 'volScalarField',
+                                                 '[1 -1 -2 0 0 0 0]', region)
 
 
 class BoundaryConditionPrgh(BoundaryConditionBase):
+    """Dynamic Pressure (p_rgh = p - rho*g*h) boundary condition"""
+
     def __init__(self, case_dir, region=None):
-        super(BoundaryConditionPrgh, self).__init__(case_dir, 'p_rgh', 'volScalarField', '[1 -1 -2 0 0 0 0 ]', region)
+        super(BoundaryConditionPrgh, self).__init__(case_dir, 'p_rgh', 'volScalarField',
+                                                    '[1 -1 -2 0 0 0 0 ]', region)
 
 
 class BoundaryConditionU(BoundaryConditionBase):
+    """Velocity boundary condition"""
+
     def __init__(self, case_dir, region=None):
-        super(BoundaryConditionU, self).__init__(case_dir, 'U', 'volVectorField', '[0 1 -1 0 0 0 0]', region)
+        super(BoundaryConditionU, self).__init__(case_dir, 'U', 'volVectorField',
+                                                 '[0 1 -1 0 0 0 0]', region)
 
 
 BOUNDARY_CONDITION_CLASSES = {
@@ -521,33 +478,46 @@ BOUNDARY_CONDITION_CLASSES = {
     'p': BoundaryConditionP,
     'omega': BoundaryConditionOmega,
     'alphat': BoundaryConditionAlphat,
-    'cellToRegion': BoundaryConditionCellToRegion,
     'epsilon': BoundaryConditionEpsilon,
     'k': BoundaryConditionK,
     'nut': BoundaryConditionNut,
 }
 
 
-def get_boundary_condition_class_by_field(field):
-    if field in BOUNDARY_CONDITION_CLASSES:
-        return BOUNDARY_CONDITION_CLASSES[field]
-    else:
-        print(f'No such field known: "{field}"')
+class BoundaryCondition:
+    """
+    Generic Boundary Condition type class that automatically determines
+    the class according to passed field name string
+    """
+
+    def __new__(cls, field, case_dir, region=None):
+        """
+        Instantiates a required class according to passed field name
+        :param field: probe field (e.g., T)
+        :param case_dir: case directory
+        :param region: region to probe
+        """
+        if field in BOUNDARY_CONDITION_CLASSES:
+            field_class = BOUNDARY_CONDITION_CLASSES[field]
+            field_inst = field_class.__new__(field_class)
+            field_inst.__init__(case_dir, region)
+            return field_inst
         return None
 
 
-if __name__ == '__main__':
-    t_boundary_cond = BoundaryConditionT('../../../cht_room', region='fluid')
-    t_boundary_cond.add_initial_boundary('inlet2', 'outletInlet', outletValue=[1, 2, 3], value=[1, 2, 3],
-                                         is_uniform=True)
+def main():
+    # internal_field = InternalField(0)
+    t_boundary_cond = BoundaryConditionT('test.case/', region='fluid')
+    t_boundary_cond.update_time(1)
+    t_boundary_cond['walls'].value = 3
+    # t_boundary_cond['walls'].save()
+    # t_boundary_cond['test'] = Boundary('noSlip')
+    # t_boundary_cond.add_boundary('test', 'noSlip')
+    t_boundary_cond.save()
+    t_boundary_cond.update_time(17)
+    t_boundary_cond.fluid_to_heater.refValue = 300
+    t_boundary_cond.fluid_to_heater.save()
 
-    boundary_condition = BoundaryConditionBase('../../../cht_room', 'T', 'volScalarField', '[0 0 0 1 0 0 0]',
-                                               region='fluid')
-    boundary_condition.add_initial_boundary('inlet', 'outletInlet', outletValue=[1, 2, 3], value=[1, 2, 3],
-                                            is_uniform=True)
-    # boundary_condition.delete_boundary('inlet2')
-    boundary_condition.inlet.value = [3, 2, 1]
-    boundary_condition['inlet'].outletValue = [10, 20, 30]
-    boundary_condition.save_initial_boundary('inlet')
-    # boundary_condition.add_boundary('inlet', 'outletInlet', outletValue=[1, 2, 3], value=[1, 2, 3], is_uniform=True)
-    print(1)
+
+if __name__ == '__main__':
+    main()
