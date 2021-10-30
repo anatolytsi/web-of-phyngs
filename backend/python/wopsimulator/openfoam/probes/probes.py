@@ -5,14 +5,7 @@ import time
 from threading import Thread, Lock
 from typing import Union, List
 
-if 'DEBUG_PROBE' in os.environ:
-    import sys
-
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(os.path.dirname(SCRIPT_DIR))
-    from common.parsing import VECTOR_PATTERN, NUMBER_PATTERN
-else:
-    from ..common.parsing import VECTOR_PATTERN, NUMBER_PATTERN
+from backend.python.wopsimulator.openfoam.common.parsing import VECTOR_PATTERN, NUMBER_PATTERN
 
 Num = Union[int, float, None]
 
