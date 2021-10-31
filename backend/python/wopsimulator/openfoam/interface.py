@@ -260,6 +260,18 @@ class OpenFoamInterface(ABC):
         argv = [cmd, '-case', self.case_dir]
         self.run_command(argv, is_parallel=self.is_setup_parallel, cores=self.num_of_cores)
 
+    def run_foam_dictionary(self, path: str, entry: str, set_value: str):
+        """
+        Runs OpenFOAM command to change dictionary specified in the path
+        :param path: path to dictionary
+        :param entry: field to change
+        :param set_value: value to set
+        :return: None
+        """
+        cmd = 'foamDictionary'
+        argv = [cmd, f'{self.case_dir}/{path}', '-entry', entry, '-set', set_value]
+        subprocess.Popen(argv)
+
     def get_boundary_conditions(self):
         """
         Gets initial boundary conditions for current case
