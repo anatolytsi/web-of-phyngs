@@ -64,6 +64,7 @@ class OpenFoamInterface(ABC):
         self.probe_parser = ProbeParser(self.case_dir)
         self.blockmesh_dict = BlockMeshDict(self.case_dir)
         self.snappy_dict = SnappyHexMeshDict(self.case_dir)
+        self.regions = []
 
     def remove_processor_dirs(self):
         """
@@ -282,6 +283,7 @@ class OpenFoamInterface(ABC):
         # Check if there are any folders in initial boundary dir
         # If there folders there, then the case is multi-regional
         if any(region_dirs):
+            self.regions = region_dirs
             for region in region_dirs:
                 self.boundaries.update({region: {}})
                 region_dir = os.listdir(f'{self.case_dir}/0/{region}')
