@@ -272,9 +272,9 @@ class OpenFoamInterface(ABC):
         argv = [cmd, f'{self.case_dir}/{path}', '-entry', entry, '-set', set_value]
         subprocess.Popen(argv)
 
-    def get_boundary_conditions(self):
+    def extract_boundary_conditions(self):
         """
-        Gets initial boundary conditions for current case
+        Extracts initial boundary conditions for current case from files
         :return: None
         """
         fields_dir = os.listdir(f'{self.case_dir}/0')
