@@ -14,6 +14,7 @@ from .boundaries.boundary_conditions import BoundaryCondition
 from .common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern, force_remove_dir, \
     remove_files_in_dir_with_pattern, copy_tree, get_numerated_dirs
 from .probes.probes import ProbeParser
+from .system.blockmesh import BlockMeshDict
 from .system.snappyhexmesh import SnappyHexMeshDict
 
 
@@ -61,6 +62,7 @@ class OpenFoamInterface(ABC):
         self.solver_is_blocking = is_blocking
         self.solver_is_running = False
         self.probe_parser = ProbeParser(self.case_dir)
+        self.blockmesh_dict = BlockMeshDict(self.case_dir)
         self.snappy_dict = SnappyHexMeshDict(self.case_dir)
 
     def remove_processor_dirs(self):
@@ -219,6 +221,7 @@ class OpenFoamInterface(ABC):
         Runs OpenFOAM command to create a mesh as described in system/blockMeshDict
         :return: None
         """
+        self.blockmesh_dict.save()
         cmd = 'blockMesh'
         argv = [cmd, '-case', self.case_dir]
         self.run_command(argv)
