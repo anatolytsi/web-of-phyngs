@@ -5,14 +5,7 @@ from typing import Union, List
 
 import gmsh
 
-if 'DEBUG_GEO' in os.environ:
-    import sys
-
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(os.path.dirname(SCRIPT_DIR))
-    from primitives import Num, Point, Line, Loop, Surface
-else:
-    from .primitives import Num, Point, Line, Loop, Surface
+from backend.python.wopsimulator.geometry.primitives import Num, Point, Line, Loop, Surface
 
 GMSH_INITIALIZED = False
 

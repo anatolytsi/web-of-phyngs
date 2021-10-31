@@ -10,12 +10,12 @@ from threading import Thread, Lock
 
 from PyFoam.Execution.BasicRunner import BasicRunner
 
-from .boundaries.boundary_conditions import BoundaryCondition
-from .common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern, force_remove_dir, \
-    remove_files_in_dir_with_pattern, copy_tree, get_numerated_dirs
-from .probes.probes import ProbeParser
-from .system.blockmesh import BlockMeshDict
-from .system.snappyhexmesh import SnappyHexMeshDict
+from backend.python.wopsimulator.openfoam.boundaries.boundary_conditions import BoundaryCondition
+from backend.python.wopsimulator.openfoam.common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern, \
+    force_remove_dir, remove_files_in_dir_with_pattern, copy_tree, get_numerated_dirs
+from backend.python.wopsimulator.openfoam.probes.probes import ProbeParser
+from backend.python.wopsimulator.openfoam.system.blockmesh import BlockMeshDict
+from backend.python.wopsimulator.openfoam.system.snappyhexmesh import SnappyHexMeshDict
 
 
 def get_latest_time(case_dir: str) -> float or int:

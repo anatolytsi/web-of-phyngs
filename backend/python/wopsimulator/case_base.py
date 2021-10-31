@@ -1,9 +1,10 @@
 import random
 from abc import ABC
 
-from geometry.manipulator import combine_stls
-from openfoam.interface import OpenFoamInterface
-from openfoam.system.snappyhexmesh import SnappyRegion, SnappyPartitionedMesh, SnappyCellZoneMesh
+from backend.python.wopsimulator.geometry.manipulator import combine_stls
+from backend.python.wopsimulator.openfoam.interface import OpenFoamInterface
+from backend.python.wopsimulator.openfoam.system.snappyhexmesh import SnappyRegion, SnappyPartitionedMesh, \
+    SnappyCellZoneMesh
 
 
 class OpenFoamCase(OpenFoamInterface, ABC):

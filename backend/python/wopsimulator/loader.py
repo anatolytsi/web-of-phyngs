@@ -8,8 +8,8 @@ from pathlib import Path
 CUR_FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 PY_BACKEND_DIR = os.path.realpath(f'{CUR_FILE_DIR}/../')
 
-from .cht_room import ChtRoom
-from .openfoam.common.filehandling import force_remove_dir, copy_tree
+from backend.python.wopsimulator.cht_room import ChtRoom
+from backend.python.wopsimulator.openfoam.common.filehandling import force_remove_dir, copy_tree
 
 CONFIG_PATH_KEY = 'path'
 CONFIG_TYPE_KEY = 'type'
