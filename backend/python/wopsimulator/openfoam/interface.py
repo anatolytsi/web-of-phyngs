@@ -289,19 +289,11 @@ class OpenFoamInterface(ABC):
                     cls_instance = BoundaryCondition(field, self.case_dir, region=region)
                     if cls_instance:
                         self.boundaries[region].update({field: cls_instance})
-                    # cls_obj = get_bc_class(field)
-                    # if cls_obj:
-                    #     cls_instance = cls_obj(self.case_dir, region=region)
-                    #     self.boundaries[region].update({field: cls_instance})
         else:
             for field in fields_dir:
                 cls_instance = BoundaryCondition(field, self.case_dir)
                 if cls_instance:
                     self.boundaries.update({field: cls_instance})
-                # cls_obj = get_bc_class(field)
-                # if cls_obj:
-                #     cls_instance = cls_obj(self.case_dir)
-                #     self.boundaries.update({field: cls_instance})
 
     @abstractmethod
     def setup(self):
