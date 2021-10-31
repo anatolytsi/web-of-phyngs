@@ -548,6 +548,8 @@ class Model:
         :param dir_path: path to directory to save to
         """
         self._produce()
+        if not os.path.exists(dir_path):
+            os.mkdir(dir_path)
         file_path = f'{dir_path}/{self.name}.stl'
         gmsh.write(file_path)
         rename_solid_stl(file_path, self.name)
@@ -582,8 +584,7 @@ def combine_stls(dest_path: str, other_paths: Union[List[str], str]):
     :param other_paths: paths to STL files
     """
     dest_path = dest_path if '.stl' in dest_path else f'{dest_path}.stl'
-    if not os.path.exists(dest_path):
-        raise FileNotFoundError(f'Path {dest_path} does not exist')
+    open(dest_path, 'w').close()
     other_paths = other_paths if isinstance(other_paths, list) else [other_paths]
     other_paths = [stl_path if '.stl' in stl_path else f'{stl_path}.stl' for stl_path in other_paths]
     for path in other_paths:
