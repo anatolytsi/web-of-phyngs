@@ -168,9 +168,9 @@ class Box(TriSurface):
         faces_x, faces_y, faces_z = set(), set(), set()
         for face in self.faces.values():
             face_x, face_y, face_z = face.get_used_coords()
-            faces_x.add(face_x)
-            faces_y.add(face_y)
-            faces_z.add(face_z)
+            faces_x = faces_x | face_x
+            faces_y = faces_y | face_y
+            faces_z = faces_z | face_z
         return faces_x, faces_y, faces_z
 
 
