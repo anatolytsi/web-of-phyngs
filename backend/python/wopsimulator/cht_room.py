@@ -1,13 +1,36 @@
 import time
+from typing import List
 
-from .openfoam.common.filehandling import force_remove_dir, get_numerated_dirs
-from .openfoam.interface import OpenFoamInterface
+from backend.python.wopsimulator.openfoam.interface import get_latest_time
+from backend.python.wopsimulator.case_base import OpenFoamCase
+from backend.python.wopsimulator.objects.door import WopDoor
+from backend.python.wopsimulator.objects.room import WopRoom
+from backend.python.wopsimulator.objects.window import WopWindow
+from backend.python.wopsimulator.objects.heater import WopHeater
+from backend.python.wopsimulator.objects.wopthings import WopSensor
+from backend.python.wopsimulator.openfoam.common.filehandling import force_remove_dir
+
+CHT_ROOM_OBJ_TYPES = [
+    WopHeater.type_name,
+    WopWindow.type_name,
+    WopRoom.type_name,
+    WopDoor.type_name,
+    WopSensor.type_name,
+    # TODO:
+    'furniture',
+]
 
 
-class ChtRoom(OpenFoamInterface):
+class ChtRoom(OpenFoamCase):
     def __init__(self, *args, **kwargs):
-        solver = 'chtMultiRegionFoam'
-        super(ChtRoom, self).__init__(solver, *args, **kwargs)
+        super(ChtRoom, self).__init__('chtMultiRegionFoam', *args, **kwargs)
+        self.heaters = {}
+        self.windows = {}
+        self.doors = {}
+        self.furniture = {}
+        self.sensors = {}
+        self.walls = None
+        self._bg_region = 'fluid'
 
     def clean_case(self):
         super(ChtRoom, self).clean_case()
@@ -15,212 +38,153 @@ class ChtRoom(OpenFoamInterface):
         force_remove_dir(f'{self.case_dir}/postProcessing')
 
     def setup(self):
+        self.prepare_geometry()
+        self.partition_mesh(self._bg_region)
+        self.prepare_partitioned_mesh()
         self.clean_case()
-        self.copy_stls()
         self.run_block_mesh()
         self.run_snappy_hex_mesh()
         self.run_split_mesh_regions(cell_zones_only=True)
         self.run_setup_cht()
-        self.get_boundary_conditions()
-        self.boundaries['heater']['T']['initial']['internalField']['value'] = \
-            self.boundaries['fluid']['T']['initial']['internalField']['value']
-        self.boundaries['heater']['T']['initial']['internalField']['is_uniform'] = \
-            self.boundaries['fluid']['T']['initial']['internalField']['is_uniform']
-        self.boundaries['heater']['T'].save_initial_internal_field()
-        # self.boundaries['heater']['T']['initial']['heater_to_fluid']['value'] = 310.0
-        # self.boundaries['heater']['T']['initial']['heater_to_fluid']['is_uniform'] = True
-        # self.boundaries['heater']['T'].save_initial_boundary('heater_to_fluid')
+        self.extract_boundary_conditions()
+        self.bind_boundary_conditions()
 
-    def run(self):
-        super(ChtRoom, self).run()
-        # time.sleep(15)
-        # self.solver.stopWithoutWrite()
-        # test = self.solver.getSolutionDirectory()
-        # print(test)
-        # print(1)
-
-
-def turn_on_heater(room, latest_result, is_run_parallel):
-    room.boundaries['heater']['T'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-    room.boundaries['heater']['T']['latest']['heater_to_fluid']['value'] = 500.0
-    room.boundaries['heater']['T']['latest']['internalField'] = 500.0
-    for field in room.boundaries['heater']['T']['latest'].keys():
-        if 'procBoundary' in field:
-            room.boundaries['heater']['T']['latest'][field]['value'] = 500.0
-    room.boundaries['heater']['T'].save_latest_boundaries(is_run_parallel=is_run_parallel)
-
-
-def turn_off_heater(room, latest_result, is_run_parallel):
-    room.boundaries['heater']['T'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-    room.boundaries['fluid']['T'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-    room_temperature = room.boundaries['fluid']['T']['latest']['internalField']
-    room.boundaries['heater']['T']['latest']['heater_to_fluid']['value'] = room_temperature
-    room.boundaries['heater']['T']['latest']['internalField'] = room_temperature
-    for field in room.boundaries['heater']['T']['latest'].keys():
-        if 'procBoundary' in field:
-            room.boundaries['heater']['T']['latest'][field]['value'] = room_temperature
-    room.boundaries['heater']['T'].save_latest_boundaries(is_run_parallel=is_run_parallel)
-
-
-def open_window(room, latest_result, is_run_parallel):
-    room.boundaries['fluid']['alphat'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-    room.boundaries['fluid']['epsilon'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-    room.boundaries['fluid']['k'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-    room.boundaries['fluid']['nut'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-    # room.boundaries['fluid']['p'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-    # room.boundaries['fluid']['p_rgh'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-    room.boundaries['fluid']['T'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-    room.boundaries['fluid']['U'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-
-    room.boundaries['fluid']['alphat']['latest']['outlet']['type'] = 'calculated'
-    room.boundaries['fluid']['alphat'].save_latest_boundaries(is_run_parallel=is_run_parallel)
-
-    # room.boundaries['fluid']['epsilon']['latest']['outlet']['type'] = 'inletOutlet'
-    # room.boundaries['fluid']['epsilon']['latest']['outlet']['value'] = 0.001
-    # room.boundaries['fluid']['epsilon']['latest']['outlet']['is_uniform'] = True
-    # room.boundaries['fluid']['epsilon']['latest']['outlet']['inletValue'] = 0.001
-
-    room.boundaries['fluid']['k']['latest']['outlet']['type'] = 'inletOutlet'
-    room.boundaries['fluid']['k']['latest']['outlet']['value'] = 0.02
-    room.boundaries['fluid']['k']['latest']['outlet']['is_uniform'] = True
-    room.boundaries['fluid']['k']['latest']['outlet']['inletValue'] = 0.02
-    room.boundaries['fluid']['k'].save_latest_boundaries(is_run_parallel=is_run_parallel)
-
-    room.boundaries['fluid']['nut']['latest']['outlet']['type'] = 'calculated'
-    room.boundaries['fluid']['nut'].save_latest_boundaries(is_run_parallel=is_run_parallel)
-
-    room.boundaries['fluid']['T']['latest']['outlet']['type'] = 'inletOutlet'
-    room.boundaries['fluid']['T']['latest']['outlet']['value'] = 280
-    room.boundaries['fluid']['T']['latest']['outlet']['is_uniform'] = True
-    room.boundaries['fluid']['T']['latest']['outlet']['inletValue'] = 280
-    room.boundaries['fluid']['T'].save_latest_boundaries(is_run_parallel=is_run_parallel)
-
-    room.boundaries['fluid']['U']['latest']['outlet']['type'] = 'pressureInletOutletVelocity'
-    room.boundaries['fluid']['U']['latest']['outlet']['value'] = '$internalField'
-    room.boundaries['fluid']['U'].save_latest_boundaries(is_run_parallel=is_run_parallel)
+    def add_object(self, name: str, obj_type: str,
+                   dimensions: List[float] = (0, 0, 0), location: List[float] = (0, 0, 0),
+                   rotation: List[float] = (0, 0, 0), sns_field: str = None):
+        # TODO: check if name contains spaces
+        if obj_type not in CHT_ROOM_OBJ_TYPES:
+            raise Exception(f'Wrong object type! Possible types are {CHT_ROOM_OBJ_TYPES}')
+        if obj_type == WopHeater.type_name:
+            wop_object = WopHeater(name, self.case_dir, self._bg_region, dimensions=dimensions, location=location,
+                                   rotation=rotation, of_interface=self)
+            wop_object.bind_snappy(self.snappy_dict, 'cell_zone', refinement_level=2)
+            self.heaters.update({name: wop_object})
+        elif obj_type == WopWindow.type_name:
+            wop_object = WopWindow(name, self.case_dir, self._bg_region, dimensions=dimensions, location=location,
+                                   rotation=rotation, of_interface=self)
+            wop_object.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
+            self.windows.update({wop_object.name: wop_object})
+            if self.walls:
+                self.walls.model.geometry.cut_surface(wop_object.model.geometry)
+        elif obj_type == WopDoor.type_name:
+            wop_object = WopDoor(name, self.case_dir, self._bg_region, dimensions=dimensions, location=location,
+                                 rotation=rotation, of_interface=self)
+            wop_object.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
+            self.doors.update({wop_object.name: wop_object})
+            if self.walls:
+                self.walls.model.geometry.cut_surface(wop_object.model.geometry)
+        elif obj_type == WopRoom.type_name:
+            wop_object = WopRoom(name, self.case_dir, self._bg_region, dimensions=dimensions, location=location,
+                                 rotation=rotation, of_interface=self)
+            wop_object.bind_snappy(self.snappy_dict, 'region', 'wall')
+            self.walls = wop_object
+            for window in self.windows.values():
+                wop_object.model.geometry.cut_surface(window.model.geometry)
+            for door in self.windows.values():
+                wop_object.model.geometry.cut_surface(door.model.geometry)
+        elif obj_type == WopSensor.type_name:
+            sensor = WopSensor(name, self.case_dir, sns_field, self._bg_region, location)
+            self.sensors.update({sensor.name: sensor})
+            return
+        self._objects.update({wop_object.name: wop_object})
 
 
 def main():
     is_run_parallel = True
-    timestep = 30
-    start = time.time()
-    room = ChtRoom('cht_room', is_blocking=False, is_run_parallel=is_run_parallel, num_of_cores=4)
+    timestep = 5
+    case_dir = 'test.case'
+
+    room_dimensions = [3, 4, 2.5]
+    window_dimension = [1.5, 0, 1.25]
+    door_dimension = [1.5, 0, 2]
+    heater_dimensions = [1, 0.2, 0.7]
+
+    window_location = [(room_dimensions[0] - window_dimension[0]) / 2,
+                       0,
+                       (room_dimensions[2] - window_dimension[2]) / 2]
+    door_location = [(room_dimensions[0] - door_dimension[0]) / 2,
+                     room_dimensions[1],
+                     (room_dimensions[2] - door_dimension[2]) / 2]
+    heater_location = [1, 1, 0.2]
+    sensor_location = [1.5, 2, 1]
+
+    room = ChtRoom(case_dir, is_blocking=False, is_run_parallel=is_run_parallel, num_of_cores=4)
+    room.add_object(name='walls', obj_type='walls', dimensions=room_dimensions)
+    room.add_object('inlet', 'window', dimensions=window_dimension, location=window_location)
+    room.add_object('outlet', 'door', dimensions=door_dimension, location=door_location)
+    room.add_object('heater', 'heater', dimensions=heater_dimensions, location=heater_location)
+    room.add_object('temp_sensor', 'sensor', location=sensor_location, sns_field='T')
 
     # room.get_boundary_conditions()
-    # room.case_is_decomposed = True
-    #
-    # latest_result = '1'
-    # room.boundaries['heater']['T'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-    # room.boundaries['heater']['T']['latest']['heater_to_fluid']['value'] = 500.0
-    # room.boundaries['heater']['T']['latest']['internalField'] = 500.0
-    # for field in room.boundaries['heater']['T']['latest'].keys():
-    #     if 'procBoundary' in field:
-    #         room.boundaries['heater']['T']['latest'][field]['value'] = 500.0
-    # room.boundaries['heater']['T'].save_latest_boundaries(is_run_parallel=is_run_parallel)
+    # current_time = get_latest_time(room.case_dir)
+    # room.boundaries['fluid']['alphat'].update(current_time)
+    # room.boundaries['fluid']['omega'].update(current_time)
+    # room.boundaries['fluid']['k'].update(current_time)
+    # room.boundaries['fluid']['nut'].update(current_time)
+    # room.boundaries['fluid']['p'].update(current_time)
+    # room.boundaries['fluid']['p_rgh'].update(current_time)
+    # room.boundaries['fluid']['T'].update(current_time)
+    # room.boundaries['fluid']['U'].update(current_time)
+    # room.boundaries['heater']['p'].update(current_time)
+    # room.boundaries['heater']['T'].update(current_time)
 
-    # Start a normal case
     room.setup()
+
+    room.heaters['heater'].temperature = 450
+    room.walls.temperature = 293.15
+
     room.run()
     time.sleep(timestep)
-
-    # # Stop, change the latest boundaries and run (Temperature)
-    # end = time.time()
-    # room.stop()
-    # print(f'Elapsed time: {end - start}')
-    # # make a function to update all boundaries from latest
-    # # make function to get latest run time getter
-    # latest_result = sorted(
-    #     [int(val) for val in get_numerated_dirs(f'cht_room{"/processor0" if is_run_parallel else ""}', exception='0')])[
-    #     -1]
-    # print(f'Latest simulation result is: {latest_result}')
-    # print(f'1 s of simulation per real time: {(end - start) / latest_result}')
-    # start = end
-    # turn_on_heater(room, latest_result, is_run_parallel)
-    # room.run()
-    # time.sleep(timestep)
-
-    # # Stop, change the latest boundaries and run (Window)
-    # end = time.time()
-    # room.stop()
-    # print(f'Elapsed time: {end - start}')
-    # # make a function to update all boundaries from latest
-    # # make function to get latest run time getter
-    # latest_result = sorted(
-    #     [int(val) for val in get_numerated_dirs(f'cht_room{"/processor0" if is_run_parallel else ""}', exception='0')])[
-    #     -1]
-    # print(f'Latest simulation result is: {latest_result}')
-    # print(f'1 s of simulation per real time: {(end - start) / latest_result}')
-    # start = end
-    # open_window(room, latest_result, is_run_parallel)
-    # room.run()
-    # time.sleep(timestep)
-
-    for _ in range(3):
-        # Stop, change the latest boundaries and run (Temperature)
-        end = time.time()
-        room.stop()
-        print(f'Elapsed time: {end - start}')
-        # make a function to update all boundaries from latest
-        # make function to get latest run time getter
-        latest_result = sorted(
-            [int(val) for val in
-             get_numerated_dirs(f'cht_room{"/processor0" if is_run_parallel else ""}', exception='0')])[
-            -1]
-        print(f'Latest simulation result is: {latest_result}')
-        print(f'1 s of simulation per real time: {(end - start) / latest_result}')
-        start = end
-        turn_on_heater(room, latest_result, is_run_parallel)
-        room.run()
-        time.sleep(timestep)
-
-        # Stop, change the latest boundaries and run (Temperature)
-        end = time.time()
-        room.stop()
-        print(f'Elapsed time: {end - start}')
-        # make a function to update all boundaries from latest
-        # make function to get latest run time getter
-        latest_result = sorted(
-            [int(val) for val in
-             get_numerated_dirs(f'cht_room{"/processor0" if is_run_parallel else ""}', exception='0')])[
-            -1]
-        print(f'Latest simulation result is: {latest_result}')
-        print(f'1 s of simulation per real time: {(end - start) / latest_result}')
-        start = end
-        turn_off_heater(room, latest_result, is_run_parallel)
-        room.run()
-        time.sleep(timestep)
-
-    # # Stop, change the latest boundaries and run (Wind speed)
-    # end = time.time()
-    # room.stop()
-    # print(f'Elapsed time: {end - start}')
-    # latest_result = sorted(
-    #     [int(val) for val in get_numerated_dirs(f'cht_room{"/processor0" if is_run_parallel else ""}', exception='0')])[
-    #     -1]
-    # print(f'Latest simulation result is: {latest_result}')
-    # print(f'1 s of simulation per real time: {(end - start) / latest_result}')
-    # start = end
-    # room.boundaries['fluid']['U'].update_latest_boundaries(latest_result, is_run_parallel=is_run_parallel)
-    # room.boundaries['fluid']['U']['latest']['inlet']['value'] = [0, 1, 0]
-    # room.boundaries['fluid']['U'].save_latest_boundaries(is_run_parallel=is_run_parallel)
-    # room.run()
-    # time.sleep(timestep)
-
-    # Finally, stop the simulation for good
-    end = time.time()
     room.stop()
-    print(f'Elapsed time: {end - start}')
-    latest_result = sorted(
-        [int(val) for val in get_numerated_dirs(f'cht_room{"/processor0" if is_run_parallel else ""}', exception='0')])[
-        -1]
-    print(f'Latest simulation result is: {latest_result}')
-    print(f'1 s of simulation per real time: {(end - start) / latest_result}')
 
-    # Should be done in a separate function (e.g. postprocess)
-    room.run_reconstruct(all_regions=True)
-    # Saving new boundaries works for now
-    # TODO: Next step: stopping mid simulation, changing some value, continuing and observing how data changed
-    # print(1)
+    print(f'{room.sensors["temp_sensor"].value=}')
+    print(f'Latest time: {get_latest_time(room.case_dir)}')
+    room.heaters['heater'].temperature = room.walls.temperature
+    room.run()
+    time.sleep(timestep)
+    room.stop()
+
+    print(f'{room.sensors["temp_sensor"].value=}')
+    print(f'Latest time: {get_latest_time(room.case_dir)}')
+    room.heaters['heater'].temperature = 450
+    room.doors['outlet'].open = True
+    room.doors['outlet'].wind_speed = [0, 0.1, 0]
+    room.run()
+    time.sleep(timestep)
+    room.stop()
+
+    print(f'{room.sensors["temp_sensor"].value=}')
+    print(f'Latest time: {get_latest_time(room.case_dir)}')
+    room.doors['outlet'].open = False
+    room.run()
+    time.sleep(timestep)
+    room.stop()
+
+    print(f'{room.sensors["temp_sensor"].value=}')
+    print(f'Latest time: {get_latest_time(room.case_dir)}')
+    room.windows['inlet'].open = True
+    room.windows['inlet'].wind_speed = [0, 0.1, 0]
+    room.run()
+    time.sleep(timestep)
+    room.stop()
+
+    print(f'{room.sensors["temp_sensor"].value=}')
+    print(f'Latest time: {get_latest_time(room.case_dir)}')
+    room.windows['inlet'].open = False
+    room.run()
+    time.sleep(timestep)
+    room.stop()
+
+    print(f'{room.sensors["temp_sensor"].value=}')
+    print(f'Latest time: {get_latest_time(room.case_dir)}')
+    room.windows['inlet'].open = True
+    room.windows['inlet'].wind_speed = [0, -0.1, 0]
+    room.doors['outlet'].open = True
+    room.doors['outlet'].wind_speed = [0, 0, 0]
+    room.run()
+    time.sleep(timestep)
+    room.stop()
 
 
 if __name__ == '__main__':
