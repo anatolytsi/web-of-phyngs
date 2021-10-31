@@ -305,11 +305,22 @@ class OpenFoamInterface(ABC):
         """
         raise NotImplementedError('Setup method is not implemented!')
 
+    def save_boundaries(self):
+        """Saves all boundary conditions"""
+        if self.regions:
+            for region in self.regions:
+                for field in self.boundaries[region].values():
+                    field.save()
+        else:
+            for field in self.boundaries.values():
+                field.save()
+
     def start_solving(self):
         """
         Starts OpenFOAM solver thread or process
         :return:
         """
+        self.save_boundaries()
         if self.is_run_parallel:
             self.run_decompose(all_regions=True, latest_time=True, force=True)
             self.solver_process = Process(target=self.run_solver_parallel, args=(True,))
