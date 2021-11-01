@@ -19,13 +19,22 @@ CHT_ROOM_OBJ_TYPES = [
     # TODO:
     'furniture',
 ]
+CONFIG_BACKGROUND_KEY = 'background'
+CONFIG_WALLS_KEY = 'walls'
+CONFIG_NAME_KEY = 'name'
+CONFIG_HEATERS_KEY = 'heaters'
+CONFIG_WINDOWS_KEY = 'windows'
+CONFIG_DOORS_KEY = 'doors'
+CONFIG_SENSORS_KEY = 'sensors'
+CONFIG_OBJ_DIMENSIONS = 'dimensions'
+CONFIG_SNS_FIELD = 'field'
+CONFIG_LOCATION = 'location'
 
 
 class ChtRoom(OpenFoamCase):
     case_type = 'cht_room'
 
-    def __init__(self, *args, **kwargs):
-        super(ChtRoom, self).__init__('chtMultiRegionFoam', *args, **kwargs)
+    def __init__(self, *args, case_param=None, **kwargs):
         self.heaters = {}
         self.windows = {}
         self.doors = {}
@@ -33,11 +42,73 @@ class ChtRoom(OpenFoamCase):
         self.sensors = {}
         self.walls = None
         self._bg_region = 'fluid'
+        if case_param:
+            super(ChtRoom, self).__init__('chtMultiRegionFoam', case_dir=case_param['path'],
+                                          is_blocking=case_param['blocking'], is_parallel=case_param['parallel'],
+                                          num_of_cores=case_param['cores'])
+            if case_param['initialized']:
+                self.load_case(case_param)
+                self.extract_boundary_conditions()
+                self.bind_boundary_conditions()
+                self.clean_case()
+            else:
+                self.remove_initial()
+                self.remove_geometry()
+        else:
+            super(ChtRoom, self).__init__('chtMultiRegionFoam', *args, **kwargs)
+            self.remove_initial()
+            self.remove_geometry()
 
-    def clean_case(self):
-        super(ChtRoom, self).clean_case()
+    def save_case(self):
+        config = super(ChtRoom, self).save_case()
+        config[CONFIG_BACKGROUND_KEY] = self._bg_region
+        config[CONFIG_HEATERS_KEY] = {}
+        config[CONFIG_WINDOWS_KEY] = {}
+        config[CONFIG_DOORS_KEY] = {}
+        config[CONFIG_SENSORS_KEY] = {}
+        config[CONFIG_WALLS_KEY] = {
+            CONFIG_NAME_KEY: self.walls.name,
+            CONFIG_OBJ_DIMENSIONS: self.walls.model.dimensions,
+            CONFIG_LOCATION: self.walls.model.location
+        }
+        for name, heater in self.heaters.items():
+            config[CONFIG_HEATERS_KEY].update({name: {
+                CONFIG_OBJ_DIMENSIONS: heater.model.dimensions,
+                CONFIG_LOCATION: heater.model.location
+            }})
+        for name, window in self.windows.items():
+            config[CONFIG_WINDOWS_KEY].update({name: {
+                CONFIG_OBJ_DIMENSIONS: window.model.dimensions,
+                CONFIG_LOCATION: window.model.location
+            }})
+        for name, door in self.doors.items():
+            config[CONFIG_DOORS_KEY].update({name: {
+                CONFIG_OBJ_DIMENSIONS: door.model.dimensions,
+                CONFIG_LOCATION: door.model.location
+            }})
+        for name, sensor in self.sensors.items():
+            config[CONFIG_SENSORS_KEY].update({name: {
+                CONFIG_SNS_FIELD: sensor.field,
+                CONFIG_LOCATION: sensor.location
+            }})
+        return config
+
+    def load_case(self, case_param: dict):
+        self._bg_region = case_param[CONFIG_BACKGROUND_KEY]
+        self.add_object(name=case_param[CONFIG_WALLS_KEY][CONFIG_NAME_KEY], obj_type='walls',
+                        dimensions=case_param[CONFIG_WALLS_KEY]['dimensions'],
+                        location=case_param[CONFIG_WALLS_KEY]['location'])
+        for name, heater in case_param[CONFIG_HEATERS_KEY].items():
+            self.add_object(name, 'heater', dimensions=heater[CONFIG_OBJ_DIMENSIONS], location=heater[CONFIG_LOCATION])
+        for name, window in case_param[CONFIG_WINDOWS_KEY].items():
+            self.add_object(name, 'window', dimensions=window[CONFIG_OBJ_DIMENSIONS], location=window[CONFIG_LOCATION])
+        for name, door in case_param[CONFIG_DOORS_KEY].items():
+            self.add_object(name, 'door', dimensions=door[CONFIG_OBJ_DIMENSIONS], location=door[CONFIG_LOCATION])
+        for name, sensor in case_param[CONFIG_SENSORS_KEY].items():
+            self.add_object(name, 'sensor', location=sensor[CONFIG_LOCATION], sns_field=sensor[CONFIG_SNS_FIELD])
+
+    def remove_initial(self):
         force_remove_dir(f'{self.case_dir}/0')
-        force_remove_dir(f'{self.case_dir}/postProcessing')
 
     def setup(self):
         self.prepare_geometry()

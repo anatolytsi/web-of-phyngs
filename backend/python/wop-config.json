@@ -1,6 +1,76 @@
 {
-    "my_room": {
-        "type": "cht_room",
-        "path": "./my_room.case"
+  "my_room.case": {
+    "type": "cht_room",
+    "path": "./my_room.case",
+    "blocking": false,
+    "parallel": true,
+    "cores": 4,
+    "initialized": true,
+    "background": "fluid",
+    "heaters": {
+      "heater": {
+        "dimensions": [
+          1,
+          0.2,
+          0.7
+        ],
+        "location": [
+          1,
+          1,
+          0.2
+        ]
+      }
+    },
+    "windows": {
+      "inlet": {
+        "dimensions": [
+          1.5,
+          0,
+          1.25
+        ],
+        "location": [
+          0.75,
+          0,
+          0.625
+        ]
+      }
+    },
+    "doors": {
+      "outlet": {
+        "dimensions": [
+          1.5,
+          0,
+          2
+        ],
+        "location": [
+          0.75,
+          4,
+          0.25
+        ]
+      }
+    },
+    "sensors": {
+      "temp_sensor": {
+        "field": "T",
+        "location": [
+          1.5,
+          2,
+          1
+        ]
+      }
+    },
+    "walls": {
+      "name": "walls",
+      "dimensions": [
+        3,
+        4,
+        2.5
+      ],
+      "location": [
+        0,
+        0,
+        0
+      ]
     }
+  }
 }

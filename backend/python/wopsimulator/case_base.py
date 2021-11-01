@@ -1,7 +1,9 @@
 import random
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from backend.python.wopsimulator.geometry.manipulator import combine_stls
+from backend.python.wopsimulator.loader import CONFIG_DICT, CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, \
+    CONFIG_PARALLEL_KEY, CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY
 from backend.python.wopsimulator.openfoam.interface import OpenFoamInterface
 from backend.python.wopsimulator.openfoam.system.snappyhexmesh import SnappyRegion, SnappyPartitionedMesh, \
     SnappyCellZoneMesh
@@ -61,6 +63,29 @@ class OpenFoamCase(OpenFoamInterface, ABC):
                                            coords['min'][2] < z < coords['max'][2])
             point_found = all(coords_allowed)
         return x, y, z
+
+    def save_case(self):
+        """
+        Dumps case parameters into dictionary
+        :return: parameter dump
+        """
+        config = CONFIG_DICT.copy()
+        config[CONFIG_TYPE_KEY] = self.case_type
+        config[CONFIG_PATH_KEY] = self.case_dir
+        config[CONFIG_BLOCKING_KEY] = self.is_blocking
+        config[CONFIG_PARALLEL_KEY] = self.is_parallel
+        config[CONFIG_CORES_KEY] = self.num_of_cores
+        config[CONFIG_INITIALIZED_KEY] = self.initialized
+        return config
+
+    @abstractmethod
+    def load_case(self, case_param: dict):
+        """
+        Method to load case parameters from case_param dict
+        Must be implemented in all child classes
+        :param case_param: loaded case parameters
+        """
+        pass
 
     def prepare_geometry(self):
         """Prepares each objects geometry"""
