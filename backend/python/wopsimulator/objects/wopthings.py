@@ -91,6 +91,7 @@ class WopSensor:
         """
         self.name = name
         self.location = location
+        self.field = field
         self._case_dir = case_dir
         self._probe = Probe(case_dir, field, region, location)
 
