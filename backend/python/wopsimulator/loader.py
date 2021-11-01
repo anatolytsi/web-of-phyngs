@@ -112,7 +112,7 @@ def save_case(case_name: str, case, config_path: str = f'{PY_BACKEND_DIR}/wop-co
     :param case: name of the project to name a new copied case and to refer to from wop-config.json
     :param config_path: path to a wop-config.json. A __main__ script directory is taken by default
     """
-    if case_type := type(case) not in CASE_TYPES.keys():
+    if (case_type := type(case)) not in CASE_TYPES.values():
         raise ValueError(f'Case type is wrong or not specified! '
                          f'Got "{case_type}", expected one of: {", ".join(CASE_TYPES)}')
     config = case.save_case()
