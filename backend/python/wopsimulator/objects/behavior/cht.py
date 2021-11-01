@@ -19,11 +19,13 @@ def update_boundaries(boundary: dict, time: int):
     boundary['U'].update_time(time)
 
 
-def set_boundary_to_wall(boundary_name: str, boundary: dict, time: int = 0, bg_name: str = None, of_interface=None):
+def set_boundary_to_wall(boundary_name: str, boundary: dict, temperature: float, time: int = 0, bg_name: str = None,
+                         of_interface=None):
     """
     Sets boundary to wall type
     :param boundary_name: name of the boundary (e.g., inlet)
     :param boundary: boundary region dict
+    :param temperature: temperature to set on wall, K
     :param time: time to update from
     :param bg_name: background region name
     :param of_interface: OpenFOAM interface
@@ -45,26 +47,21 @@ def set_boundary_to_wall(boundary_name: str, boundary: dict, time: int = 0, bg_n
     omega[boundary_name] = Boundary('omegaWallFunction', value=10, value_uniform=True)
     p[boundary_name] = Boundary('calculated', value=1e5, value_uniform=True)
     p_rgh[boundary_name] = Boundary('fixedFluxPressure', value=1e5, value_uniform=True)
-    t[boundary_name] = Boundary('fixedValue', value='$internalField')
-    for b_name in boundary['T']:
-        if b_name != 'internalField' and t[b_name] != t[boundary_name] and t[b_name].type == t[boundary_name].type:
-            if t[b_name].value != '$internalField':
-                t[boundary_name].value = t[b_name].value
-                t[boundary_name].value_uniform = t[b_name].value_uniform
-                break
+    t[boundary_name] = Boundary('fixedValue', value=temperature, value_uniform=True)
     u[boundary_name] = Boundary('noSlip')
     if of_interface and bg_name:
         of_interface.run_foam_dictionary(f'constant/{bg_name}/polyMesh/boundary',
                                          f'entry0.{boundary_name}.type', 'wall')
 
 
-def set_boundary_to_inlet(boundary_name: str, boundary: dict, velocity: List[float], time: int = 0,
+def set_boundary_to_inlet(boundary_name: str, boundary: dict, velocity: List[float], temperature: float, time: int = 0,
                           bg_name: str = None, of_interface=None):
     """
     Sets boundary to inlet type
     :param boundary_name: name of the boundary (e.g., inlet)
     :param boundary: boundary region dict
     :param velocity: velocity to set on inlet, m/s [0, 1, 0]
+    :param temperature: temperature to set on inlet, K
     :param time: time to update from
     :param bg_name: background region name
     :param of_interface: OpenFOAM interface
@@ -89,26 +86,21 @@ def set_boundary_to_inlet(boundary_name: str, boundary: dict, velocity: List[flo
                                     value=10, value_uniform=True)
     p[boundary_name] = Boundary('calculated', value=1e5, value_uniform=True)
     p_rgh[boundary_name] = Boundary('fixedFluxPressure', value=1e5, value_uniform=True)
-    t[boundary_name] = Boundary('fixedValue', value=280, value_uniform=True)
-    for b_name in boundary['T']:
-        if b_name != 'internalField' and t[b_name] != t[boundary_name]:
-            if t[b_name].value != '$internalField':
-                t[boundary_name].value = t[b_name].value
-                t[boundary_name].value_uniform = t[b_name].value_uniform
-                break
+    t[boundary_name] = Boundary('fixedValue', value=temperature, value_uniform=True)
     u[boundary_name] = Boundary('fixedValue', value=velocity, value_uniform=True)
     if of_interface and bg_name:
         of_interface.run_foam_dictionary(f'constant/{bg_name}/polyMesh/boundary',
                                          f'entry0.{boundary_name}.type', 'patch')
 
 
-def set_boundary_to_outlet(boundary_name: str, boundary: dict, velocity: List[float], time: int = 0,
+def set_boundary_to_outlet(boundary_name: str, boundary: dict, velocity: List[float], temperature: float, time: int = 0,
                            bg_name: str = None, of_interface=None):
     """
     Sets boundary to outlet type
     :param boundary_name: name of the boundary (e.g., inlet)
     :param boundary: boundary region dict
     :param velocity: velocity to set on outlet, m/s [0, 1, 0]
+    :param temperature: temperature to set on outlet, K
     :param time: time to update from
     :param bg_name: background region name
     :param of_interface: OpenFOAM interface
@@ -129,7 +121,7 @@ def set_boundary_to_outlet(boundary_name: str, boundary: dict, velocity: List[fl
     k[boundary_name] = Boundary('zeroGradient')
     nut[boundary_name] = Boundary('zeroGradient')
     omega[boundary_name] = Boundary('zeroGradient')
-    t[boundary_name] = Boundary('inletOutlet', value=280, value_uniform=True, inletValue=280)
+    t[boundary_name] = Boundary('inletOutlet', value=temperature, value_uniform=True, inletValue=temperature)
     u[boundary_name] = Boundary('pressureInletOutletVelocity', value=velocity, value_uniform=True)
     epsilon[boundary_name] = Boundary('inletOutlet', value=0.001, value_uniform=True,
                                       inletValue=0.001, inletValue_uniform=True)

@@ -29,6 +29,8 @@ CONFIG_SENSORS_KEY = 'sensors'
 CONFIG_OBJ_DIMENSIONS = 'dimensions'
 CONFIG_SNS_FIELD = 'field'
 CONFIG_LOCATION = 'location'
+CONFIG_TEMPERATURE_KEY = 'temperature'
+CONFIG_VELOCITY_KEY = 'velocity'
 
 
 class ChtRoom(OpenFoamCase):
@@ -69,22 +71,28 @@ class ChtRoom(OpenFoamCase):
         config[CONFIG_WALLS_KEY] = {
             CONFIG_NAME_KEY: self.walls.name,
             CONFIG_OBJ_DIMENSIONS: self.walls.model.dimensions,
-            CONFIG_LOCATION: self.walls.model.location
+            CONFIG_LOCATION: self.walls.model.location,
+            CONFIG_TEMPERATURE_KEY: self.walls.temperature
         }
         for name, heater in self.heaters.items():
             config[CONFIG_HEATERS_KEY].update({name: {
                 CONFIG_OBJ_DIMENSIONS: heater.model.dimensions,
-                CONFIG_LOCATION: heater.model.location
+                CONFIG_LOCATION: heater.model.location,
+                CONFIG_TEMPERATURE_KEY: heater.temperature
             }})
         for name, window in self.windows.items():
             config[CONFIG_WINDOWS_KEY].update({name: {
                 CONFIG_OBJ_DIMENSIONS: window.model.dimensions,
-                CONFIG_LOCATION: window.model.location
+                CONFIG_LOCATION: window.model.location,
+                CONFIG_TEMPERATURE_KEY: window.temperature,
+                CONFIG_VELOCITY_KEY: window.wind_speed
             }})
         for name, door in self.doors.items():
             config[CONFIG_DOORS_KEY].update({name: {
                 CONFIG_OBJ_DIMENSIONS: door.model.dimensions,
-                CONFIG_LOCATION: door.model.location
+                CONFIG_LOCATION: door.model.location,
+                CONFIG_TEMPERATURE_KEY: door.temperature,
+                CONFIG_VELOCITY_KEY: door.wind_speed
             }})
         for name, sensor in self.sensors.items():
             config[CONFIG_SENSORS_KEY].update({name: {
@@ -100,10 +108,17 @@ class ChtRoom(OpenFoamCase):
                         location=case_param[CONFIG_WALLS_KEY]['location'])
         for name, heater in case_param[CONFIG_HEATERS_KEY].items():
             self.add_object(name, 'heater', dimensions=heater[CONFIG_OBJ_DIMENSIONS], location=heater[CONFIG_LOCATION])
+            self.heaters[name].temperature = heater[CONFIG_TEMPERATURE_KEY]
         for name, window in case_param[CONFIG_WINDOWS_KEY].items():
             self.add_object(name, 'window', dimensions=window[CONFIG_OBJ_DIMENSIONS], location=window[CONFIG_LOCATION])
+            self.windows[name].temperature = window[CONFIG_TEMPERATURE_KEY]
+            self.windows[name].is_open = any(window[CONFIG_VELOCITY_KEY])
+            self.windows[name].wind_speed = window[CONFIG_VELOCITY_KEY]
         for name, door in case_param[CONFIG_DOORS_KEY].items():
             self.add_object(name, 'door', dimensions=door[CONFIG_OBJ_DIMENSIONS], location=door[CONFIG_LOCATION])
+            self.doors[name].temperature = door[CONFIG_TEMPERATURE_KEY]
+            self.doors[name].is_open = any(door[CONFIG_VELOCITY_KEY])
+            self.doors[name].wind_speed = door[CONFIG_VELOCITY_KEY]
         for name, sensor in case_param[CONFIG_SENSORS_KEY].items():
             self.add_object(name, 'sensor', location=sensor[CONFIG_LOCATION], sns_field=sensor[CONFIG_SNS_FIELD])
 

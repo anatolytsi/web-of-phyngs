@@ -28,6 +28,7 @@ class WopDoor(WopObject):
         """
         self._open = False
         self._wind_speed = [0, 0, 0]
+        self._temperature = 293.15
         model_type = 'stl' if template else 'surface'
         stl_path = f'{os.path.abspath(__file__)}/geometry/doors/{template}.stl' if template else None
         super(WopDoor, self).__init__(name, case_dir, model_type, bg_region, dimensions, location, rotation,
@@ -35,7 +36,7 @@ class WopDoor(WopObject):
 
     def _add_initial_boundaries(self):
         """Adds initial boundaries of a door"""
-        set_boundary_to_wall(self.name, self._boundary_conditions)
+        set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature)
 
     @property
     def open(self):
@@ -51,10 +52,10 @@ class WopDoor(WopObject):
         latest_result = get_latest_time(self._case_dir)
         self._open = is_open
         if is_open:
-            set_boundary_to_outlet(self.name, self._boundary_conditions, self.wind_speed, latest_result,
-                                   bg_name=self._bg_region, of_interface=self._of_interface)
+            set_boundary_to_outlet(self.name, self._boundary_conditions, self._wind_speed, self._temperature,
+                                   latest_result, bg_name=self._bg_region, of_interface=self._of_interface)
         else:
-            set_boundary_to_wall(self.name, self._boundary_conditions, latest_result,
+            set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature, latest_result,
                                  bg_name=self._bg_region, of_interface=self._of_interface)
             self._wind_speed = [0, 0, 0]
 
@@ -68,8 +69,24 @@ class WopDoor(WopObject):
         self._wind_speed = wind_speed
         if self._open:
             update_boundaries(self._boundary_conditions, latest_result)
-            self._boundary_conditions['U'][self.name].value = self.wind_speed
+            self._boundary_conditions['U'][self.name].value = self._wind_speed
             self._boundary_conditions['U'][self.name].save()
+
+    @property
+    def temperature(self):
+        """Door temperature getter"""
+        return self._temperature
+
+    @temperature.setter
+    def temperature(self, temperature):
+        """
+        Sets door temperature by modifying the latest results
+        :param temperature: temperature in K
+        """
+        latest_result = get_latest_time(self._case_dir)
+        self._temperature = float(temperature)
+        self._boundary_conditions['T'].update_time(latest_result)
+        self._boundary_conditions['T'][self.name].value = self._temperature
 
 
 def main():

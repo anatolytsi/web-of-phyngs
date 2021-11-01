@@ -33,7 +33,7 @@ class WopRoom(WopObject):
 
     def _add_initial_boundaries(self):
         """Adds initial boundaries of a room"""
-        set_boundary_to_wall(self.name, self._boundary_conditions)
+        set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature)
 
     @property
     def temperature(self):
