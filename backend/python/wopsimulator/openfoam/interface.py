@@ -93,19 +93,32 @@ class OpenFoamInterface(ABC):
         """
         force_remove_dir(f'{self.case_dir}/constant/triSurface')
 
-    def clean_case(self):
-        """
-        Removes old files in the case directory and prepares the case
-        :return: None
-        """
+    def remove_geometry(self):
+        """Removes geometry and mesh related files"""
+        self.remove_mesh_dirs()
+        self.remove_tri_surface_dir()
+
+    def remove_solutions(self):
+        """Removes solutions from directory"""
         self.remove_processor_dirs()
         self.remove_solution_dirs()
-        self.remove_mesh_dirs()
+        force_remove_dir(f'{self.case_dir}/postProcessing')
+
+    def remove_logs(self):
+        """Removes logs and foam files"""
         remove_files_in_dir_with_pattern(self.case_dir, prefix='PyFoamState.')
         remove_files_in_dir_with_pattern(self.case_dir, prefix='log.')
         remove_files_in_dir_with_pattern(self.case_dir, suffix='.logfile')
         remove_files_in_dir_with_pattern(self.case_dir, suffix='.foam')
         remove_files_in_dir_with_pattern(self.case_dir, suffix='.OpenFOAM')
+
+    def clean_case(self):
+        """
+        Removes old results and logs in the case directory
+        :return: None
+        """
+        self.remove_solutions()
+        self.remove_logs()
 
     def copy_stls(self, src_sub_dir: str = 'geometry', dst_sub_dir: str = 'constant/triSurface'):
         """
