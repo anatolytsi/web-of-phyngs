@@ -44,7 +44,7 @@ class WopRoom(WopObject):
     def temperature(self, temperature):
         """
         Sets room temperature by modifying the latest results
-        :param temperature: temperature in C
+        :param temperature: temperature in K
         """
         if self._snappy_dict is None and self._boundary_conditions is None:
             raise Exception('SnappyHexMesh and/or Boundary conditions were not bound')
