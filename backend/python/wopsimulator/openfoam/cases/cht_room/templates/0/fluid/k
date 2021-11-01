@@ -14,51 +14,18 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-kInlet          0.02;
-intensityInlet  0.01;
-
 dimensions      [0 2 -2 0 0 0 0];
 
-internalField   uniform $kInlet;
+internalField   uniform 0.02;
 
 boundaryField
 {
     ".*"
     {
         type            kqRWallFunction;
-        value           uniform $kInlet;
+        value           uniform 0.02;
     }
 
-    fluid_to_heater
-    {
-        type            kqRWallFunction;
-        value           uniform $kInlet;
-    }
-
-    inlet
-    {
-        type            kqRWallFunction;
-        value           uniform $kInlet;
-//        type            turbulentIntensityKineticEnergyInlet;
-//        intensity       $intensityInlet;
-//        value           uniform $kInlet;
-    }
-
-    outlet
-    {
-        type            kqRWallFunction;
-        value           uniform $kInlet;
-//        type            inletOutlet;
-//        inletValue      uniform $kInlet;
-//        value           uniform $kInlet;
-    }
-
-    walls
-    {
-        type            kqRWallFunction;
-        value           uniform $kInlet;
-    }
-// next
     #includeEtc "caseDicts/setConstraintTypes"
 }
 

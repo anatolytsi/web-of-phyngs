@@ -12,16 +12,10 @@ Description
 
 #includeEtc "caseDicts/postProcessing/probes/probes.cfg"
 
-fields (T U);
+fields (T);
 region fluid;
 functionObjectLibs ("libsampling.so");
-//writeControl   timeStep;                                              
-//writeInterval  0;
 probeLocations
 (
-    (1.83 2.745 1.2)
-    (1.0 1.0 1.0)
-    (1.0 1.0 2.0)
+    (1.5 2 1)
 );
-
-// ************************************************************************* //

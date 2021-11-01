@@ -14,44 +14,18 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "$FOAM_CASE/constant/initialConditions";
-
 dimensions      [1 -1 -2 0 0 0 0];
 
-internalField   uniform $pInitial;
+internalField   uniform 1e5;
 
 boundaryField
 {
     ".*"
     {
         type            calculated;
-        value           uniform $pInitial;
+        value           uniform 1e5;
     }
 
-    fluid_to_heater
-    {
-        type            calculated;
-        value           uniform $pInitial;
-    }
-
-    outlet
-    {
-        type            calculated;
-        value           uniform $pInitial;
-    }
-
-    inlet
-    {
-        type            calculated;
-        value           uniform $pInitial;
-    }
-
-    walls
-    {
-        type            calculated;
-        value           uniform $pInitial;
-    }
-// next
     #includeEtc "caseDicts/setConstraintTypes"
 }
 

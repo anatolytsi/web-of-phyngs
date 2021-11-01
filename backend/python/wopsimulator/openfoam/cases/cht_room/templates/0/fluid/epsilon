@@ -14,51 +14,18 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-epsilonInlet      0.001;
-mixingLengthInlet 0.007;
-
 dimensions      [0 2 -3 0 0 0 0];
 
-internalField   uniform $epsilonInlet;
+internalField   uniform 0.001;
 
 boundaryField
 {
     ".*"
     {
         type            compressible::epsilonWallFunction;
-        value           uniform $epsilonInlet;
+        value           uniform 0.001;
     }
 
-    fluid_to_heater
-    {
-        type            compressible::epsilonWallFunction;
-        value           uniform $epsilonInlet;
-    }
-
-    inlet
-    {
-//        type            turbulentMixingLengthDissipationRateInlet;
-//        mixingLength    $mixingLengthInlet;
-//        value           uniform $epsilonInlet;
-        type            compressible::epsilonWallFunction;
-        value           uniform $epsilonInlet;
-    }
-
-    outlet
-    {
-//        type            inletOutlet;
-//        value           uniform $epsilonInlet;
-//        inletValue      uniform $epsilonInlet;
-        type            compressible::epsilonWallFunction;
-        value           uniform $epsilonInlet;
-    }
-
-    walls
-    {
-        type            compressible::epsilonWallFunction;
-        value           uniform $epsilonInlet;
-    }
-// next
     #includeEtc "caseDicts/setConstraintTypes"
 }
 

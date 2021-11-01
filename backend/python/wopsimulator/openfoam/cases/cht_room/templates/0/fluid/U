@@ -14,11 +14,9 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-Uinlet          (0 -0.001 0);
-
 dimensions      [0 1 -1 0 0 0 0];
 
-internalField   uniform (0 0.001 0);
+internalField   uniform (0 0 0);
 
 boundaryField
 {
@@ -27,30 +25,6 @@ boundaryField
         type            noSlip;
     }
 
-    fluid_to_heater
-    {
-        type            noSlip;
-    }
-
-    inlet
-    {
-        type            fixedValue;
-        value           uniform $Uinlet;
-//        type            noSlip;
-    }
-
-    outlet
-    {
-        type            pressureInletOutletVelocity;
-        value           $internalField;
-//        type            noSlip;
-    }
-
-    walls
-    {
-        type            noSlip;
-    }
-// next
     #includeEtc "caseDicts/setConstraintTypes"
 }
 

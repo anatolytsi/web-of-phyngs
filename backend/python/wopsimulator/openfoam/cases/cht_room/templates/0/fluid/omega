@@ -14,49 +14,16 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-omegaInlet        10;
-mixingLengthInlet 0.0035;
-
 dimensions      [0 0 -1 0 0 0 0];
 
-internalField   uniform $omegaInlet;
+internalField   uniform 10;
 
 boundaryField
 {
     ".*"
     {
         type            omegaWallFunction;
-        value           uniform $omegaInlet;
-    }
-
-    fluid_to_heater
-    {
-        type            omegaWallFunction;
-        value           uniform $omegaInlet;
-    }
-
-    inlet
-    {
-//        type            turbulentMixingLengthFrequencyInlet;
-//        mixingLength    $mixingLengthInlet;
-//        value           uniform $omegaInlet;
-        type            omegaWallFunction;
-        value           uniform $omegaInlet;
-    }
-
-    outlet
-    {
-//        type            inletOutlet;
-//        inletValue      uniform $omegaInlet;
-//        value           uniform $omegaInlet;
-        type            omegaWallFunction;
-        value           uniform $omegaInlet;
-    }
-
-    walls
-    {
-        type            omegaWallFunction;
-        value           uniform $omegaInlet;
+        value           uniform 10;
     }
 
     #includeEtc "caseDicts/setConstraintTypes"

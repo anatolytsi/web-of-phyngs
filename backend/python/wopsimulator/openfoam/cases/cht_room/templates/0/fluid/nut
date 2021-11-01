@@ -26,32 +26,6 @@ boundaryField
         value           uniform 0;
     }
 
-    fluid_to_heater
-    {
-        type            nutkWallFunction;
-        value           uniform 0;
-    }
-
-    inlet
-    {
-        type            nutkWallFunction;
-//        type            calculated;
-        value           uniform 0;
-    }
-
-    outlet
-    {
-        type            nutkWallFunction;
-//        type            calculated;
-        value           uniform 0;
-    }
-
-    walls
-    {
-        type            nutkWallFunction;
-        value           uniform 0;
-    }
-// next
     #includeEtc "caseDicts/setConstraintTypes"
 }
 
