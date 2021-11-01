@@ -137,7 +137,8 @@ class BoundaryConditionBase:
         fields = re.findall(f'{FIELD_NAME_PATTERN}{{\\s*([^}}]*)}}\\s*', fields, flags=re.MULTILINE)
         boundary_fields = {}
         for name, val_str in fields:
-            f_contents = re.findall(f'{FIELD_NAME_PATTERN}{LIST_OR_VALUE_PATTERN}', val_str, flags=re.MULTILINE)
+            f_contents = re.findall(f'^(?!\\/\\/)\\s*{FIELD_NAME_PATTERN}{LIST_OR_VALUE_PATTERN}', val_str,
+                                    flags=re.MULTILINE)
             boundary_fields.update({name: {}})
             for f_content in f_contents:
                 val_name = f_content[0]
