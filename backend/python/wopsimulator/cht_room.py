@@ -22,6 +22,8 @@ CHT_ROOM_OBJ_TYPES = [
 
 
 class ChtRoom(OpenFoamCase):
+    case_type = 'cht_room'
+
     def __init__(self, *args, **kwargs):
         super(ChtRoom, self).__init__('chtMultiRegionFoam', *args, **kwargs)
         self.heaters = {}
@@ -48,6 +50,7 @@ class ChtRoom(OpenFoamCase):
         self.run_setup_cht()
         self.extract_boundary_conditions()
         self.bind_boundary_conditions()
+        self.initialized = True
 
     def add_object(self, name: str, obj_type: str,
                    dimensions: List[float] = (0, 0, 0), location: List[float] = (0, 0, 0),
@@ -109,7 +112,7 @@ def main():
     heater_location = [1, 1, 0.2]
     sensor_location = [1.5, 2, 1]
 
-    room = ChtRoom(case_dir, is_blocking=False, is_run_parallel=is_run_parallel, num_of_cores=4)
+    room = ChtRoom(case_dir, is_blocking=False, is_parallel=is_run_parallel, num_of_cores=4)
     room.add_object(name='walls', obj_type='walls', dimensions=room_dimensions)
     room.add_object('inlet', 'window', dimensions=window_dimension, location=window_location)
     room.add_object('outlet', 'door', dimensions=door_dimension, location=door_location)

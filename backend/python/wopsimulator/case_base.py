@@ -9,9 +9,11 @@ from backend.python.wopsimulator.openfoam.system.snappyhexmesh import SnappyRegi
 
 class OpenFoamCase(OpenFoamInterface, ABC):
     """OpenFOAM case base class"""
+    case_type = ''
 
     def __init__(self, *args, **kwargs):
         super(OpenFoamCase, self).__init__(*args, **kwargs)
+        self.initialized = False
         self._objects = {}
         self._partitioned_mesh = None
 

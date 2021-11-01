@@ -41,30 +41,29 @@ class OpenFoamInterface(ABC):
                  solver_type,
                  case_dir='.',
                  is_blocking=True,
-                 is_mesh_parallel=False,
-                 is_run_parallel=False,
+                 is_parallel=False,
                  num_of_cores=1):
-        self.solver_type = solver_type
         self.case_dir = case_dir
-        self.is_setup_parallel = is_mesh_parallel
-        self.is_run_parallel = is_run_parallel
-        self.available_cores = cpu_count()
-        self.case_is_decomposed = False
-        if self.available_cores >= num_of_cores > 0:
-            self.num_of_cores = num_of_cores
-        else:
-            raise ValueError('Incorrect number of cores')
-        self.boundaries = {}
-        self.solver = None
-        self.solver_thread = None
-        self.solver_process = None
-        self.solver_mutex = Lock()
-        self.solver_is_blocking = is_blocking
-        self.solver_is_running = False
-        self.probe_parser = ProbeParser(self.case_dir)
+        self.is_parallel = is_parallel
+        self.is_blocking = is_blocking
         self.blockmesh_dict = BlockMeshDict(self.case_dir)
         self.snappy_dict = SnappyHexMeshDict(self.case_dir)
         self.regions = []
+        self.boundaries = {}
+        self._available_cores = cpu_count()
+        self._is_decomposed = False
+        # TODO: make a getter/setter for number of cores
+        if self._available_cores >= num_of_cores > 0:
+            self.num_of_cores = num_of_cores
+        else:
+            raise ValueError('Incorrect number of cores')
+        self._solver_type = solver_type
+        self._solver = None
+        self._solver_thread = None
+        self._solver_process = None
+        self._solver_mutex = Lock()
+        self._solver_is_running = False
+        self._probe_parser = ProbeParser(self.case_dir)
 
     def remove_processor_dirs(self):
         """
@@ -146,12 +145,12 @@ class OpenFoamInterface(ABC):
         :return: None
         """
         # FIXME: this function is not exited properly as the Process is terminated
-        self.solver_mutex.acquire()
-        argv = ['mpirun', '-np', str(self.num_of_cores), self.solver_type, '-case', self.case_dir, '-parallel']
-        self.solver = BasicRunner(argv=argv, silent=silent, logname=self.solver_type)
-        self.solver.start()
+        self._solver_mutex.acquire()
+        argv = ['mpirun', '-np', str(self.num_of_cores), self._solver_type, '-case', self.case_dir, '-parallel']
+        self._solver = BasicRunner(argv=argv, silent=silent, logname=self._solver_type)
+        self._solver.start()
         print('Process terminated')
-        self.solver_mutex.release()
+        self._solver_mutex.release()
 
     def run_solver(self, silent=True):
         """
@@ -159,18 +158,18 @@ class OpenFoamInterface(ABC):
         :param silent: flag to output console data
         :return: None
         """
-        self.solver_mutex.acquire()
+        self._solver_mutex.acquire()
         print('Entering thread solver')
-        argv = [self.solver_type, '-case', self.case_dir]
-        self.solver = BasicRunner(argv=argv, silent=silent, logname=self.solver_type)
-        self.solver.start()
-        if self.solver.runOK():
-            if self.is_run_parallel:
+        argv = [self._solver_type, '-case', self.case_dir]
+        self._solver = BasicRunner(argv=argv, silent=silent, logname=self._solver_type)
+        self._solver.start()
+        if self._solver.runOK():
+            if self.is_parallel:
                 self.run_reconstruct(all_regions=True)
         else:
-            raise Exception(f'{self.solver_type} run failed')
+            raise Exception(f'{self._solver_type} run failed')
         print('Quiting thread solver')
-        self.solver_mutex.release()
+        self._solver_mutex.release()
 
     def run_decompose(self, all_regions: bool = False, copy_zero: bool = False, latest_time: bool = False,
                       force: bool = False):
@@ -182,7 +181,7 @@ class OpenFoamInterface(ABC):
         :param force: flag to clear processor folders before decomposing
         :return: None
         """
-        if self.case_is_decomposed:
+        if self._is_decomposed:
             latest_time = True
             force = True
         cmd = 'decomposePar'
@@ -196,7 +195,7 @@ class OpenFoamInterface(ABC):
         if force:
             argv.insert(1, '-force')
         self.run_command(argv)
-        self.case_is_decomposed = True
+        self._is_decomposed = True
 
     def run_reconstruct(self, all_regions: bool = False, latest_time: bool = False, fields: list = None):
         """
@@ -235,7 +234,7 @@ class OpenFoamInterface(ABC):
         self.snappy_dict.save()
         cmd = 'snappyHexMesh'
         argv = [cmd, '-case', self.case_dir, '-overwrite']
-        self.run_command(argv, is_parallel=self.is_setup_parallel, cores=self.num_of_cores)
+        self.run_command(argv, cores=self.num_of_cores)
 
     def run_split_mesh_regions(self, cell_zones: bool = False, cell_zones_only: bool = False):
         """
@@ -250,7 +249,7 @@ class OpenFoamInterface(ABC):
             argv.insert(1, '-cellZones')
         if cell_zones_only:
             argv.insert(1, '-cellZonesOnly')
-        self.run_command(argv, is_parallel=self.is_setup_parallel, cores=self.num_of_cores)
+        self.run_command(argv, cores=self.num_of_cores)
 
     def run_setup_cht(self):
         """
@@ -259,7 +258,7 @@ class OpenFoamInterface(ABC):
         """
         cmd = 'foamSetupCHT'
         argv = [cmd, '-case', self.case_dir]
-        self.run_command(argv, is_parallel=self.is_setup_parallel, cores=self.num_of_cores)
+        self.run_command(argv, cores=self.num_of_cores)
 
     def run_foam_dictionary(self, path: str, entry: str, set_value: str):
         """
@@ -321,28 +320,28 @@ class OpenFoamInterface(ABC):
         :return:
         """
         self.save_boundaries()
-        if self.is_run_parallel:
+        if self.is_parallel:
             self.run_decompose(all_regions=True, latest_time=True, force=True)
-            self.solver_process = Process(target=self.run_solver_parallel, args=(True,))
-            self.solver_process.start()
+            self._solver_process = Process(target=self.run_solver_parallel, args=(True,))
+            self._solver_process.start()
         else:
-            self.solver_thread = Thread(target=self.run_solver, daemon=True)
-            self.solver_thread.start()
+            self._solver_thread = Thread(target=self.run_solver, daemon=True)
+            self._solver_thread.start()
 
     def stop_solving(self):
         """
         Stops OpenFOAM solver
         :return: None
         """
-        if self.is_run_parallel:
-            self.solver_process.terminate()
+        if self.is_parallel:
+            self._solver_process.terminate()
             # FIXME: somehow get when the process is really terminated and only then proceed
             time.sleep(1)  # Safe delay to make sure a full stop happened
             self.run_reconstruct(all_regions=True)
         else:
-            self.solver.stopWithoutWrite()
-        self.solver_mutex.acquire()
-        self.solver_mutex.release()
+            self._solver.stopWithoutWrite()
+        self._solver_mutex.acquire()
+        self._solver_mutex.release()
 
     def run(self):
         """
@@ -350,16 +349,16 @@ class OpenFoamInterface(ABC):
         :return: None
         """
         self.start_solving()
-        self.probe_parser = ProbeParser(self.case_dir)
-        self.probe_parser.start()
-        if self.solver_is_blocking:
-            self.solver_mutex.acquire()
-            self.solver_mutex.release()
+        self._probe_parser = ProbeParser(self.case_dir)
+        self._probe_parser.start()
+        if self.is_blocking:
+            self._solver_mutex.acquire()
+            self._solver_mutex.release()
 
     def stop(self):
         """
         Stops solver and monitor threads
         :return: None
         """
-        self.probe_parser.stop()
+        self._probe_parser.stop()
         self.stop_solving()
