@@ -1,5 +1,6 @@
 import random
 from abc import ABC, abstractmethod
+from typing import List
 
 from backend.python.wopsimulator.geometry.manipulator import combine_stls
 from backend.python.wopsimulator.variables import CONFIG_DICT, CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, \
@@ -13,11 +14,42 @@ class OpenFoamCase(OpenFoamInterface, ABC):
     """OpenFOAM case base class"""
     case_type = ''
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, loaded=False, initialized=False, **kwargs):
+        """
+        OpenFOAM case generic initializer
+        :param args: OpenFOAM interface args
+        :param loaded: case was loaded, i.e., was created in the past
+        :param initialized: case was initialized (setup) in the past
+        :param kwargs: OpenFOAM interface kwargs, i.e., case parameters
+        """
         super(OpenFoamCase, self).__init__(*args, **kwargs)
-        self.initialized = False
+        self.initialized = initialized
         self._objects = {}
         self._partitioned_mesh = None
+        self.sensors = {}
+        if loaded:
+            if initialized:
+                self._setup_initialized_case(kwargs)
+            else:
+                self._setup_uninitialized_case(kwargs)
+
+    def _setup_initialized_case(self, case_param: dict):
+        """
+        Setups the loaded initialized case
+        :param case_param: loaded case parameters
+        """
+        self.extract_boundary_conditions()
+        self.load_initial_objects(case_param)
+        self.bind_boundary_conditions()
+        self.set_initial_objects(case_param)
+
+    def _setup_uninitialized_case(self, case_param: dict):
+        """
+        Setups the loaded uninitialized case
+        :param case_param: loaded case parameters
+        """
+        self.clean_case()
+        self.remove_geometry()
 
     def _get_mesh_dimensions(self) -> list:
         """
@@ -64,24 +96,38 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             point_found = all(coords_allowed)
         return x, y, z
 
-    def save_case(self):
+    def dump_case(self):
         """
         Dumps case parameters into dictionary
-        :return: parameter dump
+        :return: parameter dump dict
         """
         config = CONFIG_DICT.copy()
         config[CONFIG_TYPE_KEY] = self.case_type
-        config[CONFIG_PATH_KEY] = self.case_dir
-        config[CONFIG_BLOCKING_KEY] = self.is_blocking
-        config[CONFIG_PARALLEL_KEY] = self.is_parallel
-        config[CONFIG_CORES_KEY] = self.num_of_cores
+        config[CONFIG_PATH_KEY] = self.path
+        config[CONFIG_BLOCKING_KEY] = self.blocking
+        config[CONFIG_PARALLEL_KEY] = self.parallel
+        config[CONFIG_CORES_KEY] = self._cores
         config[CONFIG_INITIALIZED_KEY] = self.initialized
         return config
 
+    def remove_initial_boundaries(self):
+        """Removes initial boundary conditions directory"""
+        super(OpenFoamCase, self).remove_initial_boundaries()
+        self.initialized = False
+
     @abstractmethod
-    def load_case(self, case_param: dict):
+    def set_initial_objects(self, case_param: dict):
         """
-        Method to load case parameters from case_param dict
+        Method to set case objects parameters from case_param dict
+        Must be implemented in all child classes
+        :param case_param: loaded case parameters
+        """
+        pass
+
+    @abstractmethod
+    def load_initial_objects(self, case_param: dict):
+        """
+        Method to load case objects parameters from case_param dict
         Must be implemented in all child classes
         :param case_param: loaded case parameters
         """
@@ -132,8 +178,8 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :param partition_name: partitioned mesh name
         """
         regions = [obj.snappy for obj in self._objects.values() if type(obj.snappy) == SnappyRegion]
-        region_paths = [f'{self.case_dir}/constant/triSurface/{region.name}.stl' for region in regions]
-        combine_stls(f'{self.case_dir}/constant/triSurface/{partition_name}.stl', region_paths)
+        region_paths = [f'{self.path}/constant/triSurface/{region.name}.stl' for region in regions]
+        combine_stls(f'{self.path}/constant/triSurface/{partition_name}.stl', region_paths)
         self._partitioned_mesh = SnappyPartitionedMesh(partition_name, f'{partition_name}.stl')
         self._partitioned_mesh.add_regions(regions)
 
@@ -153,6 +199,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         blockmesh_min_coords = [coord[0] - 1 for coord in minmax_coords]
         blockmesh_max_coords = [coord[1] + 1 for coord in minmax_coords]
         self.blockmesh_dict.add_box(blockmesh_min_coords, blockmesh_max_coords, name=self._partitioned_mesh.name)
+        self.decompose_dict.divide_domain([j - i for i, j in minmax_coords])
 
     def bind_boundary_conditions(self):
         """Binds boundary conditions to objects"""

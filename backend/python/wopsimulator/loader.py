@@ -31,7 +31,7 @@ def load_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/wop-config.j
             case_cls = CASE_TYPES[case_type_name]
         else:
             raise ValueError(f'Case type is wrong or not specified! Expected one of: {", ".join(CASE_TYPES)}')
-        case = case_cls(case_param=config[case_name])
+        case = case_cls(**config[case_name], loaded=True)
         return case
     raise ValueError(f'Case "{case_name}" is not defined in the config "{config_path}"')
 
@@ -83,7 +83,7 @@ def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEN
     with open(config_path, 'w') as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
 
-    case = case_cls(case_param=case_config)
+    case = case_cls(**config[case_name])
     return case
 
 
@@ -97,7 +97,7 @@ def save_case(case_name: str, case, config_path: str = f'{PY_BACKEND_DIR}/wop-co
     if (case_type := type(case)) not in CASE_TYPES.values():
         raise ValueError(f'Case type is wrong or not specified! '
                          f'Got "{case_type}", expected one of: {", ".join(CASE_TYPES)}')
-    config = case.save_case()
+    config = case.dump_case()
     case_name = case_name if '.case' in case_name else f'{case_name}.case'
     with open(config_path, 'r') as f:
         config_old = json.load(f)
@@ -126,6 +126,18 @@ def remove_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/wop-config
 
     with open(config_path, 'w') as f:
         json.dump(config, f, ensure_ascii=False, indent=4)
+
+
+def get_cases_names(config_path: str = f'{PY_BACKEND_DIR}/wop-config.json'):
+    """
+    Retrieve all available cases
+    :param config_path: path to a wop-config.json. A __main__ script directory is taken by default
+    :return: None
+    """
+    with open(config_path, 'r') as f:
+        config = json.load(f)
+
+    return list(config.keys())
 
 
 def main():

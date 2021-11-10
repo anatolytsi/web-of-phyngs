@@ -15,6 +15,7 @@ from backend.python.wopsimulator.openfoam.common.filehandling import remove_iter
     force_remove_dir, remove_files_in_dir_with_pattern, copy_tree, get_numerated_dirs
 from backend.python.wopsimulator.openfoam.probes.probes import ProbeParser
 from backend.python.wopsimulator.openfoam.system.blockmesh import BlockMeshDict
+from backend.python.wopsimulator.openfoam.system.decomposepar import DecomposeParDict
 from backend.python.wopsimulator.openfoam.system.snappyhexmesh import SnappyHexMeshDict
 
 
@@ -37,61 +38,87 @@ class OpenFoamInterface(ABC):
     OpenFOAM Interface class. Serves as a wrapper of OpenFOAM commands
     """
 
-    def __init__(self,
-                 solver_type,
-                 case_dir='.',
-                 is_blocking=True,
-                 is_parallel=False,
-                 num_of_cores=1):
-        self.case_dir = case_dir
-        self.is_parallel = is_parallel
-        self.is_blocking = is_blocking
-        self.blockmesh_dict = BlockMeshDict(self.case_dir)
-        self.snappy_dict = SnappyHexMeshDict(self.case_dir)
+    def __init__(self, solver_type, path='.', blocking=True, parallel=False, cores=1, **kwargs):
+        """
+        OpenFOAM Interface initialization function
+        :param solver_type: solver type, e.g., chtMultiRegionFoam TODO: check for solver type
+        :param path: path to case dir
+        :param blocking: flag for solver blocking the main thread
+        :param parallel: flag for parallel run
+        :param cores: number of cores used for parallel run
+        :param kwargs: keys used by children and not by this class
+        """
+        self.path = path
+        self.parallel = parallel
+        self.blocking = blocking
+        self.cores = cores
+        self.decompose_dict = DecomposeParDict(path, self.cores, 'simple')
+        self.blockmesh_dict = BlockMeshDict(self.path)
+        self.snappy_dict = SnappyHexMeshDict(self.path)
         self.regions = []
         self.boundaries = {}
-        self._available_cores = cpu_count()
         self._is_decomposed = False
-        # TODO: make a getter/setter for number of cores
-        if self._available_cores >= num_of_cores > 0:
-            self.num_of_cores = num_of_cores
-        else:
-            raise ValueError('Incorrect number of cores')
         self._solver_type = solver_type
         self._solver = None
         self._solver_thread = None
         self._solver_process = None
         self._solver_mutex = Lock()
         self._solver_is_running = False
-        self._probe_parser = ProbeParser(self.case_dir)
+        self._probe_parser = ProbeParser(self.path)
+
+    @property
+    def cores(self):
+        """
+        Number of cores getter
+        """
+        return self._cores
+
+    @cores.setter
+    def cores(self, cores):
+        """
+        Number of cores setter
+        :param cores: number of cores
+        """
+        if self.parallel:
+            available_cores = cpu_count()
+            if available_cores >= cores > 0:
+                if cores == 1:
+                    self.parallel = False
+                self._cores = cores
+            else:
+                self._cores = available_cores
+            if self._cores != 1 and self._cores % 2:
+                self._cores //= 2
+        else:
+            self._cores = 1
 
     def remove_processor_dirs(self):
         """
         Removes processors folder
         :return: None
         """
-        remove_iterable_dirs(self.case_dir, prepend_str='processor')
+        remove_iterable_dirs(self.path, prepend_str='processor')
 
     def remove_solution_dirs(self):
         """
         Removes solution directories folder
         :return: None
         """
-        remove_iterable_dirs(self.case_dir, exception='0')
+        remove_iterable_dirs(self.path, exception='0')
 
     def remove_mesh_dirs(self):
         """
         Removes Mesh folders in all folders (e.g. polyMesh)
         :return: None
         """
-        remove_dirs_with_pattern(self.case_dir, suffix='Mesh', is_recursive=True)
+        remove_dirs_with_pattern(self.path, suffix='Mesh', is_recursive=True)
 
     def remove_tri_surface_dir(self):
         """
         Removes tri surface folder
         :return: None
         """
-        force_remove_dir(f'{self.case_dir}/constant/triSurface')
+        force_remove_dir(f'{self.path}/constant/triSurface')
 
     def remove_geometry(self):
         """Removes geometry and mesh related files"""
@@ -102,15 +129,19 @@ class OpenFoamInterface(ABC):
         """Removes solutions from directory"""
         self.remove_processor_dirs()
         self.remove_solution_dirs()
-        force_remove_dir(f'{self.case_dir}/postProcessing')
+        force_remove_dir(f'{self.path}/postProcessing')
 
     def remove_logs(self):
         """Removes logs and foam files"""
-        remove_files_in_dir_with_pattern(self.case_dir, prefix='PyFoamState.')
-        remove_files_in_dir_with_pattern(self.case_dir, prefix='log.')
-        remove_files_in_dir_with_pattern(self.case_dir, suffix='.logfile')
-        remove_files_in_dir_with_pattern(self.case_dir, suffix='.foam')
-        remove_files_in_dir_with_pattern(self.case_dir, suffix='.OpenFOAM')
+        remove_files_in_dir_with_pattern(self.path, prefix='PyFoamState.')
+        remove_files_in_dir_with_pattern(self.path, prefix='log.')
+        remove_files_in_dir_with_pattern(self.path, suffix='.logfile')
+        remove_files_in_dir_with_pattern(self.path, suffix='.foam')
+        remove_files_in_dir_with_pattern(self.path, suffix='.OpenFOAM')
+
+    def remove_initial_boundaries(self):
+        """Removes initial boundary conditions directory"""
+        force_remove_dir(f'{self.path}/0')
 
     def clean_case(self):
         """
@@ -128,8 +159,8 @@ class OpenFoamInterface(ABC):
         :param dst_sub_dir:
         :return: None
         """
-        stls_path = f'{self.case_dir}/{src_sub_dir}'
-        path_to_copy = f'{self.case_dir}/{dst_sub_dir}'
+        stls_path = f'{self.path}/{src_sub_dir}'
+        path_to_copy = f'{self.path}/{dst_sub_dir}'
         copy_tree(stls_path, path_to_copy)
 
     @staticmethod
@@ -159,7 +190,7 @@ class OpenFoamInterface(ABC):
         """
         # FIXME: this function is not exited properly as the Process is terminated
         self._solver_mutex.acquire()
-        argv = ['mpirun', '-np', str(self.num_of_cores), self._solver_type, '-case', self.case_dir, '-parallel']
+        argv = ['mpirun', '-np', str(self.cores), self._solver_type, '-case', self.path, '-parallel']
         self._solver = BasicRunner(argv=argv, silent=silent, logname=self._solver_type)
         self._solver.start()
         print('Process terminated')
@@ -173,11 +204,11 @@ class OpenFoamInterface(ABC):
         """
         self._solver_mutex.acquire()
         print('Entering thread solver')
-        argv = [self._solver_type, '-case', self.case_dir]
+        argv = [self._solver_type, '-case', self.path]
         self._solver = BasicRunner(argv=argv, silent=silent, logname=self._solver_type)
         self._solver.start()
         if self._solver.runOK():
-            if self.is_parallel:
+            if self.parallel:
                 self.run_reconstruct(all_regions=True)
         else:
             raise Exception(f'{self._solver_type} run failed')
@@ -197,8 +228,10 @@ class OpenFoamInterface(ABC):
         if self._is_decomposed:
             latest_time = True
             force = True
+        else:
+            self.decompose_dict.save()
         cmd = 'decomposePar'
-        argv = [cmd, '-case', self.case_dir]
+        argv = [cmd, '-case', self.path]
         if all_regions:
             argv.insert(1, '-allRegions')
         if copy_zero:
@@ -220,7 +253,7 @@ class OpenFoamInterface(ABC):
         """
         # TODO: check if case is decomposed
         cmd = 'reconstructPar'
-        argv = [cmd, '-newTimes', '-case', self.case_dir]
+        argv = [cmd, '-newTimes', '-case', self.path]
         if all_regions:
             argv.insert(1, '-allRegions')
         if latest_time:
@@ -236,7 +269,7 @@ class OpenFoamInterface(ABC):
         """
         self.blockmesh_dict.save()
         cmd = 'blockMesh'
-        argv = [cmd, '-case', self.case_dir]
+        argv = [cmd, '-case', self.path]
         self.run_command(argv)
 
     def run_snappy_hex_mesh(self):
@@ -246,8 +279,8 @@ class OpenFoamInterface(ABC):
         """
         self.snappy_dict.save()
         cmd = 'snappyHexMesh'
-        argv = [cmd, '-case', self.case_dir, '-overwrite']
-        self.run_command(argv, cores=self.num_of_cores)
+        argv = [cmd, '-case', self.path, '-overwrite']
+        self.run_command(argv, cores=self.cores)
 
     def run_split_mesh_regions(self, cell_zones: bool = False, cell_zones_only: bool = False):
         """
@@ -257,12 +290,12 @@ class OpenFoamInterface(ABC):
         :return: None
         """
         cmd = 'splitMeshRegions'
-        argv = [cmd, '-case', self.case_dir, '-overwrite']
+        argv = [cmd, '-case', self.path, '-overwrite']
         if cell_zones:
             argv.insert(1, '-cellZones')
         if cell_zones_only:
             argv.insert(1, '-cellZonesOnly')
-        self.run_command(argv, cores=self.num_of_cores)
+        self.run_command(argv, cores=self.cores)
 
     def run_setup_cht(self):
         """
@@ -270,8 +303,8 @@ class OpenFoamInterface(ABC):
         :return: None
         """
         cmd = 'foamSetupCHT'
-        argv = [cmd, '-case', self.case_dir]
-        self.run_command(argv, cores=self.num_of_cores)
+        argv = [cmd, '-case', self.path]
+        self.run_command(argv, cores=self.cores)
 
     def run_foam_dictionary(self, path: str, entry: str, set_value: str):
         """
@@ -282,7 +315,7 @@ class OpenFoamInterface(ABC):
         :return: None
         """
         cmd = 'foamDictionary'
-        argv = [cmd, f'{self.case_dir}/{path}', '-entry', entry, '-set', set_value]
+        argv = [cmd, f'{self.path}/{path}', '-entry', entry, '-set', set_value]
         subprocess.Popen(argv)
 
     def extract_boundary_conditions(self):
@@ -290,24 +323,25 @@ class OpenFoamInterface(ABC):
         Extracts initial boundary conditions for current case from files
         :return: None
         """
-        fields_dir = os.listdir(f'{self.case_dir}/0')
-        region_dirs = [obj for obj in fields_dir if os.path.isdir(f'{self.case_dir}/0/{obj}')]
+        fields_dir = os.listdir(f'{self.path}/0')
+        region_dirs = [obj for obj in fields_dir if os.path.isdir(f'{self.path}/0/{obj}')]
         # Check if there are any folders in initial boundary dir
         # If there folders there, then the case is multi-regional
         if any(region_dirs):
             self.regions = region_dirs
             for region in region_dirs:
                 self.boundaries.update({region: {}})
-                region_dir = os.listdir(f'{self.case_dir}/0/{region}')
+                region_dir = os.listdir(f'{self.path}/0/{region}')
                 for field in region_dir:
-                    cls_instance = BoundaryCondition(field, self.case_dir, region=region)
+                    cls_instance = BoundaryCondition(field, self.path, region=region)
                     if cls_instance:
                         self.boundaries[region].update({field: cls_instance})
         else:
             for field in fields_dir:
-                cls_instance = BoundaryCondition(field, self.case_dir)
+                cls_instance = BoundaryCondition(field, self.path)
                 if cls_instance:
                     self.boundaries.update({field: cls_instance})
+        self.decompose_dict.regions = self.regions
 
     @abstractmethod
     def setup(self):
@@ -333,7 +367,7 @@ class OpenFoamInterface(ABC):
         :return:
         """
         self.save_boundaries()
-        if self.is_parallel:
+        if self.parallel:
             self.run_decompose(all_regions=True, latest_time=True, force=True)
             self._solver_process = Process(target=self.run_solver_parallel, args=(True,))
             self._solver_process.start()
@@ -346,7 +380,7 @@ class OpenFoamInterface(ABC):
         Stops OpenFOAM solver
         :return: None
         """
-        if self.is_parallel:
+        if self.parallel:
             self._solver_process.terminate()
             # FIXME: somehow get when the process is really terminated and only then proceed
             time.sleep(1)  # Safe delay to make sure a full stop happened
@@ -362,9 +396,9 @@ class OpenFoamInterface(ABC):
         :return: None
         """
         self.start_solving()
-        self._probe_parser = ProbeParser(self.case_dir)
+        self._probe_parser = ProbeParser(self.path)
         self._probe_parser.start()
-        if self.is_blocking:
+        if self.blocking:
             self._solver_mutex.acquire()
             self._solver_mutex.release()
 
