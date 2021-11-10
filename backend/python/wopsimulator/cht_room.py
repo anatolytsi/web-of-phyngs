@@ -91,7 +91,7 @@ class ChtRoom(OpenFoamCase):
                 CONFIG_LOCATION: window.model.location,
                 CONFIG_OBJ_ROTATION: window.model.rotation,
                 CONFIG_TEMPERATURE_KEY: window.temperature,
-                CONFIG_VELOCITY_KEY: window.wind_speed
+                CONFIG_VELOCITY_KEY: window.velocity
             }})
         for name, door in self.doors.items():
             config[CONFIG_DOORS_KEY].update({name: {
@@ -99,7 +99,7 @@ class ChtRoom(OpenFoamCase):
                 CONFIG_LOCATION: door.model.location,
                 CONFIG_OBJ_ROTATION: door.model.rotation,
                 CONFIG_TEMPERATURE_KEY: door.temperature,
-                CONFIG_VELOCITY_KEY: door.wind_speed
+                CONFIG_VELOCITY_KEY: door.velocity
             }})
         for name, sensor in self.sensors.items():
             config[CONFIG_SENSORS_KEY].update({name: {
@@ -245,7 +245,7 @@ def main():
     print(f'Latest time: {get_latest_time(room.case_dir)}')
     room.heaters['heater'].temperature = 450
     room.doors['outlet'].open = True
-    room.doors['outlet'].wind_speed = [0, 0.1, 0]
+    room.doors['outlet'].velocity = [0, 0.1, 0]
     room.run()
     time.sleep(timestep)
     room.stop()
@@ -260,7 +260,7 @@ def main():
     print(f'{room.sensors["temp_sensor"].value=}')
     print(f'Latest time: {get_latest_time(room.case_dir)}')
     room.windows['inlet'].open = True
-    room.windows['inlet'].wind_speed = [0, 0.1, 0]
+    room.windows['inlet'].velocity = [0, 0.1, 0]
     room.run()
     time.sleep(timestep)
     room.stop()
@@ -275,9 +275,9 @@ def main():
     print(f'{room.sensors["temp_sensor"].value=}')
     print(f'Latest time: {get_latest_time(room.case_dir)}')
     room.windows['inlet'].open = True
-    room.windows['inlet'].wind_speed = [0, -0.1, 0]
+    room.windows['inlet'].velocity = [0, -0.1, 0]
     room.doors['outlet'].open = True
-    room.doors['outlet'].wind_speed = [0, 0, 0]
+    room.doors['outlet'].velocity = [0, 0, 0]
     room.run()
     time.sleep(timestep)
     room.stop()

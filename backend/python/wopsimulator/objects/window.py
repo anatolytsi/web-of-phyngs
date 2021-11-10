@@ -27,7 +27,7 @@ class WopWindow(WopObject):
         :param of_interface: OpenFoam interface
         """
         self._open = False
-        self._wind_speed = [0, 0, 0]
+        self._velocity = [0, 0, 0]
         self._temperature = 293.15
         model_type = 'stl' if template else 'surface'
         stl_path = f'{os.path.abspath(__file__)}/geometry/doors/{template}.stl' if template else None
@@ -53,24 +53,27 @@ class WopWindow(WopObject):
         latest_result = get_latest_time(self._case_dir)
         self._open = is_open
         if is_open:
-            set_boundary_to_inlet(self.name, self._boundary_conditions, self._wind_speed, self._temperature,
+            set_boundary_to_inlet(self.name, self._boundary_conditions, self._velocity, self._temperature,
                                   latest_result, bg_name=self._bg_region, of_interface=self._of_interface)
         else:
             set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature, latest_result,
                                  bg_name=self._bg_region, of_interface=self._of_interface)
-            self._wind_speed = [0, 0, 0]
+            self._velocity = [0, 0, 0]
 
     @property
-    def wind_speed(self):
-        return self._wind_speed
+    def velocity(self):
+        return self._velocity
 
-    @wind_speed.setter
-    def wind_speed(self, wind_speed):
+    @velocity.setter
+    def velocity(self, wind_speed):
+        if self._snappy_dict is None or self._boundary_conditions is None:
+            self._velocity = wind_speed
+            return
         latest_result = get_latest_time(self._case_dir)
-        self._wind_speed = wind_speed
+        self._velocity = wind_speed
         if self._open:
             update_boundaries(self._boundary_conditions, latest_result)
-            self._boundary_conditions['U'][self.name].value = self._wind_speed
+            self._boundary_conditions['U'][self.name].value = self._velocity
             self._boundary_conditions['U'][self.name].save()
 
     @property
