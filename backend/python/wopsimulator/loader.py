@@ -1,30 +1,12 @@
 """
 Case loader
 """
-import os
 import json
 from pathlib import Path
 
-CUR_FILE_DIR = os.path.dirname(os.path.realpath(__file__))
-PY_BACKEND_DIR = os.path.realpath(f'{CUR_FILE_DIR}/../')
-
-CONFIG_TYPE_KEY = 'type'
-CONFIG_PATH_KEY = 'path'
-CONFIG_BLOCKING_KEY = 'blocking'
-CONFIG_PARALLEL_KEY = 'parallel'
-CONFIG_CORES_KEY = 'cores'
-CONFIG_INITIALIZED_KEY = 'initialized'
-CONFIG_DICT = {
-    CONFIG_TYPE_KEY: '',
-    CONFIG_PATH_KEY: '',
-    CONFIG_BLOCKING_KEY: False,
-    CONFIG_PARALLEL_KEY: False,
-    CONFIG_CORES_KEY: 1,
-    CONFIG_INITIALIZED_KEY: False
-}
-
 from backend.python.wopsimulator.cht_room import ChtRoom
 from backend.python.wopsimulator.openfoam.common.filehandling import force_remove_dir, copy_tree
+from backend.python.wopsimulator.variables import *
 
 CASE_TYPES = {
     ChtRoom.case_type: ChtRoom,
