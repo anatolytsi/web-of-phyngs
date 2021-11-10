@@ -69,12 +69,15 @@ class ChtRoom(OpenFoamCase):
         config[CONFIG_WINDOWS_KEY] = {}
         config[CONFIG_DOORS_KEY] = {}
         config[CONFIG_SENSORS_KEY] = {}
-        config[CONFIG_WALLS_KEY] = {
-            CONFIG_NAME_KEY: self.walls.name,
-            CONFIG_OBJ_DIMENSIONS: self.walls.model.dimensions,
-            CONFIG_LOCATION: self.walls.model.location,
-            CONFIG_TEMPERATURE_KEY: self.walls.temperature
-        }
+        config[CONFIG_WALLS_KEY] = {}
+        if self.walls:
+            config[CONFIG_WALLS_KEY] = {
+                CONFIG_NAME_KEY: self.walls.name,
+                CONFIG_OBJ_DIMENSIONS: self.walls.model.dimensions,
+                CONFIG_LOCATION: self.walls.model.location,
+                CONFIG_OBJ_ROTATION: self.walls.model.rotation,
+                CONFIG_TEMPERATURE_KEY: self.walls.temperature
+            }
         for name, heater in self.heaters.items():
             config[CONFIG_HEATERS_KEY].update({name: {
                 CONFIG_OBJ_DIMENSIONS: heater.model.dimensions,
