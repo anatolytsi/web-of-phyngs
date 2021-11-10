@@ -38,6 +38,11 @@ class WopWindow(WopObject):
         """Adds initial boundaries of a window"""
         set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature)
 
+    def dump_settings(self):
+        settings = super(WopWindow, self).dump_settings()
+        settings[self.name].update({'temperature': self._temperature, 'velocity': self._velocity})
+        return settings
+
     @property
     def open(self):
         """Window open status getter"""

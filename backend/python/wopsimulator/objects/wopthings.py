@@ -45,6 +45,13 @@ class WopObject(ABC):
         """
         pass
 
+    def dump_settings(self):
+        return {self.name: {
+            'dimensions': self.model.dimensions,
+            'location': self.model.location,
+            'rotation': self.model.rotation,
+        }}
+
     def prepare(self):
         """Saves the model of an instance to a proper location (constant/triSurface)"""
         self.model.save(f'{self._case_dir}/constant/triSurface')
@@ -112,6 +119,12 @@ class WopSensor:
         self.field = field
         self._case_dir = case_dir
         self._probe = Probe(case_dir, field, region, location)
+
+    def dump_settings(self):
+        return {self.name: {
+            'location': self.location,
+            'field': self.field
+        }}
 
     @property
     def value(self):

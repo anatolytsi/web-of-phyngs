@@ -35,6 +35,11 @@ class WopRoom(WopObject):
         """Adds initial boundaries of a room"""
         set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature)
 
+    def dump_settings(self):
+        settings = super(WopRoom, self).dump_settings()
+        settings[self.name].update({'temperature': self._temperature})
+        return settings
+
     @property
     def temperature(self):
         """Room temperature getter"""

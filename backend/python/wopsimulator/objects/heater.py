@@ -47,6 +47,11 @@ class WopHeater(WopObject):
             self._boundary_conditions = region_boundaries
             self._add_initial_boundaries()
 
+    def dump_settings(self):
+        settings = super(WopHeater, self).dump_settings()
+        settings[self.name].update({'temperature': self._temperature})
+        return settings
+
     @property
     def temperature(self):
         """Temperature getter"""

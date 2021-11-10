@@ -38,6 +38,11 @@ class WopDoor(WopObject):
         """Adds initial boundaries of a door"""
         set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature)
 
+    def dump_settings(self):
+        settings = super(WopDoor, self).dump_settings()
+        settings[self.name].update({'temperature': self._temperature, 'velocity': self._velocity})
+        return settings
+
     @property
     def open(self):
         """Door open status getter"""
