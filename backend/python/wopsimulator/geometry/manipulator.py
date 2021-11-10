@@ -256,7 +256,10 @@ class Model:
             self._produced = False
         if GMSH_INITIALIZED:
             GMSH_INITIALIZED = False
-            gmsh.finalize()
+            try:
+                gmsh.finalize()
+            except ValueError as e:
+                print(e)
 
     def _produce(self):
         """
