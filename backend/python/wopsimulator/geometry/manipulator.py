@@ -219,9 +219,9 @@ class Model:
                             f'Available model types are: {self._model_types}')
         self.name = name
         self.model_type = model_type
-        self.dimensions = dimensions
-        self.location = location
-        self.rotation = rotation
+        self.dimensions = dimensions if dimensions is not None else [0, 0, 0]
+        self.location = location if location is not None else [0, 0, 0]
+        self.rotation = rotation if rotation is not None else [0, 0, 0]
         self.center = []
         self._initialized = False
         self._produced = False
