@@ -87,6 +87,40 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         """
         pass
 
+    @abstractmethod
+    def add_object(self, name: str, obj_type: str,
+                   dimensions: List[float] = (0, 0, 0), location: List[float] = (0, 0, 0),
+                   rotation: List[float] = (0, 0, 0), sns_field: str = None):
+        """
+        Adds WoP object/sensor to a case
+        :param name: name of the object
+        :param obj_type: type of an object, case specific
+        :param dimensions: object dimensions
+        :param location: object location
+        :param rotation: object rotation
+        :param sns_field: field to monitor for sensor
+        """
+        pass
+
+    def get_object(self, object_name):
+        """
+        Gets object/sensor by its name
+        :param object_name: name of an object/sensor
+        :return: object/sensor instance
+        """
+        if object_name in self._objects:
+            return self._objects[object_name]
+        elif object_name in self.sensors:
+            return self.sensors[object_name]
+        raise ValueError(f'Object with name {object_name} was not found')
+
+    def get_objects(self):
+        """
+        Gets all objects/sensors
+        :return: objects/sensors dict
+        """
+        return {**self._objects, **self.sensors}
+
     def prepare_geometry(self):
         """Prepares each objects geometry"""
         for obj in self._objects.values():
