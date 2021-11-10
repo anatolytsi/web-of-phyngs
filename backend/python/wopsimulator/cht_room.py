@@ -27,6 +27,7 @@ CONFIG_WINDOWS_KEY = 'windows'
 CONFIG_DOORS_KEY = 'doors'
 CONFIG_SENSORS_KEY = 'sensors'
 CONFIG_OBJ_DIMENSIONS = 'dimensions'
+CONFIG_OBJ_ROTATION = 'rotation'
 CONFIG_SNS_FIELD = 'field'
 CONFIG_LOCATION = 'location'
 CONFIG_TEMPERATURE_KEY = 'temperature'
@@ -78,12 +79,14 @@ class ChtRoom(OpenFoamCase):
             config[CONFIG_HEATERS_KEY].update({name: {
                 CONFIG_OBJ_DIMENSIONS: heater.model.dimensions,
                 CONFIG_LOCATION: heater.model.location,
+                CONFIG_OBJ_ROTATION: heater.model.rotation,
                 CONFIG_TEMPERATURE_KEY: heater.temperature
             }})
         for name, window in self.windows.items():
             config[CONFIG_WINDOWS_KEY].update({name: {
                 CONFIG_OBJ_DIMENSIONS: window.model.dimensions,
                 CONFIG_LOCATION: window.model.location,
+                CONFIG_OBJ_ROTATION: window.model.rotation,
                 CONFIG_TEMPERATURE_KEY: window.temperature,
                 CONFIG_VELOCITY_KEY: window.wind_speed
             }})
@@ -91,6 +94,7 @@ class ChtRoom(OpenFoamCase):
             config[CONFIG_DOORS_KEY].update({name: {
                 CONFIG_OBJ_DIMENSIONS: door.model.dimensions,
                 CONFIG_LOCATION: door.model.location,
+                CONFIG_OBJ_ROTATION: door.model.rotation,
                 CONFIG_TEMPERATURE_KEY: door.temperature,
                 CONFIG_VELOCITY_KEY: door.wind_speed
             }})
