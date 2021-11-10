@@ -124,3 +124,20 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         """Binds boundary conditions to objects"""
         for obj in self._objects.values():
             obj.bind_region_boundaries(self.boundaries)
+
+    def __getitem__(self, item):
+        """Allow to access attributes of a class as in dictionary"""
+        return getattr(self, item)
+
+    def __setitem__(self, key, value):
+        """Allow to set attributes of a class as in dictionary"""
+        setattr(self, key, value)
+
+    def __iter__(self):
+        """Allow to iterate over attribute names of a class"""
+        for each in [b for b in dir(self) if '_' not in b[0]]:
+            yield each
+
+    def __delitem__(self, key):
+        """Allow to delete individual attributes of a class"""
+        del self.__dict__[key]
