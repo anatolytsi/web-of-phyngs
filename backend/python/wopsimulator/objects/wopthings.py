@@ -72,8 +72,9 @@ class WopObject(ABC):
         i.e., the boundary files are produced
         :param region_boundaries: dict of a region boundary conditions
         """
-        self._boundary_conditions = region_boundaries[self._bg_region]
-        self._add_initial_boundaries()
+        if region_boundaries:
+            self._boundary_conditions = region_boundaries[self._bg_region]
+            self._add_initial_boundaries()
 
 
 class WopSensor:

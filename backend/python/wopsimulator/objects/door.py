@@ -89,6 +89,9 @@ class WopDoor(WopObject):
         Sets door temperature by modifying the latest results
         :param temperature: temperature in K
         """
+        if self._snappy_dict is None or self._boundary_conditions is None:
+            self._temperature = float(temperature)
+            return
         latest_result = get_latest_time(self._case_dir)
         self._temperature = float(temperature)
         self._boundary_conditions['T'].update_time(latest_result)

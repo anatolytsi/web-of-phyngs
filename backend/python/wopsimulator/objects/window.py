@@ -50,6 +50,9 @@ class WopWindow(WopObject):
         :param is_open: windows status
         :return:
         """
+        if self._snappy_dict is None or self._boundary_conditions is None:
+            self._open = is_open
+            return
         latest_result = get_latest_time(self._case_dir)
         self._open = is_open
         if is_open:
@@ -87,6 +90,9 @@ class WopWindow(WopObject):
         Sets window temperature by modifying the latest results
         :param temperature: temperature in K
         """
+        if self._snappy_dict is None or self._boundary_conditions is None:
+            self._temperature = float(temperature)
+            return
         latest_result = get_latest_time(self._case_dir)
         self._temperature = float(temperature)
         self._boundary_conditions['T'].update_time(latest_result)
