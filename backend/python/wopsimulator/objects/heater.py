@@ -43,8 +43,9 @@ class WopHeater(WopObject):
         i.e., the boundary files are produced
         :param region_boundaries: dict of a region boundary conditions
         """
-        self._boundary_conditions = region_boundaries
-        self._add_initial_boundaries()
+        if region_boundaries:
+            self._boundary_conditions = region_boundaries
+            self._add_initial_boundaries()
 
     @property
     def temperature(self):
@@ -57,8 +58,9 @@ class WopHeater(WopObject):
         Sets heater temperature by modifying the latest results
         :param temperature: temperature in K
         """
-        if self._snappy_dict is None and self._boundary_conditions is None:
-            raise Exception('SnappyHexMesh and/or Boundary conditions were not bound')
+        if self._snappy_dict is None or self._boundary_conditions is None:
+            self._temperature = float(temperature)
+            return
         latest_result = get_latest_time(self._case_dir)
         self._temperature = float(temperature)
         set_boundary_to_heater(self.name, self._bg_region, self._boundary_conditions, self._temperature, latest_result)
