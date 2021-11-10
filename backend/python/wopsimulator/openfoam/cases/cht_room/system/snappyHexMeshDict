@@ -22,47 +22,12 @@ addLayers       false;
 
 geometry
 {
-    fluid
-    {
-        type triSurfaceMesh;
-        file "fluid.stl";
-    
-        regions
-        {
-            walls  { name walls; }
-            inlet  { name inlet; }
-            outlet { name outlet; }
-        }
-    }
-    heater
-    {
-        type triSurfaceMesh;
-        file "heater.stl";
-    }
 }
 
 castellatedMeshControls
 {
     refinementSurfaces
     {
-        fluid
-        {
-            level (0 0);
-            regions
-            {
-                walls  { level (0 0); patchInfo { type wall; } }
-                inlet  { level (2 2); patchInfo { type wall; } }
-                outlet { level (2 2); patchInfo { type wall; } }
-            }
-        }
-        heater
-        {
-            level          (2 2);
-            faceZone       heater;
-            cellZone       heater;
-            cellZoneInside insidePoint;
-            insidePoint    (1.5 1.1 0.55);
-        }
     }
 
     nCellsBetweenLevels 1;
@@ -72,7 +37,7 @@ castellatedMeshControls
         // Note: for better mesh quality utilize this refinement region
         
     }
-    locationInMesh (1.732000 0.166000 0.936000);
+    locationInMesh (0 0 0);
 }
 
 addLayersControls

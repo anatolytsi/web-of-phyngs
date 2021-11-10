@@ -31,22 +31,4 @@ hierarchicalCoeffs
     order       xyz;
 }
 
-
-//numberOfSubdomains  4;
-//
-//method          scotch;
-//
-//simpleCoeffs
-//{
-//    n           (2 2 1);
-//    delta       0.001;
-//}
-//
-//hierarchicalCoeffs
-//{
-//    n           (2 2 1);
-//    delta       0.001;
-//    order       xyz;
-//}
-
 // ************************************************************************* //
