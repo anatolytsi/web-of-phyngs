@@ -17,5 +17,4 @@ region fluid;
 functionObjectLibs ("libsampling.so");
 probeLocations
 (
-    (1.5 2 1)
 );
