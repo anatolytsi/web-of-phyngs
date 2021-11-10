@@ -76,6 +76,23 @@ class WopObject(ABC):
             self._boundary_conditions = region_boundaries[self._bg_region]
             self._add_initial_boundaries()
 
+    def __getitem__(self, item):
+        """Allow to access attributes of a class as in dictionary"""
+        return getattr(self, item)
+
+    def __setitem__(self, key, value):
+        """Allow to set attributes of a class as in dictionary"""
+        setattr(self, key, value)
+
+    def __iter__(self):
+        """Allow to iterate over attribute names of a class"""
+        for each in [b for b in dir(self) if '_' not in b[0]]:
+            yield each
+
+    def __delitem__(self, key):
+        """Allow to delete individual attributes of a class"""
+        del self.__dict__[key]
+
 
 class WopSensor:
     """Web of Phyngs Sensor base class"""
@@ -100,3 +117,20 @@ class WopSensor:
     def value(self):
         """Sensor value getter"""
         return self._probe.value
+
+    def __getitem__(self, item):
+        """Allow to access attributes of a class as in dictionary"""
+        return getattr(self, item)
+
+    def __setitem__(self, key, value):
+        """Allow to set attributes of a class as in dictionary"""
+        setattr(self, key, value)
+
+    def __iter__(self):
+        """Allow to iterate over attribute names of a class"""
+        for each in [b for b in dir(self) if '_' not in b[0]]:
+            yield each
+
+    def __delitem__(self, key):
+        """Allow to delete individual attributes of a class"""
+        del self.__dict__[key]
