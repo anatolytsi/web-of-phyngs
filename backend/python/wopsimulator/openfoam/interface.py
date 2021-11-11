@@ -16,6 +16,7 @@ from backend.python.wopsimulator.openfoam.common.filehandling import remove_iter
 from backend.python.wopsimulator.openfoam.constant.material_properties import MaterialProperties
 from backend.python.wopsimulator.openfoam.probes.probes import ProbeParser
 from backend.python.wopsimulator.openfoam.system.blockmesh import BlockMeshDict
+from backend.python.wopsimulator.openfoam.system.controldict import ControlDict
 from backend.python.wopsimulator.openfoam.system.decomposepar import DecomposeParDict
 from backend.python.wopsimulator.openfoam.system.snappyhexmesh import SnappyHexMeshDict
 
@@ -39,7 +40,8 @@ class OpenFoamInterface(ABC):
         self.parallel = parallel
         self.blocking = blocking
         self.cores = cores
-        self.decompose_dict = DecomposeParDict(path, self.cores, 'simple')
+        self.control_dict = ControlDict(self.path, solver_type)
+        self.decompose_dict = DecomposeParDict(self.path, self.cores, 'simple')
         self.blockmesh_dict = BlockMeshDict(self.path)
         self.snappy_dict = SnappyHexMeshDict(self.path)
         self.material_props = MaterialProperties(self.path)
@@ -355,6 +357,7 @@ class OpenFoamInterface(ABC):
         Starts OpenFOAM solver thread or process
         :return:
         """
+        self.control_dict.save()
         self.save_boundaries()
         if self.parallel:
             self.run_decompose(all_regions=True, latest_time=True, force=True)
