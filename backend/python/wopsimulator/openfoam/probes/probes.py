@@ -5,7 +5,7 @@ import time
 from threading import Thread, Lock
 from typing import Union, List
 
-from backend.python.wopsimulator.openfoam.common.parsing import VECTOR_PATTERN, NUMBER_PATTERN
+from backend.python.wopsimulator.openfoam.common.parsing import VECTOR_PATTERN, NUMBER_PATTERN, get_latest_time
 
 Num = Union[int, float, None]
 
@@ -253,7 +253,11 @@ class ProbeParser(Thread):
         vector_pattern = re.compile(vector_pattern)
         region_probes = [[num, probe] for num, probe in enumerate(Probe._instances) if probe.region == region]
         for field in Probe._fields:
-            path_to_probes_field = f'{path_to_probes_data}/0/{field}'
+            try:
+                latest_result = get_latest_time(path_to_probes_data)
+            except FileNotFoundError:
+                latest_result = 0
+            path_to_probes_field = f'{path_to_probes_data}/{latest_result}/{field}'
             if os.path.exists(path_to_probes_field):
                 field_probes = [[num, probe] for num, probe in region_probes if probe.field == field]
                 with open(path_to_probes_field, 'rb') as f:
