@@ -4,6 +4,7 @@ from backend.python.wopsimulator.loader import load_case, create_case, get_cases
 
 
 class Case(Resource):
+    current_cases = None
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -26,6 +27,7 @@ class Case(Resource):
         args = self.reqparse.parse_args()
         try:
             case = create_case(case_name, args)
+            self.current_cases[case_name] = case
             return case.dump_case()
         except (ValueError, FileExistsError) as e:
             return str(e)
@@ -35,12 +37,13 @@ class Case(Resource):
     def patch(self, case_name):
         args = self.reqparse.parse_args()
         try:
-            case = load_case(case_name)
+            if case_name not in self.current_cases:
+                self.current_cases[case_name] = load_case(case_name)
             for key, value in args.items():
                 if value is not None:
-                    case[key] = value
-            save_case(case_name, case)
-            return case.dump_case()
+                    self.current_cases[case_name][key] = value
+            save_case(case_name, self.current_cases[case_name])
+            return self.current_cases[case_name].dump_case()
         except ValueError:
             return f'Case {case_name} is not defined'
         except Exception as e:
@@ -48,6 +51,8 @@ class Case(Resource):
 
     def delete(self, case_name):
         try:
+            if case_name in self.current_cases:
+                del self.current_cases[case_name]
             remove_case(case_name, remove_case_dir=True)
             return f'Case {case_name} was deleted'
         except Exception as e:
