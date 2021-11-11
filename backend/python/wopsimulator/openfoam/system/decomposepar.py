@@ -102,7 +102,7 @@ class DecomposeParDict:
         :param data: data to save
         :param rel_path: relative path
         """
-        with open(f'{self._case_dir}/system/{rel_path}', 'w') as f:
+        with open(f'{self._case_dir}/system/{rel_path}', 'w+') as f:
             f.writelines(data)
 
     def save(self):
