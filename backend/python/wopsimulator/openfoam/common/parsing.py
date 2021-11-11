@@ -12,6 +12,7 @@ SPECIFIC_FIELD_PATTERN = r' *%s\s+{\s+[^}]*}'
 SPECIFIC_FIELD_VALUES_PATTERN = r' *%s\s+{\s*([^}]*)}'
 INTERNAL_FIELD_PATTERN = f'^\\s*internalField\\s+{LIST_OR_VALUE_PATTERN}'
 SPECIAL_CHARACTERS = '"!@#$%^&*()-+?_=.,<>/'
+SPECIFIC_VALUE_PATTERN = r' *%s\s+([^;]*);'
 
 
 def get_latest_time(case_dir: str) -> float or int:
