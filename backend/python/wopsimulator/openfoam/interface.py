@@ -12,26 +12,12 @@ from PyFoam.Execution.BasicRunner import BasicRunner
 
 from backend.python.wopsimulator.openfoam.boundaries.boundary_conditions import BoundaryCondition
 from backend.python.wopsimulator.openfoam.common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern, \
-    force_remove_dir, remove_files_in_dir_with_pattern, copy_tree, get_numerated_dirs
+    force_remove_dir, remove_files_in_dir_with_pattern, copy_tree
 from backend.python.wopsimulator.openfoam.constant.material_properties import MaterialProperties
 from backend.python.wopsimulator.openfoam.probes.probes import ProbeParser
 from backend.python.wopsimulator.openfoam.system.blockmesh import BlockMeshDict
 from backend.python.wopsimulator.openfoam.system.decomposepar import DecomposeParDict
 from backend.python.wopsimulator.openfoam.system.snappyhexmesh import SnappyHexMeshDict
-
-
-def get_latest_time(case_dir: str) -> float or int:
-    """
-    Returns latest time of the simulation that
-    correspond to latest time result folder name
-    :param case_dir: case directory
-    :return: latest simulation time
-    """
-    try:
-        latest_time = sorted([float(val) for val in get_numerated_dirs(case_dir, exception='0')])[-1]
-        return int(latest_time) if latest_time.is_integer() else latest_time
-    except IndexError:
-        return 0
 
 
 class OpenFoamInterface(ABC):

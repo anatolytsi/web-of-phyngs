@@ -1,7 +1,7 @@
 import time
 from typing import List
 
-from backend.python.wopsimulator.openfoam.interface import get_latest_time
+from backend.python.wopsimulator.openfoam.common.parsing import get_latest_time
 from backend.python.wopsimulator.case_base import OpenFoamCase
 from backend.python.wopsimulator.objects.door import WopDoor
 from backend.python.wopsimulator.objects.room import WopRoom

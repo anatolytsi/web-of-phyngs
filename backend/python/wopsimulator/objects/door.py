@@ -3,7 +3,7 @@ import os
 from backend.python.wopsimulator.objects.behavior.cht import set_boundary_to_outlet, set_boundary_to_wall, \
     update_boundaries
 from backend.python.wopsimulator.objects.wopthings import WopObject
-from backend.python.wopsimulator.openfoam.interface import get_latest_time
+from backend.python.wopsimulator.openfoam.common.parsing import get_latest_time
 
 
 class WopDoor(WopObject):
