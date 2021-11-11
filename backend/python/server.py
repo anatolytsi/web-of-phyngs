@@ -16,6 +16,7 @@ class Server:
         self.app = Flask(__name__)
         self.api = Api(self.app)
         self.current_cases = {}
+        Case.current_cases = self.current_cases
         Command.current_cases = self.current_cases
         ObjectList.current_cases = self.current_cases
         Object.current_cases = self.current_cases
