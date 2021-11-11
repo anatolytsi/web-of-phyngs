@@ -1,3 +1,4 @@
+import math
 from typing import List
 
 BLOCKMESH_DICT_FILE_TEMPLATE = r"""/*--------------------------------*- C++ -*----------------------------------*\
@@ -179,11 +180,14 @@ class Boundary:
 
 class BlockMeshDict:
     """BlockMesh dictionary file representation as a class"""
+    _min_block_size = 0.1
+    _max_block_size = 0.7
 
-    def __init__(self, case_dir):
+    def __init__(self, case_dir, mesh_quality: int = 50):
         """
         BlockMeshDict class initialization function
         :param case_dir: case directory
+        :param mesh_quality: mesh quality in percents
         """
         self.scale = 1
         self._case_dir = case_dir
@@ -191,6 +195,48 @@ class BlockMeshDict:
         self.blocks = []
         self.edges = []
         self.boundaries = []
+        self._avg_block_size = (self._min_block_size + self._max_block_size) / 2
+        percents = [0, 50, 100]
+        values = [self._max_block_size, self._avg_block_size, self._min_block_size]
+        sum_of_mult = sum([x * y for x, y in zip(percents, values)])
+        percents_sq = [math.pow(perc, 2) for perc in percents]
+        percents_sq_sum = math.pow(sum(percents), 2)
+        percents_sum_sq = sum(percents_sq)
+        sum_percents = sum(percents)
+        sum_values = sum(values)
+        n = len(percents)
+        # Linear regression coefficients
+        self._quality_a = (sum_percents * sum_values - n * sum_of_mult) / (percents_sq_sum - n * percents_sum_sq)
+        self._quality_b = (sum_percents * sum_of_mult - percents_sum_sq * sum_values) / \
+                          (percents_sq_sum - n * percents_sum_sq)
+        self.mesh_quality = mesh_quality
+
+    @property
+    def mesh_quality(self):
+        """Mesh quality getter"""
+        return self._mesh_quality
+
+    @mesh_quality.setter
+    def mesh_quality(self, mesh_quality):
+        """
+        Mesh quality setter
+        :param mesh_quality: mesh quality in percents
+        """
+        if 0 > mesh_quality or mesh_quality > 100:
+            raise ValueError(f'Mesh quality is defined in percentage '
+                             f'(0%-100%), but {mesh_quality} was provided')
+        self._block_size = self._quality_a * mesh_quality + self._quality_b
+        for block in self.blocks:
+            self._calculate_mesh(block)
+        self._mesh_quality = mesh_quality
+
+    def _calculate_mesh(self, block):
+        """
+        Calculates block mesh according to given mesh quality
+        :param block: block to calculate mesh for
+        :return:
+        """
+        block.cells_in_direction = [int(dim // self._block_size) for dim in block.get_dimensions()]
 
     def add_box(self, min_coords: List[float] = None, max_coords: List[float] = None,
                 cells_in_direction: List[int] = (10, 10, 10), cell_expansion_ratios: List[int] = (1, 1, 1), name=None):
@@ -216,6 +262,7 @@ class BlockMeshDict:
         self.vertices.extend(vertices)
         block = Block(vertices, cells_in_direction, cell_expansion_ratios, name)
         self.blocks.append(block)
+        self._calculate_mesh(block)
 
     def save(self):
         """Saves a class as blockMeshDict"""
