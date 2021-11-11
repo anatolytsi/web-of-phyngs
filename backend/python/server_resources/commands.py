@@ -50,6 +50,7 @@ class Command(Resource):
                 return f'Case {case_name} was cleaned'
             elif command == COMMAND_SETUP:
                 self.current_cases[case_name].setup()
+                save_case(case_name, self.current_cases[case_name])
                 return f'Case {case_name} was setup'
             elif command == COMMAND_RUN:
                 self.current_cases[case_name].run()
