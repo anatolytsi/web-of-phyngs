@@ -89,7 +89,8 @@ class SnappyRegion:
 class SnappyPartitionedMesh:
     """Class representation of a partitioned mesh in snappyHexMeshDict"""
 
-    def __init__(self, name: str, stl_name: str, refinement_level: int = 0):
+    def __init__(self, name: str, stl_name: str, refinement_level: int = 0,
+                 material_type: str = 'fluid', material: str = 'air'):
         """
         Snappy region base initialization function
         :param name: name of a partitioned mesh
@@ -99,6 +100,8 @@ class SnappyPartitionedMesh:
         self.name = name
         self.refinement_level = refinement_level
         self.regions = {}
+        self.material_type = material_type
+        self.material = material
         self._stl_file = stl_name if '.stl' in stl_name else f'{stl_name}.stl'
         self._max_name_len = 0
 
@@ -171,7 +174,8 @@ class SnappyCellZoneMesh:
     """Class representation of a cell zone mesh in snappyHexMeshDict"""
 
     def __init__(self, name: str, stl_name: str, refinement_level: int = 0, face_zone: str = None,
-                 cell_zone: str = None, cell_zone_inside: str = 'insidePoint', inside_point: List[float] = None):
+                 cell_zone: str = None, cell_zone_inside: str = 'insidePoint', inside_point: List[float] = None,
+                 material_type: str = 'solid', material: str = 'copper'):
         """
         Snappy cell zone base initialization function
         :param name: cell zone name
@@ -191,6 +195,8 @@ class SnappyCellZoneMesh:
         if cell_zone_inside == 'insidePoint' and not inside_point:
             raise AttributeError('Cell zone specified as inside point, but the point is not specified')
         self.inside_point = inside_point
+        self.material_type = material_type
+        self.material = material
 
     def get_geometry_str(self) -> str:
         """

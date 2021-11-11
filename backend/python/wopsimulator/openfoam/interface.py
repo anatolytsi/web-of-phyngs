@@ -13,6 +13,7 @@ from PyFoam.Execution.BasicRunner import BasicRunner
 from backend.python.wopsimulator.openfoam.boundaries.boundary_conditions import BoundaryCondition
 from backend.python.wopsimulator.openfoam.common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern, \
     force_remove_dir, remove_files_in_dir_with_pattern, copy_tree, get_numerated_dirs
+from backend.python.wopsimulator.openfoam.constant.material_properties import MaterialProperties
 from backend.python.wopsimulator.openfoam.probes.probes import ProbeParser
 from backend.python.wopsimulator.openfoam.system.blockmesh import BlockMeshDict
 from backend.python.wopsimulator.openfoam.system.decomposepar import DecomposeParDict
@@ -55,6 +56,7 @@ class OpenFoamInterface(ABC):
         self.decompose_dict = DecomposeParDict(path, self.cores, 'simple')
         self.blockmesh_dict = BlockMeshDict(self.path)
         self.snappy_dict = SnappyHexMeshDict(self.path)
+        self.material_props = MaterialProperties(self.path)
         self.regions = []
         self.boundaries = {}
         self._is_decomposed = False
@@ -302,6 +304,7 @@ class OpenFoamInterface(ABC):
         Runs OpenFOAM command to setup CHT, which copies data from case/templates folder
         :return: None
         """
+        self.material_props.save()
         cmd = 'foamSetupCHT'
         argv = [cmd, '-case', self.path]
         self.run_command(argv, cores=self.cores)

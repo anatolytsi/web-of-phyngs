@@ -191,6 +191,8 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         # Get all partitions
         partitions = [obj.snappy for obj in self._objects.values() if type(obj.snappy) == SnappyCellZoneMesh]
         partitions.insert(0, self._partitioned_mesh)
+        for partition in partitions:
+            self.material_props.add_object(partition.name, partition.material_type, partition.material)
         # Add partitions to snappyHexMeshDict, get dimensions and find a location in mesh
         self.snappy_dict.add_meshes(partitions)
         minmax_coords = self._get_mesh_dimensions()
