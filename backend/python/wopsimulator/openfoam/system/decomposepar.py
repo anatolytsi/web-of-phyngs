@@ -1,3 +1,4 @@
+import os
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -21,7 +22,6 @@ FoamFile
     class       dictionary;
     object      decomposeParDict;
 }
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 numberOfSubdomains  %d;
 
@@ -102,24 +102,28 @@ class DecomposeParDict:
 
     def _parse(self):
         """Parses decomposeParDict"""
-        lines = open(f'{self._case_dir}/system/decomposeParDict').readlines()
-        lines_str = ''.join(lines)
-        self.num_of_domains = int(re.search(f'{self._num_of_domains_str}\\s+(\\d+);', lines_str,
-                                            flags=re.MULTILINE).group(1))
-        self.method = re.search(f'{self._method_str}\\s+(\\w+);', lines_str, flags=re.MULTILINE).group(1)
-        result = re.search(SPECIFIC_FIELD_PATTERN % SimpleCoeffs.get_name(), lines_str, flags=re.MULTILINE).group(0)
-        if result:
-            n_str = re.search(r' *n\s+\s*\(([^;]*)\)', result, flags=re.MULTILINE).group(1)
-            self.simple_coeffs.n = [int(s) for s in n_str.split(' ')]
-            self.simple_coeffs.delta = float(re.search(r' *delta\s+\s*([^;]*)', result, flags=re.MULTILINE).group(1))
-        result = re.search(SPECIFIC_FIELD_PATTERN % HierarchicalCoeffs.get_name(), lines_str,
-                           flags=re.MULTILINE).group(0)
-        if result:
-            n_str = re.search(r' *n\s+\s*\(([^;]*)\)', result, flags=re.MULTILINE).group(1)
-            self.hierarchical_coeffs.n = [int(s) for s in n_str.split(' ')]
-            self.hierarchical_coeffs.delta = float(re.search(r' *delta\s+\s*([^;]*)', result,
-                                                             flags=re.MULTILINE).group(1))
-            self.hierarchical_coeffs.order = re.search(r' *order\s+\s*([^;]*)', result, flags=re.MULTILINE).group(1)
+        if os.path.exists(path := f'{self._case_dir}/system/decomposeParDict'):
+            lines = open(path).readlines()
+            lines_str = ''.join(lines)
+            self.num_of_domains = int(re.search(f'{self._num_of_domains_str}\\s+(\\d+);', lines_str,
+                                                flags=re.MULTILINE).group(1))
+            self.method = re.search(f'{self._method_str}\\s+(\\w+);', lines_str, flags=re.MULTILINE).group(1)
+            result = re.search(SPECIFIC_FIELD_PATTERN % SimpleCoeffs.get_name(), lines_str,
+                               flags=re.MULTILINE).group(0)
+            if result:
+                n_str = re.search(r' *n\s+\s*\(([^;]*)\)', result, flags=re.MULTILINE).group(1)
+                self.simple_coeffs.n = [int(s) for s in n_str.split(' ')]
+                self.simple_coeffs.delta = float(re.search(r' *delta\s+\s*([^;]*)', result,
+                                                           flags=re.MULTILINE).group(1))
+            result = re.search(SPECIFIC_FIELD_PATTERN % HierarchicalCoeffs.get_name(), lines_str,
+                               flags=re.MULTILINE).group(0)
+            if result:
+                n_str = re.search(r' *n\s+\s*\(([^;]*)\)', result, flags=re.MULTILINE).group(1)
+                self.hierarchical_coeffs.n = [int(s) for s in n_str.split(' ')]
+                self.hierarchical_coeffs.delta = float(re.search(r' *delta\s+\s*([^;]*)', result,
+                                                                 flags=re.MULTILINE).group(1))
+                self.hierarchical_coeffs.order = re.search(r' *order\s+\s*([^;]*)', result,
+                                                           flags=re.MULTILINE).group(1)
 
     def _save(self, data: str, rel_path: str):
         """
