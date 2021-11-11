@@ -86,6 +86,7 @@ class Vertex:
         :param coords: coordinates array [x, y, z]
         """
         self.coords = self._locations[self._inst_number]
+        self.x, self.y, self.z = self.coords
         self.num = self._inst_number
 
     def __str__(self):
@@ -145,6 +146,27 @@ class Block:
                f'{self.name + " " if self.name is not None else ""}' \
                f'({" ".join([str(num) for num in self.cells_in_direction])}) simpleGrading ' \
                f'({" ".join([str(num) for num in self.cell_expansion_ratios])})\n'
+
+    def get_dimensions(self):
+        """
+        Gets block dimensions
+        :return: block dimensions [x, y, z]
+        """
+        x_min, x_max, y_min, y_max, z_min, z_max = 0, 0, 0, 0, 0, 0
+        for vertex in self.vertices:
+            if vertex.x < x_min:
+                x_min = vertex.x
+            elif vertex.x > x_max:
+                x_max = vertex.x
+            if vertex.y < y_min:
+                y_min = vertex.y
+            elif vertex.y > y_max:
+                y_max = vertex.y
+            if vertex.z < z_min:
+                z_min = vertex.z
+            elif vertex.z > z_max:
+                z_max = vertex.z
+        return x_max - x_min, y_max - y_min, z_max - z_min
 
 
 class Edge:
