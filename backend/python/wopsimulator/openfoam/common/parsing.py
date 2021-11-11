@@ -1,6 +1,6 @@
 from backend.python.wopsimulator.openfoam.common.filehandling import get_numerated_dirs
 
-NUMBER_PATTERN = r'[+-]?[0-9]*[.]?[0-9]*[e]?[+-]?[0-9]*'
+NUMBER_PATTERN = r'[+-]?[0-9]+[.]?[0-9]*[e]?[+-]?[0-9]*'
 VECTOR_PATTERN = f'\\(\\s*({NUMBER_PATTERN})\\s+({NUMBER_PATTERN})\\s+({NUMBER_PATTERN})\\s*\\)\\s*'
 FIELD_NAME_PATTERN = r'(\w+|\"\.\*\")\s+'
 LIST_PATTERN = r'nonuniform\s+List<(scalar|vector)>\s*(\d+)\s*\(([^;]*)\)'
