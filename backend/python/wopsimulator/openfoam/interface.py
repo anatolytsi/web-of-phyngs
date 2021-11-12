@@ -53,8 +53,8 @@ class OpenFoamInterface(ABC):
         self._solver_thread = None
         self._solver_process = None
         self._solver_mutex = Lock()
-        self._solver_is_running = False
         self._probe_parser = ProbeParser(self.path)
+        self.running = False
 
     @property
     def cores(self):
@@ -366,6 +366,7 @@ class OpenFoamInterface(ABC):
         else:
             self._solver_thread = Thread(target=self.run_solver, daemon=True)
             self._solver_thread.start()
+        self.running = True
 
     def stop_solving(self):
         """
@@ -379,6 +380,7 @@ class OpenFoamInterface(ABC):
             self.run_reconstruct(all_regions=True)
         else:
             self._solver.stopWithoutWrite()
+        self.running = False
         self._solver_mutex.acquire()
         self._solver_mutex.release()
 
