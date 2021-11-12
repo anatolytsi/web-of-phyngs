@@ -233,12 +233,14 @@ class OpenFoamInterface(ABC):
         self.run_command(argv)
         self._is_decomposed = True
 
-    def run_reconstruct(self, all_regions: bool = False, latest_time: bool = False, fields: list = None):
+    def run_reconstruct(self, all_regions: bool = False, latest_time: bool = False, fields: list = None,
+                        region: str = ''):
         """
         Runs OpenFOAM case reconstruction after a parallel run, described in system/decomposeParDict
         :param all_regions: flag to reconstruct all regions (used for multi-region cases like cht)
         :param latest_time: flag to only reconstruct from the latest time
         :param fields: fields to be reconstructed, e.g., ['U', 'T', 'p']
+        :param region: region to reconstruct
         :return: None
         """
         # TODO: check if case is decomposed
@@ -246,10 +248,12 @@ class OpenFoamInterface(ABC):
         argv = [cmd, '-newTimes', '-case', self.path]
         if all_regions:
             argv.insert(1, '-allRegions')
+        elif region:
+            argv.insert(1, f'-region {region}')
         if latest_time:
             argv.insert(1, '-latestTime')
         if fields:
-            argv.insert(1, f'({" ".join(fields)})')
+            argv.insert(1, f'-fields \'({" ".join(fields)})\'')
         self.run_command(argv)
 
     def run_block_mesh(self):
