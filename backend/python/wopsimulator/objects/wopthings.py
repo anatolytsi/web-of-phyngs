@@ -34,6 +34,10 @@ class WopObject(ABC):
         self._of_interface = of_interface
         self._snappy_dict = None
         self._bg_region = bg_region
+        # Region and fields are used for stopping the case
+        # and reconstructing only certain region and fields
+        self._region = bg_region
+        self._fields = []
         self.snappy = None
         self.model = Model(name, model_type, dimensions, location, rotation, facing_zero, stl_path)
 
@@ -89,7 +93,18 @@ class WopObject(ABC):
 
     def __setitem__(self, key, value):
         """Allow to set attributes of a class as in dictionary"""
+        case_was_stopped = False
+        if self._of_interface.running and self._fields:
+            case_was_stopped = True
+            self._of_interface.stop()
+            if self._of_interface.parallel:
+                if self._fields == 'all':
+                    self._of_interface.run_reconstruct(latest_time=True, region=self._region)
+                else:
+                    self._of_interface.run_reconstruct(latest_time=True, region=self._region, fields=self._fields)
         setattr(self, key, value)
+        if case_was_stopped:
+            self._of_interface.run()
 
     def __iter__(self):
         """Allow to iterate over attribute names of a class"""

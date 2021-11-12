@@ -30,6 +30,7 @@ class WopRoom(WopObject):
         stl_path = f'{os.path.abspath(__file__)}/geometry/doors/{template}.stl' if template else None
         super(WopRoom, self).__init__(name, case_dir, model_type, bg_region, dimensions, location, rotation,
                                       stl_path=stl_path, of_interface=of_interface)
+        self._fields = ['T']
 
     def _add_initial_boundaries(self):
         """Adds initial boundaries of a room"""

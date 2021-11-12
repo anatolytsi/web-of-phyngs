@@ -30,6 +30,8 @@ class WopHeater(WopObject):
         stl_path = f'{os.path.abspath(__file__)}/geometry/heaters/{template}.stl' if template else None
         super(WopHeater, self).__init__(name, case_dir, model_type, bg_region, dimensions, location, rotation,
                                         stl_path=stl_path, of_interface=of_interface)
+        self._region = name
+        self._fields = ['T']
 
     def _add_initial_boundaries(self):
         """Adds initial boundaries of a heater"""
@@ -68,7 +70,15 @@ class WopHeater(WopObject):
             return
         latest_result = get_latest_time(self._case_dir)
         self._temperature = float(temperature)
-        set_boundary_to_heater(self.name, self._bg_region, self._boundary_conditions, self._temperature, latest_result)
+        self._boundary_conditions[self.name]['T'].update_time(latest_result)
+        if latest_result != 0:
+            heater_boundary_name = f'{self.name}_to_{self._bg_region}'
+            t = self._boundary_conditions[self.name]['T']
+            t.internalField.value = temperature
+            t[heater_boundary_name].value = temperature
+        else:
+            set_boundary_to_heater(self.name, self._bg_region, self._boundary_conditions, self._temperature,
+                                   latest_result)
 
 
 def main():
