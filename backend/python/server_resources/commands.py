@@ -12,6 +12,7 @@ COMMAND_CLEAN = 'clean'
 COMMAND_SETUP = 'setup'
 COMMAND_RUN = 'run'
 COMMAND_STOP = 'stop'
+COMMAND_PROCESS = 'postprocess'
 
 COMMANDS = {
     COMMAND_HELP: 'Returns this JSON',
@@ -19,7 +20,8 @@ COMMANDS = {
     COMMAND_CLEAN: 'Cleans case',
     COMMAND_SETUP: 'Setups case',
     COMMAND_RUN: 'Runs case',
-    COMMAND_STOP: 'Stops case'
+    COMMAND_STOP: 'Stops case',
+    COMMAND_PROCESS: 'Post-process case'
 }
 
 
@@ -28,6 +30,8 @@ class Command(Resource):
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('fields', type=list, help='Fields to post-process', location='json')
+        self.reqparse.add_argument('region', type=str, help='Region to post-process')
         super(Command, self).__init__()
 
     def get(self, case_name, command):
@@ -58,5 +62,14 @@ class Command(Resource):
             elif command == COMMAND_STOP:
                 self.current_cases[case_name].stop()
                 return f'Case {case_name} was stopped'
+            elif command == COMMAND_PROCESS:
+                args = self.reqparse.parse_args()
+                if self.current_cases[case_name].running:
+                    self.current_cases[case_name].stop()
+                if self.current_cases[case_name].parallel:
+                    if not args['region']:
+                        self.current_cases[case_name].run_reconstruct(all_regions=True)
+                    else:
+                        self.current_cases[case_name].run_reconstruct(region=args['region'], fields=args['fields'])
         except Exception as e:
             return str(e)
