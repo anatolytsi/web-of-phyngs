@@ -48,7 +48,7 @@ class Object(Resource):
             if case_name not in self.current_cases:
                 self.current_cases[case_name] = load_case(case_name)
             self.current_cases[case_name].add_object(obj_name, args['type'], args['dimensions'],
-                                                            args['location'], args['rotation'], args['field'])
+                                                     args['location'], args['rotation'], args['field'])
         except Exception as e:
             return str(e)
 
