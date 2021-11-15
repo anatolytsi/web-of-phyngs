@@ -32,6 +32,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
                 self._setup_initialized_case(kwargs)
             else:
                 self._setup_uninitialized_case(kwargs)
+        self.initialized = initialized
 
     def _setup_initialized_case(self, case_param: dict):
         """
@@ -208,12 +209,23 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         for obj in self._objects.values():
             obj.bind_region_boundaries(self.boundaries)
 
+    def run(self):
+        """
+        Runs solver and monitor threads
+        Case must be setup before running
+        """
+        if not self.initialized:
+            self.setup()
+            # raise PermissionError(f'Case must be setup before running')
+        super(OpenFoamCase, self).run()
+
     def __getitem__(self, item):
         """Allow to access attributes of a class as in dictionary"""
         return getattr(self, item)
 
     def __setitem__(self, key, value):
         """Allow to set attributes of a class as in dictionary"""
+        self.initialized = False
         setattr(self, key, value)
 
     def __iter__(self):
