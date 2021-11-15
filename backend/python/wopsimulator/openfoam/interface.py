@@ -34,6 +34,7 @@ class OpenFoamInterface(ABC):
         :param blocking: flag for solver blocking the main thread
         :param parallel: flag for parallel run
         :param cores: number of cores used for parallel run
+        :param mesh_quality: mesh quality in percents [0 - 100]
         :param kwargs: keys used by children and not by this class
         """
         self.path = path
