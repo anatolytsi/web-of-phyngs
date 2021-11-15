@@ -63,6 +63,7 @@ class Command(Resource):
                 return f'Case {case_name} is running'
             elif command == COMMAND_STOP:
                 self.current_cases[case_name].stop()
+                save_case(case_name, self.current_cases[case_name])
                 return f'Case {case_name} was stopped'
             elif command == COMMAND_PROCESS:
                 args = self.reqparse.parse_args()
