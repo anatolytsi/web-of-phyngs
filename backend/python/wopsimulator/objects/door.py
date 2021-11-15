@@ -60,13 +60,16 @@ class WopDoor(WopObject):
             return
         latest_result = get_latest_time(self._case_dir)
         self._open = is_open
-        if is_open:
-            set_boundary_to_outlet(self.name, self._boundary_conditions, self._velocity, self._temperature,
-                                   latest_result, bg_name=self._bg_region, of_interface=self._of_interface)
-        else:
-            set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature, latest_result,
-                                 bg_name=self._bg_region, of_interface=self._of_interface)
-            self._velocity = [0, 0, 0]
+        try:
+            if is_open:
+                set_boundary_to_outlet(self.name, self._boundary_conditions, self._velocity, self._temperature,
+                                       latest_result, bg_name=self._bg_region, of_interface=self._of_interface)
+            else:
+                set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature, latest_result,
+                                     bg_name=self._bg_region, of_interface=self._of_interface)
+                self._velocity = [0, 0, 0]
+        except FileNotFoundError as e:
+            print(e)
 
     @property
     def velocity(self):
@@ -79,10 +82,13 @@ class WopDoor(WopObject):
             return
         latest_result = get_latest_time(self._case_dir)
         self._velocity = wind_speed
-        if self._open:
-            update_boundaries(self._boundary_conditions, latest_result)
-            self._boundary_conditions['U'][self.name].value = self._velocity
-            self._boundary_conditions['U'][self.name].save()
+        try:
+            if self._open:
+                update_boundaries(self._boundary_conditions, latest_result)
+                self._boundary_conditions['U'][self.name].value = self._velocity
+                self._boundary_conditions['U'][self.name].save()
+        except FileNotFoundError as e:
+            print(e)
 
     @property
     def temperature(self):
@@ -100,8 +106,11 @@ class WopDoor(WopObject):
             return
         latest_result = get_latest_time(self._case_dir)
         self._temperature = float(temperature)
-        self._boundary_conditions['T'].update_time(latest_result)
-        self._boundary_conditions['T'][self.name].value = self._temperature
+        try:
+            self._boundary_conditions['T'].update_time(latest_result)
+            self._boundary_conditions['T'][self.name].value = self._temperature
+        except FileNotFoundError as e:
+            print(e)
 
 
 def main():

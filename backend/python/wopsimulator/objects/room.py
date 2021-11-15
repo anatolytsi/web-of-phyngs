@@ -57,8 +57,11 @@ class WopRoom(WopObject):
             return
         latest_result = get_latest_time(self._case_dir)
         self._temperature = float(temperature)
-        self._boundary_conditions['T'].update_time(latest_result)
-        self._boundary_conditions['T'].internalField.value = temperature
+        try:
+            self._boundary_conditions['T'].update_time(latest_result)
+            self._boundary_conditions['T'].internalField.value = temperature
+        except FileNotFoundError as e:
+            print(e)
 
 
 def main():
