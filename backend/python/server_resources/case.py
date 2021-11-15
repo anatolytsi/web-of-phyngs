@@ -49,6 +49,8 @@ class Case(Resource):
                 if value is not None:
                     self.current_cases[case_name][key] = value
             save_case(case_name, self.current_cases[case_name])
+            # Reload the case with new changes applied
+            self.current_cases[case_name] = load_case(case_name)
             return self.current_cases[case_name].dump_case()
         except ValueError:
             return f'Case {case_name} is not defined'
