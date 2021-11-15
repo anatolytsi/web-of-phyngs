@@ -259,10 +259,11 @@ class BlockMeshDict:
         v6 = Vertex(max_coords[0], max_coords[1], max_coords[2])
         v7 = Vertex(min_coords[0], max_coords[1], max_coords[2])
         vertices = [v0, v1, v2, v3, v4, v5, v6, v7]
-        self.vertices.extend(vertices)
         block = Block(vertices, cells_in_direction, cell_expansion_ratios, name)
-        self.blocks.append(block)
-        self._calculate_mesh(block)
+        if block not in self.blocks:
+            self.vertices.extend(vertices)
+            self.blocks.append(block)
+            self._calculate_mesh(block)
 
     def save(self):
         """Saves a class as blockMeshDict"""
