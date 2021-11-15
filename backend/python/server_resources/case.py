@@ -64,6 +64,8 @@ class Case(Resource):
                 del self.current_cases[case_name]
             remove_case(case_name, remove_case_dir=True)
             return f'Case {case_name} was deleted'
+        except KeyError:
+            return f'Case {case_name} does not exist'
         except Exception as e:
             traceback.print_exc()
             return str(e)
