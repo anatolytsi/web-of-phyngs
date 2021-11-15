@@ -2,6 +2,8 @@
   "my_room.case": {
     "type": "cht_room",
     "path": "./my_room.case",
+    "mesh_quality": 50,
+    "clean_limit": 0,
     "blocking": false,
     "parallel": true,
     "cores": 4,

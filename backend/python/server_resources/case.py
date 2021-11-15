@@ -12,6 +12,7 @@ class Case(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('type', type=str, help='Web of Phyngs case type')
         self.reqparse.add_argument('mesh_quality', type=int, help='Case mesh quality in percents')
+        self.reqparse.add_argument('clean_limit', type=int, help='Case maximum amount of results before cleaning')
         self.reqparse.add_argument('parallel', type=bool, help='Run case in parallel')
         self.reqparse.add_argument('cores', type=int, help='Number of cores for parallel run')
         self.reqparse.add_argument('background', type=str, help='Case background region')

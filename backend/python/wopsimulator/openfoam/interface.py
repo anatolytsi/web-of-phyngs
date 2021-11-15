@@ -9,10 +9,12 @@ from multiprocessing import Process, cpu_count
 from threading import Thread, Lock
 
 from PyFoam.Execution.BasicRunner import BasicRunner
+from numpy import arange
 
 from backend.python.wopsimulator.openfoam.boundaries.boundary_conditions import BoundaryCondition
 from backend.python.wopsimulator.openfoam.common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern, \
     force_remove_dir, remove_files_in_dir_with_pattern, copy_tree
+from backend.python.wopsimulator.openfoam.common.parsing import get_latest_time
 from backend.python.wopsimulator.openfoam.constant.material_properties import MaterialProperties
 from backend.python.wopsimulator.openfoam.probes.probes import ProbeParser
 from backend.python.wopsimulator.openfoam.system.blockmesh import BlockMeshDict
@@ -26,7 +28,8 @@ class OpenFoamInterface(ABC):
     OpenFOAM Interface class. Serves as a wrapper of OpenFOAM commands
     """
 
-    def __init__(self, solver_type, path='.', blocking=True, parallel=False, cores=1, mesh_quality=50, **kwargs):
+    def __init__(self, solver_type, path='.', blocking=True, parallel=False, cores=1, mesh_quality=50,
+                 clean_limit=0, **kwargs):
         """
         OpenFOAM Interface initialization function
         :param solver_type: solver type, e.g., chtMultiRegionFoam TODO: check for solver type
@@ -35,12 +38,14 @@ class OpenFoamInterface(ABC):
         :param parallel: flag for parallel run
         :param cores: number of cores used for parallel run
         :param mesh_quality: mesh quality in percents [0 - 100]
+        :param clean_limit: maximum number of results before cleaning, cleans if > 0
         :param kwargs: keys used by children and not by this class
         """
         self.path = path
         self.parallel = parallel
         self.blocking = blocking
         self.cores = cores
+        self.clean_limit = clean_limit
         self.control_dict = ControlDict(self.path, solver_type)
         self.decompose_dict = DecomposeParDict(self.path, self.cores, 'simple')
         self.blockmesh_dict = BlockMeshDict(self.path)
@@ -185,6 +190,7 @@ class OpenFoamInterface(ABC):
         argv = ['mpirun', '-np', str(self.cores), self._solver_type, '-case', self.path, '-parallel']
         self._solver = BasicRunner(argv=argv, silent=silent, logname=self._solver_type)
         self._solver.start()
+        self.stop()
         print('Process terminated')
         self._solver_mutex.release()
 
@@ -365,14 +371,16 @@ class OpenFoamInterface(ABC):
         """
         self.control_dict.save()
         self.save_boundaries()
+        cleaner_thread = Thread(target=self.result_cleaner, daemon=True)
         if self.parallel:
             self.run_decompose(all_regions=True, latest_time=True, force=True)
-            self._solver_process = Process(target=self.run_solver_parallel, args=(True,))
+            self._solver_process = Process(target=self.run_solver_parallel, args=(True,), daemon=True)
             self._solver_process.start()
         else:
             self._solver_thread = Thread(target=self.run_solver, daemon=True)
             self._solver_thread.start()
         self.running = True
+        cleaner_thread.start()
 
     def stop_solving(self):
         """
@@ -388,6 +396,29 @@ class OpenFoamInterface(ABC):
         self.running = False
         self._solver_mutex.acquire()
         self._solver_mutex.release()
+
+    def result_cleaner(self):
+        """Thread to clean the results periodically"""
+        if not self.clean_limit:
+            return
+        time_path = f'{self.path}/processor0' if self.parallel else self.path
+        deletion_time = 0
+        margin = self.clean_limit / 2 // self.control_dict.write_interval * self.control_dict.write_interval
+        while self.running:
+            latest_time = get_latest_time(time_path)
+            if latest_time != deletion_time and not latest_time % self.clean_limit:
+                time.sleep(0.05)
+                exceptions = '|'.join([str(int(val) if val.is_integer() else val)
+                                       for val in arange(latest_time - margin, latest_time + margin,
+                                                         self.control_dict.write_interval)])
+                exceptions = exceptions.replace('.', r'\.')
+                if self.parallel:
+                    for core in range(0, self.cores):
+                        remove_dirs_with_pattern(f'{self.path}/processor{core}', f'^(?!(?:0|{exceptions})$)\\d+')
+                else:
+                    remove_dirs_with_pattern(self.path, f'^(?!(?:0|{exceptions})$)\\d+')
+                deletion_time = latest_time
+            time.sleep(0.01)
 
     def run(self):
         """
