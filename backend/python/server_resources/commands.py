@@ -1,3 +1,5 @@
+import traceback
+
 from flask_restful import Resource, reqparse
 
 from backend.python.wopsimulator.loader import load_case, get_cases_names, save_case
@@ -72,4 +74,5 @@ class Command(Resource):
                     else:
                         self.current_cases[case_name].run_reconstruct(region=args['region'], fields=args['fields'])
         except Exception as e:
+            traceback.print_exc()
             return str(e)

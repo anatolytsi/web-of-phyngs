@@ -1,3 +1,5 @@
+import traceback
+
 from flask_restful import Resource, reqparse
 
 from backend.python.wopsimulator.loader import load_case, create_case, get_cases_names, save_case, remove_case
@@ -30,8 +32,10 @@ class Case(Resource):
             self.current_cases[case_name] = case
             return case.dump_case()
         except (ValueError, FileExistsError) as e:
+            traceback.print_exc()
             return str(e)
         except Exception as e:
+            traceback.print_exc()
             return str(e)
 
     def patch(self, case_name):
@@ -47,7 +51,8 @@ class Case(Resource):
         except ValueError:
             return f'Case {case_name} is not defined'
         except Exception as e:
-            return str(e)
+            traceback.print_exc()
+            return e
 
     def delete(self, case_name):
         try:
@@ -56,6 +61,7 @@ class Case(Resource):
             remove_case(case_name, remove_case_dir=True)
             return f'Case {case_name} was deleted'
         except Exception as e:
+            traceback.print_exc()
             return str(e)
 
 
@@ -64,4 +70,5 @@ class CaseList(Resource):
         try:
             return get_cases_names()
         except Exception as e:
+            traceback.print_exc()
             return str(e)
