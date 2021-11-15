@@ -4,7 +4,7 @@ from typing import List
 
 from backend.python.wopsimulator.geometry.manipulator import combine_stls
 from backend.python.wopsimulator.variables import CONFIG_DICT, CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, \
-    CONFIG_PARALLEL_KEY, CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY
+    CONFIG_PARALLEL_KEY, CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY, CONFIG_MESH_QUALITY_KEY
 from backend.python.wopsimulator.openfoam.interface import OpenFoamInterface
 from backend.python.wopsimulator.openfoam.system.snappyhexmesh import SnappyRegion, SnappyPartitionedMesh, \
     SnappyCellZoneMesh
