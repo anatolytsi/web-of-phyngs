@@ -169,6 +169,8 @@ class BoundaryConditionBase:
     def _file_parse(self):
         """Parses boundary condition file"""
         filepath = self._filepath % self._time
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f'File {filepath} does not exist')
         lines = open(filepath).readlines()
         lines_str = ''.join(lines)
         # Parse and initialize internal field if it exists
@@ -201,11 +203,12 @@ class BoundaryConditionBase:
 
         def wrapper(self, *args, **kwargs):
             filepath = self._filepath % self._time
-            lines = open(filepath).readlines()
-            lines_str = ''.join(lines)
-            lines_str = func(self, *args, **kwargs, lines_str=lines_str)
-            with open(filepath, 'w') as f:
-                f.writelines(lines_str)
+            if os.path.exists(filepath):
+                lines = open(filepath).readlines()
+                lines_str = ''.join(lines)
+                lines_str = func(self, *args, **kwargs, lines_str=lines_str)
+                with open(filepath, 'w') as f:
+                    f.writelines(lines_str)
 
         return wrapper
 
