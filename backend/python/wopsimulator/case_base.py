@@ -38,6 +38,10 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Setups the loaded initialized case
         :param case_param: loaded case parameters
         """
+        try:
+            self.run_reconstruct(all_regions=True, latest_time=True)
+        except Exception:
+            pass
         self.extract_boundary_conditions()
         self.load_initial_objects(case_param)
         self.bind_boundary_conditions()
