@@ -26,7 +26,7 @@ class OpenFoamInterface(ABC):
     OpenFOAM Interface class. Serves as a wrapper of OpenFOAM commands
     """
 
-    def __init__(self, solver_type, path='.', blocking=True, parallel=False, cores=1, **kwargs):
+    def __init__(self, solver_type, path='.', blocking=True, parallel=False, cores=1, mesh_quality=50, **kwargs):
         """
         OpenFOAM Interface initialization function
         :param solver_type: solver type, e.g., chtMultiRegionFoam TODO: check for solver type
@@ -43,6 +43,7 @@ class OpenFoamInterface(ABC):
         self.control_dict = ControlDict(self.path, solver_type)
         self.decompose_dict = DecomposeParDict(self.path, self.cores, 'simple')
         self.blockmesh_dict = BlockMeshDict(self.path)
+        self.blockmesh_dict.mesh_quality = mesh_quality
         self.snappy_dict = SnappyHexMeshDict(self.path)
         self.material_props = MaterialProperties(self.path)
         self.regions = []

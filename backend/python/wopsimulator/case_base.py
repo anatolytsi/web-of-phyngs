@@ -23,7 +23,6 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :param kwargs: OpenFOAM interface kwargs, i.e., case parameters
         """
         super(OpenFoamCase, self).__init__(*args, **kwargs)
-        self.initialized = initialized
         self._objects = {}
         self._partitioned_mesh = None
         self.sensors = {}
@@ -109,6 +108,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         config[CONFIG_PARALLEL_KEY] = self.parallel
         config[CONFIG_CORES_KEY] = self._cores
         config[CONFIG_INITIALIZED_KEY] = self.initialized
+        config[CONFIG_MESH_QUALITY_KEY] = self.blockmesh_dict.mesh_quality
         return config
 
     def remove_initial_boundaries(self):
@@ -226,7 +226,10 @@ class OpenFoamCase(OpenFoamInterface, ABC):
     def __setitem__(self, key, value):
         """Allow to set attributes of a class as in dictionary"""
         self.initialized = False
-        setattr(self, key, value)
+        if key == CONFIG_MESH_QUALITY_KEY:
+            self.blockmesh_dict.mesh_quality = value
+        else:
+            setattr(self, key, value)
 
     def __iter__(self):
         """Allow to iterate over attribute names of a class"""

@@ -11,6 +11,7 @@ class Case(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('type', type=str, help='Web of Phyngs case type')
+        self.reqparse.add_argument('mesh_quality', type=int, help='Case mesh quality in percents')
         self.reqparse.add_argument('parallel', type=bool, help='Run case in parallel')
         self.reqparse.add_argument('cores', type=int, help='Number of cores for parallel run')
         self.reqparse.add_argument('background', type=str, help='Case background region')
@@ -23,6 +24,7 @@ class Case(Resource):
         except ValueError:
             return f'Case is not defined'
         except Exception as e:
+            traceback.print_exc()
             return str(e)
 
     def post(self, case_name):
