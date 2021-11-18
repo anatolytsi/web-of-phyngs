@@ -1,8 +1,8 @@
-import traceback
-
 from flask_restful import Resource, reqparse
 
-from backend.python.wopsimulator.loader import load_case, get_cases_names, save_case
+from backend.python.server_resources.case import auto_load_case
+from backend.python.server_resources.exceptions import catch_error
+from backend.python.wopsimulator.loader import save_case
 
 COMMAND_HELP = 'help'
 COMMAND_LIST = 'list'
@@ -36,44 +36,38 @@ class Command(Resource):
         self.reqparse.add_argument('region', type=str, help='Region to post-process')
         super(Command, self).__init__()
 
+    @catch_error
     def get(self, case_name, command):
         if command not in COMMANDS:
-            return f'Command {command} is on defined'
+            return f'Command {command} is not defined', 400
         return COMMANDS[command]
 
+    @catch_error
+    @auto_load_case
     def post(self, case_name, command):
-        try:
-            if command == COMMAND_HELP:
-                return COMMANDS
-            if case_name not in self.current_cases:
-                self.current_cases[case_name] = load_case(case_name)
-            if command == COMMAND_SAVE:
-                save_case(case_name, self.current_cases[case_name])
-                return self.current_cases[case_name].dump_case()
-            elif command == COMMAND_CLEAN:
-                self.current_cases[case_name].clean_case()
-                save_case(case_name, self.current_cases[case_name])
-                return f'Case {case_name} was cleaned'
-            elif command == COMMAND_SETUP:
-                self.current_cases[case_name].setup()
-                save_case(case_name, self.current_cases[case_name])
-                return f'Case {case_name} was setup'
-            elif command == COMMAND_RUN:
-                self.current_cases[case_name].run()
-                return f'Case {case_name} is running'
-            elif command == COMMAND_STOP:
+        if command == COMMAND_HELP:
+            return COMMANDS
+        if command == COMMAND_SAVE:
+            save_case(case_name, self.current_cases[case_name])
+            self.current_cases[case_name].dump_case()
+        elif command == COMMAND_CLEAN:
+            self.current_cases[case_name].clean_case()
+            save_case(case_name, self.current_cases[case_name])
+        elif command == COMMAND_SETUP:
+            self.current_cases[case_name].setup()
+            save_case(case_name, self.current_cases[case_name])
+        elif command == COMMAND_RUN:
+            self.current_cases[case_name].run()
+        elif command == COMMAND_STOP:
+            self.current_cases[case_name].stop()
+            save_case(case_name, self.current_cases[case_name])
+        elif command == COMMAND_PROCESS:
+            args = self.reqparse.parse_args()
+            if self.current_cases[case_name].running:
                 self.current_cases[case_name].stop()
-                save_case(case_name, self.current_cases[case_name])
-                return f'Case {case_name} was stopped'
-            elif command == COMMAND_PROCESS:
-                args = self.reqparse.parse_args()
-                if self.current_cases[case_name].running:
-                    self.current_cases[case_name].stop()
-                if self.current_cases[case_name].parallel:
-                    if not args['region']:
-                        self.current_cases[case_name].run_reconstruct(all_regions=True)
-                    else:
-                        self.current_cases[case_name].run_reconstruct(region=args['region'], fields=args['fields'])
-        except Exception as e:
-            traceback.print_exc()
-            return str(e)
+            if self.current_cases[case_name].parallel:
+                if not args['region']:
+                    self.current_cases[case_name].run_reconstruct(all_regions=True)
+                else:
+                    self.current_cases[case_name].run_reconstruct(region=args['region'], fields=args['fields'])
+        return '', 201
