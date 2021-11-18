@@ -244,7 +244,7 @@ class Model:
 
     def _finilize(self):
         """
-        Finilizes work with GMSH API and closes it and current model
+        Finalizes work with GMSH API and closes it and current model
         """
         global GMSH_INITIALIZED
         if self._initialized:
@@ -259,6 +259,8 @@ class Model:
             try:
                 gmsh.finalize()
             except ValueError as e:
+                # Do not handle this error as it occurs when
+                #  gmsh was finalized from non-main thread
                 print(e)
 
     def _produce(self):
