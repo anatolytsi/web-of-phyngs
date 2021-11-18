@@ -2,6 +2,7 @@ import random
 from abc import ABC, abstractmethod
 from typing import List
 
+from backend.python.wopsimulator.exceptions import ObjectNotFound
 from backend.python.wopsimulator.geometry.manipulator import combine_stls
 from backend.python.wopsimulator.variables import CONFIG_DICT, CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, \
     CONFIG_PARALLEL_KEY, CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY
@@ -164,7 +165,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             return self._objects[object_name]
         elif object_name in self.sensors:
             return self.sensors[object_name]
-        raise ValueError(f'Object with name {object_name} was not found')
+        raise ObjectNotFound(f'Object with name {object_name} was not found')
 
     def get_objects(self):
         """

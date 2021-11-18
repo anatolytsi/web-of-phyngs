@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from backend.python.wopsimulator.cht_room import ChtRoom
+from backend.python.wopsimulator.exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists
 from backend.python.wopsimulator.openfoam.common.filehandling import force_remove_dir, copy_tree
 from backend.python.wopsimulator.variables import *
 
@@ -25,15 +26,15 @@ def load_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/wop-config.j
     case_name = case_name if '.case' in case_name else f'{case_name}.case'
     if case_name in config.keys():
         if not (CONFIG_PATH_KEY in config[case_name] and os.path.exists(path := config[case_name][CONFIG_PATH_KEY])):
-            raise OSError(f'Path for case "{case_name}" is not defined')
+            raise CaseNotFound(f'Path for case "{case_name}" is not defined')
         if CONFIG_TYPE_KEY in config[case_name] and \
                 (case_type_name := config[case_name][CONFIG_TYPE_KEY]) in CASE_TYPES.keys():
             case_cls = CASE_TYPES[case_type_name]
         else:
-            raise ValueError(f'Case type is wrong or not specified! Expected one of: {", ".join(CASE_TYPES)}')
+            raise CaseTypeError(f'Case type is wrong or not specified! Expected one of: {", ".join(CASE_TYPES)}')
         case = case_cls(**config[case_name], loaded=True)
         return case
-    raise ValueError(f'Case "{case_name}" is not defined in the config "{config_path}"')
+    raise CaseNotFound(f'Case "{case_name}" is not defined in the config "{config_path}"')
 
 
 def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEND_DIR,
@@ -49,8 +50,8 @@ def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEN
     :return: WoP Simulator class instance
     """
     if case_param[CONFIG_TYPE_KEY] not in CASE_TYPES.keys():
-        raise ValueError(f'Case type is wrong or not specified! '
-                         f'Got "{case_param[CONFIG_TYPE_KEY]}", expected one of: {", ".join(CASE_TYPES)}')
+        raise CaseTypeError(f'Case type is wrong or not specified! '
+                            f'Got "{case_param[CONFIG_TYPE_KEY]}", expected one of: {", ".join(CASE_TYPES)}')
     case_cls = CASE_TYPES[case_param[CONFIG_TYPE_KEY]]
 
     # Load/Create config
@@ -69,7 +70,7 @@ def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEN
             del config[case_name]
             force_remove_dir(case_path)
         else:
-            raise FileExistsError(f'Project with name "{case_name}" already exists!')
+            raise CaseAlreadyExists(f'Project with name "{case_name}" already exists!')
     copy_tree(f'{CUR_FILE_DIR}/openfoam/cases/{case_param[CONFIG_TYPE_KEY]}', case_path)
 
     # TODO: JSON schema validation
@@ -95,8 +96,8 @@ def save_case(case_name: str, case, config_path: str = f'{PY_BACKEND_DIR}/wop-co
     :param config_path: path to a wop-config.json. A __main__ script directory is taken by default
     """
     if (case_type := type(case)) not in CASE_TYPES.values():
-        raise ValueError(f'Case type is wrong or not specified! '
-                         f'Got "{case_type}", expected one of: {", ".join(CASE_TYPES)}')
+        raise CaseTypeError(f'Case type is wrong or not specified! '
+                            f'Got "{case_type}", expected one of: {", ".join(CASE_TYPES)}')
     config = case.dump_case()
     case_name = case_name if '.case' in case_name else f'{case_name}.case'
     with open(config_path, 'r') as f:
@@ -120,8 +121,10 @@ def remove_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/wop-config
         config = json.load(f)
 
     case_name = case_name if '.case' in case_name else f'{case_name}.case'
-    if remove_case_dir and os.path.exists(case_path := config[case_name][CONFIG_PATH_KEY]):
+    if remove_case_dir and case_name in config and os.path.exists(case_path := config[case_name][CONFIG_PATH_KEY]):
         force_remove_dir(case_path)
+    else:
+        raise CaseNotFound(f'Case "{case_name}" is not defined in the config "{config_path}"')
     del config[case_name]
 
     with open(config_path, 'w') as f:

@@ -1,6 +1,7 @@
 import time
 from typing import List
 
+from backend.python.wopsimulator.exceptions import WrongObjectType
 from backend.python.wopsimulator.openfoam.common.parsing import get_latest_time
 from backend.python.wopsimulator.case_base import OpenFoamCase
 from backend.python.wopsimulator.objects.door import WopDoor
@@ -217,7 +218,7 @@ class ChtRoom(OpenFoamCase):
             self.sensors.update({sensor.name: sensor})
             return
         else:
-            raise Exception(f'Wrong object type! Possible types are {CHT_ROOM_OBJ_TYPES}')
+            raise WrongObjectType(f'Wrong object type! Possible types are {CHT_ROOM_OBJ_TYPES}')
         self.initialized = False
         self._objects.update({wop_object.name: wop_object})
 

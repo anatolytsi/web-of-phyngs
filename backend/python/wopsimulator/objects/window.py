@@ -1,5 +1,6 @@
 import os
 
+from backend.python.wopsimulator.exceptions import ObjectSetValueFailed
 from backend.python.wopsimulator.objects.behavior.cht import set_boundary_to_wall, set_boundary_to_inlet, \
     update_boundaries
 from backend.python.wopsimulator.objects.wopthings import WopObject
@@ -56,11 +57,10 @@ class WopWindow(WopObject):
         :param is_open: windows status
         :return:
         """
+        self._open = is_open
         if self._snappy_dict is None or self._boundary_conditions is None:
-            self._open = is_open
             return
         latest_result = get_latest_time(self._case_dir)
-        self._open = is_open
         try:
             if is_open:
                 set_boundary_to_inlet(self.name, self._boundary_conditions, self._velocity, self._temperature,
@@ -69,8 +69,8 @@ class WopWindow(WopObject):
                 set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature, latest_result,
                                      bg_name=self._bg_region, of_interface=self._of_interface)
                 self._velocity = [0, 0, 0]
-        except FileNotFoundError as e:
-            print(e)
+        except Exception as e:
+            raise ObjectSetValueFailed(e)
 
     @property
     def velocity(self):
@@ -78,18 +78,17 @@ class WopWindow(WopObject):
 
     @velocity.setter
     def velocity(self, wind_speed):
+        self._velocity = wind_speed
         if self._snappy_dict is None or self._boundary_conditions is None:
-            self._velocity = wind_speed
             return
         latest_result = get_latest_time(self._case_dir)
-        self._velocity = wind_speed
         try:
             if self._open:
                 update_boundaries(self._boundary_conditions, latest_result)
                 self._boundary_conditions['U'][self.name].value = self._velocity
                 self._boundary_conditions['U'][self.name].save()
-        except FileNotFoundError as e:
-            print(e)
+        except Exception as e:
+            raise ObjectSetValueFailed(e)
 
     @property
     def temperature(self):
@@ -102,16 +101,15 @@ class WopWindow(WopObject):
         Sets window temperature by modifying the latest results
         :param temperature: temperature in K
         """
+        self._temperature = float(temperature)
         if self._snappy_dict is None or self._boundary_conditions is None:
-            self._temperature = float(temperature)
             return
         latest_result = get_latest_time(self._case_dir)
-        self._temperature = float(temperature)
         try:
             self._boundary_conditions['T'].update_time(latest_result)
             self._boundary_conditions['T'][self.name].value = self._temperature
-        except FileNotFoundError as e:
-            print(e)
+        except Exception as e:
+            raise ObjectSetValueFailed(e)
 
 
 def main():

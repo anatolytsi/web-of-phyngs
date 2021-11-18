@@ -1,5 +1,6 @@
 import os
 
+from backend.python.wopsimulator.exceptions import ObjectSetValueFailed
 from backend.python.wopsimulator.objects.behavior.cht import set_boundary_to_wall
 from backend.python.wopsimulator.objects.wopthings import WopObject
 from backend.python.wopsimulator.openfoam.common.parsing import get_latest_time
@@ -52,16 +53,15 @@ class WopRoom(WopObject):
         Sets room temperature by modifying the latest results
         :param temperature: temperature in K
         """
+        self._temperature = float(temperature)
         if self._snappy_dict is None or self._boundary_conditions is None:
-            self._temperature = float(temperature)
             return
         latest_result = get_latest_time(self._case_dir)
-        self._temperature = float(temperature)
         try:
             self._boundary_conditions['T'].update_time(latest_result)
             self._boundary_conditions['T'].internalField.value = temperature
-        except FileNotFoundError as e:
-            print(e)
+        except Exception as e:
+            raise ObjectSetValueFailed(e)
 
 
 def main():
