@@ -30,8 +30,10 @@ class WopDoor(WopObject):
         self._open = False
         self._velocity = [0, 0, 0]
         self._temperature = 293.15
+        self.template = template
         model_type = 'stl' if template else 'surface'
-        stl_path = f'{os.path.abspath(__file__)}/geometry/doors/{template}.stl' if template else None
+        stl_path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/doors/{template}' \
+                   f'{"" if template[-4:] == ".stl" else ".stl"}' if template else ''
         super(WopDoor, self).__init__(name, case_dir, model_type, bg_region, dimensions, location, rotation,
                                       stl_path=stl_path, of_interface=of_interface)
         self._fields = 'all'

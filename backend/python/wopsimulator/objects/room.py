@@ -28,7 +28,9 @@ class WopRoom(WopObject):
         """
         self._temperature = 293.15
         model_type = 'stl' if template else 'box'
-        stl_path = f'{os.path.abspath(__file__)}/geometry/doors/{template}.stl' if template else None
+        self.template = template
+        stl_path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/rooms/{template}' \
+                   f'{"" if template[-4:] == ".stl" else ".stl"}' if template else ''
         super(WopRoom, self).__init__(name, case_dir, model_type, bg_region, dimensions, location, rotation,
                                       stl_path=stl_path, of_interface=of_interface)
         self._fields = ['T']
