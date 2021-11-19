@@ -4,6 +4,9 @@ import re
 from typing import Union, List
 
 import gmsh
+import numpy
+from stl import mesh
+from stl.stl import ASCII
 
 from backend.python.wopsimulator.geometry.primitives import Num, Point, Line, Loop, Surface
 
@@ -174,18 +177,60 @@ class Box(TriSurface):
         return faces_x, faces_y, faces_z
 
 
-class STL(TriSurface):
+class STL:
     """
     STL class (trisurface) for imported STL models
     """
 
-    def __init__(self, faces):
+    def __init__(self, stl_path):
         """
         STL class initialization function
-        :param faces: STL surfaces that compose a model
+        :param stl_path: path to STL file
         """
         super(STL, self).__init__()
-        self.faces = faces
+        self.path = stl_path
+        self.mesh = mesh.Mesh.from_file(stl_path)
+
+    def rotate(self, rotation: List[Num], center: List[Num]):
+        """
+        Rotates STL in space
+        :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
+        :param center: center of rotation [x, y, z]
+        """
+        rot_mat = [1 if rot_deg else 0 for rot_deg in rotation]
+        self.mesh.rotate([rot_mat[0], 0, 0], math.radians(rotation[0]), center)
+        self.mesh.rotate([0, rot_mat[1], 0], math.radians(rotation[1]), center)
+        self.mesh.rotate([0, 0, rot_mat[2]], math.radians(rotation[2]), center)
+
+    def translate(self, coords: List[Num]):
+        """
+        Translates STL by certain coordinates
+        :param coords: coordinates [x, y, z]
+        """
+        for i in range(0, len(self.mesh.vectors)):
+            for j in range(0, len(self.mesh.vectors[i])):
+                self.mesh.vectors[i][j] = self.mesh.vectors[i][j] + numpy.array(coords)
+
+    def calculate_dimensions(self):
+        """
+        Calculates dimensions of the imported STL
+        :return: [x, y, z] dimensions
+        """
+        minx = self.mesh.x.min()
+        maxx = self.mesh.x.max()
+        miny = self.mesh.y.min()
+        maxy = self.mesh.y.max()
+        minz = self.mesh.z.min()
+        maxz = self.mesh.z.max()
+        return maxx - minx, maxy - miny, maxz - minz
+
+    def get_used_coords(self):
+        """
+        Determines the coordinates used by the box
+        :return: sets for each coordinate [x, y, z]
+        """
+        points = numpy.around(numpy.unique(self.mesh.vectors.reshape([int(self.mesh.vectors.size/3), 3]), axis=0), 2)
+        return set(points[:, 0].tolist()), set(points[:, 1].tolist()), set(points[:, 2].tolist())
 
 
 class Model:
@@ -225,7 +270,6 @@ class Model:
         self.center = []
         self._initialized = False
         self._produced = False
-        self.geometry = None
         self.geometry = self._create_geometry_from_type(facing_zero=facing_zero, stl_path=stl_path)
 
     def _init(self):
@@ -289,19 +333,6 @@ class Model:
             self._init()
             self._produce()
 
-    @staticmethod
-    def _get_centroid(points):
-        """
-        Get center of an arbitrary surface from its points
-        :param points:
-        :return: center coordinates [x, y, z]
-        """
-        length = len(points)
-        sum_x = sum([p.coords.x for p in points])
-        sum_y = sum([p.coords.y for p in points])
-        sum_z = sum([p.coords.z for p in points])
-        return round(sum_x / length, 5), round(sum_y / length, 5), round(sum_z / length, 5)
-
     def _create_geometry_from_type(self, facing_zero, stl_path):
         """
         Creates geometry from a type provided
@@ -354,182 +385,16 @@ class Model:
                 b.rotate(self.rotation, self.center)
                 return b
         elif self.model_type == self._stl_type:
-            self._init()
-            gmsh.merge(stl_path)
-            # Works for finding all the points
-            # angle = 20
-            # curve_angle = -180
-            angle = 80
-            curve_angle = -90
-            include_boundary = True
-            force_parameterizable_patches = True
-            gmsh.model.mesh.classify_surfaces(math.radians(angle), include_boundary,
-                                              force_parameterizable_patches,
-                                              math.radians(curve_angle))
-            gmsh.model.mesh.createGeometry()
-            surf_nums = [num for dim, num in gmsh.model.getEntities(2)]
-            # Extract all point number and their coordinates from the geometry
-            points = []
-            for point_num in [num for dim, num in gmsh.model.get_entities(0)]:
-                point_coord = list(gmsh.model.get_value(0, point_num, []))
-                points.append([point_coord, Point(coords=point_coord)])
-            # Check whether a point lays on a surface
-            surfaces = {}
-            for surf_num in surf_nums:
-                surfaces.update({surf_num: {'points': [], 'outer_points': [], 'inner_points': []}})
-                for point_coord, point in points:
-                    closest_point_coords = list(gmsh.model.get_closest_point(2, surf_num, point_coord)[0])
-                    # Check if point coordinates match a closest point on surface
-                    if point_coord == closest_point_coords:
-                        surfaces[surf_num]['points'].append(point)
-                # Find contour of the surface
-                surfaces[surf_num]['outer_points'] = self._find_contour(surfaces[surf_num]['points'])
-                if (remaining_points := list(set(surfaces[surf_num]['points']) -
-                                             set(surfaces[surf_num]['outer_points']))):
-                    # Not the best implementation as if there is more than 1 surface - it wouldn't work as expected
-                    surfaces[surf_num]['inner_points'] = self._find_contour(remaining_points)
-                surfaces[surf_num].update({'lines': []})
-                surfaces[surf_num].update({'surface': []})
-                for i in range(n := len(surfaces[surf_num]['outer_points'])):
-                    p1, p2 = surfaces[surf_num]['outer_points'][i], surfaces[surf_num]['outer_points'][(i + 1) % n]
-                    l = Line(p1, p2)
-                    surfaces[surf_num]['lines'].append(l if l.p1 == p1 else -l)
-                    # l if l.p1 == p1 else -l
-                surfaces[surf_num]['surface'] = Surface(Loop(surfaces[surf_num]['lines']))
-                inner_lines = []
-                for i in range(n := len(surfaces[surf_num]['inner_points'])):
-                    l = Line(surfaces[surf_num]['inner_points'][i], surfaces[surf_num]['inner_points'][(i + 1) % n])
-                    inner_lines.append(l)
-                if inner_lines:
-                    surfaces[surf_num]['surface'].cut(Surface(Loop(inner_lines)))
-            self._finilize()
-            return STL(faces=[s['surface'] for s in surfaces.values()])
-
-    def _rotate_to_axis(self, points):
-        """
-        Rotates a surface as a collection of points to one of the planes, thus eliminating one coordinate
-        :param points: surface points
-        """
-        # Find center of a surface
-        center = self._get_centroid(points)
-        # Find a highest point
-        max_z = max([pnt.coords.z for pnt in points])
-        # Get a vector end point
-        v_end_p = [pnt for pnt in points if pnt.coords.z == max_z][0]
-
-        # Find vector, starts at center and ends in point with maximum height
-        vector = [v_end_p.coords.x - center[0], v_end_p.coords.y - center[1], v_end_p.coords.z - center[2]]
-
-        # The vector is then tried to be matched to the zy plane
-        # Rotate all points around z axis such that the vector is parallel to y axis
-        rotation = [0, 0, math.pi / 2 - math.atan(vector[1] / vector[0])]
-        for point in points:
-            point.rotate(rotation, center, radians=True)
-
-        # Recalculate the vector coordinates
-        vector = [v_end_p.coords.x - center[0], v_end_p.coords.y - center[1], v_end_p.coords.z - center[2]]
-        # Rotate all points around y axis such that the vector is parallel to x axis
-        rotation = [0, -math.atan(vector[0] / vector[2]), 0]
-        for point in points:
-            point.rotate(rotation, center, radians=True)
-
-        # Recalculate the vector coordinates
-        vector = [v_end_p.coords.x - center[0], v_end_p.coords.y - center[1], v_end_p.coords.z - center[2]]
-        # Rotate all points around x axis such that the vector is parallel to y axis
-        rotation = [-math.atan(vector[1] / vector[2]), 0, 0]
-        for point in points:
-            point.rotate(rotation, center, radians=True)
-
-        # FIXME: Above manipulations do not work properly at the time :)))
-        #  For now, a workaround is to find an axis with a minimal difference (either x or y) and simply truncate it
-
-        # Get the list of all coordinates
-        x_lst = [pnt.coords.x for pnt in points]
-        y_lst = [pnt.coords.y for pnt in points]
-        z_lst = [pnt.coords.z for pnt in points]
-
-        # Find lengths across all axis
-        max_diff_x = max(x_lst) - min(x_lst)
-        max_diff_y = max(y_lst) - min(y_lst)
-        max_diff_z = max(z_lst) - min(z_lst)
-        max_diff = [('x', max_diff_x), ('y', max_diff_y), ('z', max_diff_z)]
-
-        # Find an axis with smallest difference and truncate it. Initially, z axis was also included, but it didnt give
-        # the expected results...
-        max_diff.sort(key=lambda val: val[1], reverse=True)
-        trunc_coord = max_diff[2][0]
-        trunc_coord = trunc_coord if trunc_coord != 'z' else max_diff[1][0]
-        for point in points:
-            point.coords[trunc_coord] = 0
-
-    def _find_contour(self, points):
-        """
-        Finds a contour of a surface from its points
-        :param points: surface points
-        """
-        # Find maximums and minimums
-        max_x = max([point.coords.x for point in points])
-        max_y = max([point.coords.y for point in points])
-        max_z = max([point.coords.z for point in points])
-        min_x = min([point.coords.x for point in points])
-        min_y = min([point.coords.y for point in points])
-        min_z = min([point.coords.z for point in points])
-        maxs = {'x': max_x, 'y': max_y, 'z': max_z}
-        mins = {'x': min_x, 'y': min_y, 'z': min_z}
-
-        # Check which axis is common for a given surface
-        common_x = all([1 if math.isclose(point.coords.x, max_x, abs_tol=0.5) else 0 for point in points])
-        common_y = all([1 if math.isclose(point.coords.y, max_y, abs_tol=0.5) else 0 for point in points])
-        common_z = all([1 if math.isclose(point.coords.z, max_z, abs_tol=0.5) else 0 for point in points])
-
-        # Check if no axis is common
-        if not any([common_x, common_y, common_z]):
-            # Save original coords
-            point_coords = {pnt.num: list(pnt.coords).copy() for pnt in points}
-            # Rotate points such that one axis is constant
-            self._rotate_to_axis(points)
-            # Find contours
-            contour_loop = self._find_contour(points)
-            # Restore original coordinates
-            for pnt in points:
-                pnt.coords.x, pnt.coords.y, pnt.coords.z = point_coords[pnt.num][:]
-            return contour_loop
-
-        # Find candidates for each axis. The idea is to find points with minimum coordinates, starting from y, z and
-        # then x
-        if not common_y:
-            candidates = [point for point in points if point.coords.y == min_y]
-        else:
-            candidates = points[:]
-        if not common_z:
-            candidates = [candidate for candidate in candidates
-                          if candidate.coords.z == min([candidate.coords.z for candidate in candidates])]
-        if not common_x:
-            candidates = [candidate for candidate in candidates
-                          if candidate.coords.x == min([candidate.coords.x for candidate in candidates])]
-
-        contour_loop = candidates
-        if common_x:
-            a = ['y', 'z']
-        elif common_y:
-            a = ['x', 'z']
-        else:
-            a = ['x', 'y']
-        contour_loop += [point for point in points if maxs[a[0]] >= point.coords[a[0]] > contour_loop[-1].coords[a[0]]
-                         and point.coords[a[1]] <= contour_loop[-1].coords[a[1]]]
-        contour_loop += [point for point in points if maxs[a[1]] >= point.coords[a[1]] > contour_loop[-1].coords[a[1]]
-                         and point.coords[a[0]] >= contour_loop[-1].coords[a[0]]]
-        contour_loop += [point for point in points if mins[a[0]] <= point.coords[a[0]] < contour_loop[-1].coords[a[0]]
-                         and point.coords[a[1]] >= contour_loop[-1].coords[a[1]]]
-        contour_loop += [point for point in points if mins[a[1]] <= point.coords[a[1]] < contour_loop[-1].coords[a[1]]
-                         and point.coords[a[0]] <= contour_loop[-1].coords[a[0]] and point not in contour_loop]
-        return contour_loop
+            inst = STL(stl_path)
+            self.dimensions = inst.calculate_dimensions()
+            return inst
 
     def rotate(self, rotation: List[Num]):
         """
         Rotates geometry
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
         """
+        self.rotation = [x1 + x2 for (x1, x2) in zip(self.rotation, rotation)]
         self.geometry.rotate(rotation, self.center)
 
     def translate(self, coords: List[Num]):
@@ -537,28 +402,33 @@ class Model:
         Translates geometry by certain coordinates
         :param coords: coordinates [x, y, z]
         """
+        self.location = [x1 + x2 for (x1, x2) in zip(self.location, coords)]
         self.geometry.translate(coords)
 
     def show(self):
         """
         Display the geometry using GMSH
         """
-        self._produce()
-        gmsh.fltk.run()
-        self._finilize()
+        if self.model_type != 'stl':
+            self._produce()
+            gmsh.fltk.run()
+            self._finilize()
 
     def save(self, dir_path: str):
         """
         Save a geometry as an STL file
         :param dir_path: path to directory to save to
         """
-        self._produce()
         if not os.path.exists(dir_path):
             os.mkdir(dir_path)
         file_path = f'{dir_path}/{self.name}.stl'
-        gmsh.write(file_path)
+        if self.model_type == 'stl':
+            self.geometry.mesh.save(file_path, mode=ASCII)
+        else:
+            self._produce()
+            gmsh.write(file_path)
+            self._finilize()
         rename_solid_stl(file_path, self.name)
-        self._finilize()
 
 
 def rename_solid_stl(stl_path: str, name: str):
