@@ -26,6 +26,7 @@ class Object(Resource):
         self.reqparse.add_argument('dimensions', type=list, help='Object dimensions', location='json')
         self.reqparse.add_argument('location', type=list, help='Object location', location='json')
         self.reqparse.add_argument('rotation', type=list, help='Object rotation', location='json')
+        self.reqparse.add_argument('template', type=str, help='Object template geometry')
         self.reqparse.add_argument('field', type=str, help='Sensor field')
         super(Object, self).__init__()
 
@@ -39,7 +40,7 @@ class Object(Resource):
     @auto_load_case
     def post(self, case_name, obj_name):
         args = self.reqparse.parse_args()
-        self.current_cases[case_name].add_object(obj_name, args['type'], args['dimensions'],
+        self.current_cases[case_name].add_object(obj_name, args['type'], args['template'], args['dimensions'],
                                                  args['location'], args['rotation'], args['field'])
         return '', 201
 
