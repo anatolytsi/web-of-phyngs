@@ -1,6 +1,6 @@
 from typing import List
 
-from backend.python.wopsimulator.openfoam.boundaries.boundary_types import Boundary
+from ...openfoam.boundaries.boundary_types import Boundary
 
 
 def update_boundaries(boundary: dict, time: int):

@@ -1,11 +1,12 @@
+import os
 import configparser
 
 from flask import Flask
 from flask_restful import Api
 
-from backend.python.server_resources.case import Case, CaseList
-from backend.python.server_resources.commands import Command
-from backend.python.server_resources.object import Object, ObjectList, ObjectValue
+from server_resources.case import Case, CaseList
+from server_resources.commands import Command
+from server_resources.object import Object, ObjectList, ObjectValue
 
 
 class Server:
@@ -35,7 +36,7 @@ class Server:
 
 def main():
     config = configparser.ConfigParser()
-    config.read('server.ini')
+    config.read(f'{os.path.dirname(os.path.abspath(__file__))}/server.ini')
     server = Server(host=config['DEFAULT']['Host'],
                     port=config.getint('DEFAULT', 'Port'),
                     debug=config.getboolean('DEFAULT', 'Debug'))

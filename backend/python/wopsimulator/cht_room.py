@@ -1,14 +1,14 @@
 import time
 from typing import List
 
-from backend.python.wopsimulator.exceptions import WrongObjectType
-from backend.python.wopsimulator.openfoam.common.parsing import get_latest_time
-from backend.python.wopsimulator.case_base import OpenFoamCase
-from backend.python.wopsimulator.objects.door import WopDoor
-from backend.python.wopsimulator.objects.room import WopRoom
-from backend.python.wopsimulator.objects.window import WopWindow
-from backend.python.wopsimulator.objects.heater import WopHeater
-from backend.python.wopsimulator.objects.wopthings import WopSensor
+from .exceptions import WrongObjectType
+from .openfoam.common.parsing import get_latest_time
+from .case_base import OpenFoamCase
+from .objects.door import WopDoor
+from .objects.room import WopRoom
+from .objects.window import WopWindow
+from .objects.heater import WopHeater
+from .objects.wopthings import WopSensor
 
 CHT_ROOM_OBJ_TYPES = [
     WopHeater.type_name,

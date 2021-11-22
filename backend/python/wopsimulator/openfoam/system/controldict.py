@@ -1,7 +1,7 @@
 import os
 import re
 
-from backend.python.wopsimulator.openfoam.common.parsing import SPECIFIC_VALUE_PATTERN, NUMBER_PATTERN
+from ..common.parsing import SPECIFIC_VALUE_PATTERN, NUMBER_PATTERN
 
 END_OF_FILE = '// ************************************************************************* //'
 

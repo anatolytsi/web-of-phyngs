@@ -11,16 +11,16 @@ from threading import Thread, Lock
 from PyFoam.Execution.BasicRunner import BasicRunner
 from numpy import arange
 
-from backend.python.wopsimulator.openfoam.boundaries.boundary_conditions import BoundaryCondition
-from backend.python.wopsimulator.openfoam.common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern, \
+from .boundaries.boundary_conditions import BoundaryCondition
+from .common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern, \
     force_remove_dir, remove_files_in_dir_with_pattern, copy_tree
-from backend.python.wopsimulator.openfoam.common.parsing import get_latest_time
-from backend.python.wopsimulator.openfoam.constant.material_properties import MaterialProperties
-from backend.python.wopsimulator.openfoam.probes.probes import ProbeParser
-from backend.python.wopsimulator.openfoam.system.blockmesh import BlockMeshDict
-from backend.python.wopsimulator.openfoam.system.controldict import ControlDict
-from backend.python.wopsimulator.openfoam.system.decomposepar import DecomposeParDict
-from backend.python.wopsimulator.openfoam.system.snappyhexmesh import SnappyHexMeshDict
+from .common.parsing import get_latest_time
+from .constant.material_properties import MaterialProperties
+from .probes.probes import ProbeParser
+from .system.blockmesh import BlockMeshDict
+from .system.controldict import ControlDict
+from .system.decomposepar import DecomposeParDict
+from .system.snappyhexmesh import SnappyHexMeshDict
 
 
 class OpenFoamInterface(ABC):

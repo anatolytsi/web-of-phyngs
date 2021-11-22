@@ -4,10 +4,10 @@ import os
 from dataclasses import dataclass
 from typing import Union, List, Callable
 
-from backend.python.wopsimulator.openfoam.common.parsing import INTERNAL_FIELD_PATTERN, BOUNDARY_FIELD_PATTERN, \
-    LIST_OR_VALUE_PATTERN, SPECIFIC_FIELD_PATTERN, SPECIFIC_FIELD_VALUES_PATTERN, SPECIAL_CHARACTERS
-from backend.python.wopsimulator.openfoam.common.parsing import NUMBER_PATTERN, VECTOR_PATTERN, FIELD_NAME_PATTERN
-from backend.python.wopsimulator.openfoam.boundaries.boundary_types import Boundary, BoundaryBase
+from ..common.parsing import INTERNAL_FIELD_PATTERN, BOUNDARY_FIELD_PATTERN, LIST_OR_VALUE_PATTERN, \
+    SPECIFIC_FIELD_PATTERN, SPECIFIC_FIELD_VALUES_PATTERN, SPECIAL_CHARACTERS
+from ..common.parsing import NUMBER_PATTERN, VECTOR_PATTERN, FIELD_NAME_PATTERN
+from .boundary_types import Boundary, BoundaryBase
 
 BOUNDARY_CONDITION_FILE_TEMPLATE = \
     r"""/*--------------------------------*- C++ -*----------------------------------*\

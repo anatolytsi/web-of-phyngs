@@ -1,12 +1,12 @@
 """Boundary types script. Used to instantiate various types of boundary conditions"""
 from typing import Callable
 
-from backend.python.wopsimulator.openfoam.boundaries.b_types.general_boundaries import *
-from backend.python.wopsimulator.openfoam.boundaries.b_types.geometric_boundaries import *
-from backend.python.wopsimulator.openfoam.boundaries.b_types.inlet_boundaries import *
-from backend.python.wopsimulator.openfoam.boundaries.b_types.outlet_boundaries import *
-from backend.python.wopsimulator.openfoam.boundaries.b_types.wall_boundaries import *
-from backend.python.wopsimulator.openfoam.boundaries.b_types.coupled_boundaries import *
+from .b_types.general_boundaries import *
+from .b_types.geometric_boundaries import *
+from .b_types.inlet_boundaries import *
+from .b_types.outlet_boundaries import *
+from .b_types.wall_boundaries import *
+from .b_types.coupled_boundaries import *
 
 # Dict of available geometric boundary types and their corresponding classes
 GEOMETRIC_BOUNDARY_TYPES = {

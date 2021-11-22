@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import List
 
-from backend.python.wopsimulator.openfoam.common.parsing import SPECIFIC_FIELD_PATTERN
+from ..common.parsing import SPECIFIC_FIELD_PATTERN
 
 END_OF_FILE = '// ************************************************************************* //'
 

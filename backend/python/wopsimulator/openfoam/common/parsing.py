@@ -1,4 +1,4 @@
-from backend.python.wopsimulator.openfoam.common.filehandling import get_numerated_dirs
+from .filehandling import get_numerated_dirs
 
 NUMBER_PATTERN = r'[+-]?[0-9]+[.]?[0-9]*[e]?[+-]?[0-9]*'
 VECTOR_PATTERN = f'\\(\\s*({NUMBER_PATTERN})\\s+({NUMBER_PATTERN})\\s+({NUMBER_PATTERN})\\s*\\)\\s*'

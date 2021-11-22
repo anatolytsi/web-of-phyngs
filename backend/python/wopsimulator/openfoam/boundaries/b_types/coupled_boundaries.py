@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from backend.python.wopsimulator.openfoam.boundaries.b_types.general_boundaries import Mixed
+from .general_boundaries import Mixed
 
 
 @dataclass

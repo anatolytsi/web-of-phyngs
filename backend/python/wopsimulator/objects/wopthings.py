@@ -1,10 +1,9 @@
 """Web of Phyngs base Phyngs (Object and Sensor)"""
 from abc import ABC, abstractmethod
 
-from backend.python.wopsimulator.geometry.manipulator import Model
-from backend.python.wopsimulator.openfoam.probes.probes import Probe
-from backend.python.wopsimulator.openfoam.system.snappyhexmesh import SnappyHexMeshDict, SnappyRegion, \
-    SnappyCellZoneMesh
+from ..geometry.manipulator import Model
+from ..openfoam.probes.probes import Probe
+from ..openfoam.system.snappyhexmesh import SnappyHexMeshDict, SnappyRegion, SnappyCellZoneMesh
 
 
 class WopObject(ABC):

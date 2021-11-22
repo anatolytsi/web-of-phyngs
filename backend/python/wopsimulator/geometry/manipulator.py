@@ -8,7 +8,7 @@ import numpy
 from stl import mesh
 from stl.stl import ASCII
 
-from backend.python.wopsimulator.geometry.primitives import Num, Point, Line, Loop, Surface
+from .primitives import Num, Point, Line, Loop, Surface
 
 GMSH_INITIALIZED = False
 

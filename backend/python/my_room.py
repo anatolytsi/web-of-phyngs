@@ -1,7 +1,7 @@
 import time
 
-from backend.python.wopsimulator.objects.heater import WopHeater
-from backend.python.wopsimulator.loader import create_case, load_case, save_case
+from .wopsimulator.objects.heater import WopHeater
+from .wopsimulator.loader import create_case, load_case, save_case
 
 
 def main():

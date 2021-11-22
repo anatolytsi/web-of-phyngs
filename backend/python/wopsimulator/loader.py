@@ -4,10 +4,10 @@ Case loader
 import json
 from pathlib import Path
 
-from backend.python.wopsimulator.cht_room import ChtRoom
-from backend.python.wopsimulator.exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists
-from backend.python.wopsimulator.openfoam.common.filehandling import force_remove_dir, copy_tree
-from backend.python.wopsimulator.variables import *
+from .cht_room import ChtRoom
+from .exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists
+from .openfoam.common.filehandling import force_remove_dir, copy_tree
+from .variables import *
 
 CASE_TYPES = {
     ChtRoom.case_type: ChtRoom,

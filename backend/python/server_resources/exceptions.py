@@ -1,6 +1,6 @@
 import traceback
 
-from backend.python.wopsimulator.exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists, WrongObjectType, \
+from wopsimulator.exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists, WrongObjectType, \
     ObjectNotFound
 
 

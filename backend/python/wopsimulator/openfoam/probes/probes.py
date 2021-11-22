@@ -5,7 +5,7 @@ import time
 from threading import Thread, Lock
 from typing import Union, List
 
-from backend.python.wopsimulator.openfoam.common.parsing import VECTOR_PATTERN, NUMBER_PATTERN, get_latest_time
+from ..common.parsing import VECTOR_PATTERN, NUMBER_PATTERN, get_latest_time
 
 Num = Union[int, float, None]
 

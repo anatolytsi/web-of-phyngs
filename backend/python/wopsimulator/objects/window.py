@@ -1,10 +1,9 @@
 import os
 
-from backend.python.wopsimulator.exceptions import ObjectSetValueFailed
-from backend.python.wopsimulator.objects.behavior.cht import set_boundary_to_wall, set_boundary_to_inlet, \
-    update_boundaries
-from backend.python.wopsimulator.objects.wopthings import WopObject
-from backend.python.wopsimulator.openfoam.common.parsing import get_latest_time
+from ..exceptions import ObjectSetValueFailed
+from ..openfoam.common.parsing import get_latest_time
+from .behavior.cht import set_boundary_to_wall, set_boundary_to_inlet, update_boundaries
+from .wopthings import WopObject
 
 
 class WopWindow(WopObject):

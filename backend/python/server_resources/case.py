@@ -1,7 +1,7 @@
 from flask_restful import Resource, reqparse
 
-from backend.python.server_resources.exceptions import catch_error
-from backend.python.wopsimulator.loader import load_case, create_case, get_cases_names, save_case, remove_case
+from .exceptions import catch_error
+from wopsimulator.loader import load_case, create_case, get_cases_names, save_case, remove_case
 
 
 def auto_load_case(func):

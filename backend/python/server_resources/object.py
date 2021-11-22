@@ -1,7 +1,7 @@
 from flask_restful import Resource, reqparse
 
-from backend.python.server_resources.case import auto_load_case
-from backend.python.server_resources.exceptions import catch_error
+from .case import auto_load_case
+from .exceptions import catch_error
 
 
 class ObjectList(Resource):
@@ -10,10 +10,14 @@ class ObjectList(Resource):
     @catch_error
     @auto_load_case
     def get(self, case_name):
-        obj_dict = {}
+        obj_list = []
         for obj in self.current_cases[case_name].get_objects().values():
-            obj_dict.update(obj.dump_settings())
-        return obj_dict
+            dump = obj.dump_settings()
+            dump_dict = list(dump.values())[0]
+            dump_dict['name'] = list(dump.keys())[0]
+            dump_dict['type'] = obj.type_name
+            obj_list.append(dump_dict)
+        return obj_list
 
 
 class Object(Resource):
@@ -63,6 +67,7 @@ class ObjectValue(Resource):
         obj = self.current_cases[case_name].get_object(obj_name)
         if obj_value in obj:
             return obj[obj_value]
+        # TODO: move this error
         raise KeyError(f'Property "{obj_value}" for object "{obj_name} does not exist')
 
     @catch_error
@@ -73,4 +78,5 @@ class ObjectValue(Resource):
         if obj_value in obj:
             obj[obj_value] = value
             return '', 200
+        # TODO: move this error
         raise KeyError(f'Property "{obj_value}" for object "{obj_name} does not exist')

@@ -1,8 +1,8 @@
 from flask_restful import Resource, reqparse
 
-from backend.python.server_resources.case import auto_load_case
-from backend.python.server_resources.exceptions import catch_error
-from backend.python.wopsimulator.loader import save_case
+from .case import auto_load_case
+from .exceptions import catch_error
+from wopsimulator.loader import save_case
 
 COMMAND_HELP = 'help'
 COMMAND_LIST = 'list'
