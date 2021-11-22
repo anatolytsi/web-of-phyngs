@@ -1,0 +1,30 @@
+{
+  "@context": "https://www.w3.org/2019/wot/td/v1",
+  "title": "WoPSimulator",
+  "description": "",
+  "security": "nosec_sc",
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  },
+  "properties": {
+    "cases": {
+      "description": "Get the available cases in the simulator",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "actions": {
+    "createCase": {
+      "description": "Create case with a specified name",
+      "type": "string"
+    },
+    "deleteCase": {
+      "description": "Delete case with a specified name",
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "@context": "https://www.w3.org/2019/wot/td/v1",
+  "title": "WoPCase",
+  "description": "",
+  "security": "nosec_sc",
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  },
+  "properties": {
+    "meshQuality": {
+      "description": "WoP simulation mesh quality",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "cleanLimit": {
+      "description": "WoP simulation clean limit time",
+      "type": "number",
+      "minimum": 0
+    },
+    "parallel": {
+      "description": "WoP simulation parallel run enabled",
+      "type": "boolean"
+    },
+    "cores": {
+      "description": "WoP simulation amount of cores for parallel run",
+      "type": "number",
+      "minimum": 1
+    },
+    "initialized": {
+      "description": "WoP simulation was initialized",
+      "type": "boolean"
+    },
+    "objects": {
+      "description": "WoP simulation objects (actuators and sensors)",
+      "type": "array",
+      "items": {
+        "description": "WoP simulation object URL",
+        "type": "string"
+      }
+    }
+  },
+  "actions": {
+    "clean": {
+      "description": "Clean WoP simulation case"
+    },
+    "setup": {
+      "description": "Setup WoP simulation case"
+    },
+    "run": {
+      "description": "Run WoP simulation case"
+    },
+    "stop": {
+      "description": "Stop WoP simulation case"
+    },
+    "postprocess": {
+      "description": "Post-process WoP simulation case"
+    }
+  }
+}
