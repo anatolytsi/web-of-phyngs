@@ -25,11 +25,12 @@ class Case(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('type', type=str, help='Web of Phyngs case type')
-        self.reqparse.add_argument('mesh_quality', type=int, help='Case mesh quality in percents')
-        self.reqparse.add_argument('clean_limit', type=int, help='Case maximum amount of results before cleaning')
-        self.reqparse.add_argument('parallel', type=bool, help='Run case in parallel')
-        self.reqparse.add_argument('cores', type=int, help='Number of cores for parallel run')
-        self.reqparse.add_argument('background', type=str, help='Case background region')
+        self.reqparse.add_argument('mesh_quality', type=int, help='Case mesh quality in percents', default=50)
+        self.reqparse.add_argument('clean_limit', type=int, help='Case maximum amount of results before cleaning',
+                                   default=0)
+        self.reqparse.add_argument('parallel', type=bool, help='Run case in parallel', default=True)
+        self.reqparse.add_argument('cores', type=int, help='Number of cores for parallel run', default=4)
+        self.reqparse.add_argument('background', type=str, help='Case background region', default='fluid')
         super(Case, self).__init__()
 
     @catch_error
