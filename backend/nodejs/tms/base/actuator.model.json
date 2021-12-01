@@ -1,0 +1,50 @@
+{
+  "@context": "https://www.w3.org/2019/wot/td/v1",
+  "title": "WoPActuator",
+  "description": "",
+  "links": [
+    {
+      "rel": "tm:extends",
+      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/object.model.json",
+      "type": "application/td+json"
+    }
+  ],
+  "security": "nosec_sc",
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  },
+  "properties": {
+    "dimensions": {
+      "description": "WoP Object dimensions",
+      "type": "array",
+      "items": {
+        "units": "m",
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3,
+      "readOnly": false,
+      "writeOnly": false
+    },
+    "rotation": {
+      "description": "WoP Object rotation",
+      "type": "array",
+      "items": {
+        "units": "deg",
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3,
+      "readOnly": false,
+      "writeOnly": false
+    },
+    "template": {
+      "description": "WoP Object template",
+      "type": "string",
+      "readOnly": false,
+      "writeOnly": false
+    }
+  }
+}

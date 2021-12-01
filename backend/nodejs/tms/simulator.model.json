@@ -13,7 +13,19 @@
       "description": "Get the available cases in the simulator",
       "type": "array",
       "items": {
-        "type": "string"
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Name of the case",
+            "type": "string"
+          },
+          "hrefs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       }
     }
   },

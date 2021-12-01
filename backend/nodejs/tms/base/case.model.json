@@ -57,6 +57,14 @@
     },
     "postprocess": {
       "description": "Post-process WoP simulation case"
+    },
+    "addObject": {
+      "description": "Add object to WoP simulation case",
+      "properties": {}
+    },
+    "removeObject": {
+      "description": "Remove object from WoP simulation case",
+      "type": "string"
     }
   }
 }

@@ -1,0 +1,33 @@
+{
+  "@context": "https://www.w3.org/2019/wot/td/v1",
+  "title": "WoPCHTWindow",
+  "description": "",
+  "links" : [
+    {
+      "rel": "tm:extends",
+      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/actuator.model.json",
+      "type": "application/td+json"
+    },
+    {
+      "rel": "tm:extends",
+      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/properties/heating.model.json",
+      "type": "application/td+json"
+    },
+    {
+      "rel": "tm:extends",
+      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/properties/velocity.model.json",
+      "type": "application/td+json"
+    },
+    {
+      "rel": "tm:extends",
+      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/properties/openable.model.json",
+      "type": "application/td+json"
+    }
+  ],
+  "security": "nosec_sc",
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  }
+}
