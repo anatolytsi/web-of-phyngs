@@ -1,9 +1,11 @@
 import random
+import time
 from abc import ABC, abstractmethod
 from typing import List
 
 from .exceptions import ObjectNotFound
 from .geometry.manipulator import combine_stls
+from .openfoam.common.parsing import get_latest_time, get_latest_time_parallel
 from .variables import CONFIG_DICT, CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, CONFIG_PARALLEL_KEY, \
     CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY
 from .openfoam.interface import OpenFoamInterface
@@ -26,6 +28,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         self._objects = {}
         self._partitioned_mesh = None
         self.sensors = {}
+        self.start_time = None
         if loaded:
             if initialized:
                 self._setup_initialized_case(kwargs)
@@ -208,6 +211,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         blockmesh_min_coords = [coord[0] - 1 for coord in minmax_coords]
         blockmesh_max_coords = [coord[1] + 1 for coord in minmax_coords]
         self.blockmesh_dict.add_box(blockmesh_min_coords, blockmesh_max_coords, name=self._partitioned_mesh.name)
+        # TODO: move it to more generalized function
         self.decompose_dict.divide_domain([j - i for i, j in minmax_coords])
 
     def bind_boundary_conditions(self):
@@ -215,11 +219,40 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         for obj in self._objects.values():
             obj.bind_region_boundaries(self.boundaries)
 
+    def get_simulation_time_sec(self):
+        """
+        Gets simulation time in epoch time
+        :return: epoch time
+        """
+        return self.start_time + self._time_probe.time
+
+    def get_time(self) -> dict:
+        """
+        Gets real time, simulation time and
+        a difference between real and simulation
+        :return: dictionary
+        """
+        times = {
+            'real_time': time.strftime('%d.%m.%y %H:%M:%S', time.localtime(time.time())),
+            'simulation_time': 0,
+            'time_difference': 0
+        }
+        if self.start_time:
+            simulation_sec = self.get_simulation_time_sec()
+            times['simulation_time'] = time.strftime('%d.%m.%y %H:%M:%S', time.localtime(simulation_sec))
+            times['time_difference'] = simulation_sec - time.time()
+        return times
+
     def run(self):
         """
         Runs solver and monitor threads
         Case must be setup before running
         """
+        get_time = get_latest_time
+        if self.parallel:
+            get_time = get_latest_time_parallel
+        if not get_time(self.path):
+            self.start_time = time.time()
         if not self.initialized:
             self.setup()
             # raise PermissionError(f'Case must be setup before running')

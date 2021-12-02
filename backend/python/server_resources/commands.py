@@ -15,6 +15,7 @@ COMMAND_SETUP = 'setup'
 COMMAND_RUN = 'run'
 COMMAND_STOP = 'stop'
 COMMAND_PROCESS = 'postprocess'
+COMMAND_SIMULATION_TIME = 'time'
 
 COMMANDS = {
     COMMAND_HELP: 'Returns this JSON',
@@ -23,7 +24,8 @@ COMMANDS = {
     COMMAND_SETUP: 'Setups case',
     COMMAND_RUN: 'Runs case',
     COMMAND_STOP: 'Stops case',
-    COMMAND_PROCESS: 'Post-process case'
+    COMMAND_PROCESS: 'Post-process case',
+    COMMAND_SIMULATION_TIME: 'Current real, simulation time of a case and their difference'
 }
 
 
@@ -37,9 +39,12 @@ class Command(Resource):
         super(Command, self).__init__()
 
     @catch_error
+    @auto_load_case
     def get(self, case_name, command):
         if command not in COMMANDS:
             return f'Command {command} is not defined', 400
+        elif command == COMMAND_SIMULATION_TIME:
+            return self.current_cases[case_name].get_time()
         return COMMANDS[command]
 
     @catch_error
