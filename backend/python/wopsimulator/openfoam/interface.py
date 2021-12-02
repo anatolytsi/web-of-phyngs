@@ -16,7 +16,7 @@ from .common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern,
     force_remove_dir, remove_files_in_dir_with_pattern, copy_tree
 from .common.parsing import get_latest_time
 from .constant.material_properties import MaterialProperties
-from .probes.probes import ProbeParser
+from .probes.probes import ProbeParser, Probe
 from .system.blockmesh import BlockMeshDict
 from .system.controldict import ControlDict
 from .system.decomposepar import DecomposeParDict
@@ -61,6 +61,7 @@ class OpenFoamInterface(ABC):
         self._solver_process = None
         self._solver_mutex = Lock()
         self._probe_parser = ProbeParser(self.path)
+        self._time_probe = None
         self.running = False
 
     @property
@@ -335,6 +336,8 @@ class OpenFoamInterface(ABC):
             for region in region_dirs:
                 self.boundaries.update({region: {}})
                 region_dir = os.listdir(f'{self.path}/0/{region}')
+                if not self._time_probe:
+                    self._time_probe = Probe(self.path, region_dir[0], region, [0, 0, 0])
                 for field in region_dir:
                     cls_instance = BoundaryCondition(field, self.path, region=region)
                     if cls_instance:
