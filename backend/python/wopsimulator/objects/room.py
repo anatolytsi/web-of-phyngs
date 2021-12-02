@@ -1,5 +1,3 @@
-import os
-
 from ..exceptions import ObjectSetValueFailed
 from ..openfoam.common.parsing import get_latest_time
 from .behavior.cht import set_boundary_to_wall
@@ -28,11 +26,9 @@ class WopRoom(WopObject):
         """
         self._temperature = 293.15
         model_type = 'stl' if template else 'box'
-        self.template = template
-        stl_path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/rooms/{template}' \
-                   f'{"" if template[-4:] == ".stl" else ".stl"}' if template else ''
+        template = f'rooms/{template}' if template else template
         super(WopRoom, self).__init__(name, case_dir, model_type, bg_region, dimensions, location, rotation,
-                                      stl_path=stl_path, of_interface=of_interface)
+                                      template=template, of_interface=of_interface)
         self._fields = ['T']
 
     def _add_initial_boundaries(self):

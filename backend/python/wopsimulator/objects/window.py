@@ -1,5 +1,3 @@
-import os
-
 from ..exceptions import ObjectSetValueFailed
 from ..openfoam.common.parsing import get_latest_time
 from .behavior.cht import set_boundary_to_wall, set_boundary_to_inlet, update_boundaries
@@ -30,11 +28,9 @@ class WopWindow(WopObject):
         self._velocity = [0, 0, 0]
         self._temperature = 293.15
         model_type = 'stl' if template else 'surface'
-        self.template = template
-        stl_path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/windows/{template}' \
-                   f'{"" if template[-4:] == ".stl" else ".stl"}' if template else ''
+        template = f'windows/{template}' if template else template
         super(WopWindow, self).__init__(name, case_dir, model_type, bg_region, dimensions, location, rotation,
-                                        stl_path=stl_path, of_interface=of_interface)
+                                        template=template, of_interface=of_interface)
         self._fields = 'all'
 
     def _add_initial_boundaries(self):

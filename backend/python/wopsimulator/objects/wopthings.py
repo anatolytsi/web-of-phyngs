@@ -1,4 +1,6 @@
 """Web of Phyngs base Phyngs (Object and Sensor)"""
+import os
+
 from abc import ABC, abstractmethod
 
 from ..geometry.manipulator import Model
@@ -14,7 +16,7 @@ class WopObject(ABC):
     type_name = 'object'
 
     def __init__(self, name: str, case_dir: str, model_type: str, bg_region: str, dimensions=(0, 0, 0),
-                 location=(0, 0, 0), rotation=(0, 0, 0), facing_zero=True, stl_path=None, of_interface=None):
+                 location=(0, 0, 0), rotation=(0, 0, 0), facing_zero=True, template=None, of_interface=None):
         """
         Web of Phyngs object initialization function
         :param name: name of an object
@@ -24,7 +26,7 @@ class WopObject(ABC):
         :param location: location coordinates [x, y, z]
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
         :param facing_zero: normal vector direction towards zero coordinates, used for model_type = 'surface'
-        :param stl_path: path to STL model, used for model_type = 'stl'
+        :param template: template name
         :param of_interface: OpenFoam interface
         """
         self.name = name
@@ -38,6 +40,9 @@ class WopObject(ABC):
         self._region = bg_region
         self._fields = []
         self.snappy = None
+        stl_path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/{template}' \
+                   f'{"" if template[-4:] == ".stl" else ".stl"}' if template else ''
+        self.template = template.split('/')[-1] if template else ''
         self.model = Model(name, model_type, dimensions, location, rotation, facing_zero, stl_path)
 
     @abstractmethod
