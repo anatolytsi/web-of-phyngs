@@ -40,6 +40,25 @@
         "description": "WoP simulation object URL",
         "type": "string"
       }
+    },
+    "time": {
+      "description": "WoP simulation time parameters",
+      "type": "object",
+      "properties": {
+        "real": {
+          "description": "WoP real time during the request",
+          "type": "string"
+        },
+        "simulation": {
+          "description": "WoP simulation time during the request",
+          "type": "string"
+        },
+        "difference": {
+          "description": "WoP time difference between real and simulation times",
+          "type": "int",
+          "unit": "ms"
+        }
+      }
     }
   },
   "actions": {

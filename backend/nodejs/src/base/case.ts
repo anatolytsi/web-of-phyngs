@@ -5,13 +5,19 @@
  * @author Anatolii Tsirkunenko
  * @since  29.11.2021
  */
-import axios from 'axios';
+import axios, {AxiosResponse} from 'axios';
 import {AbstractThing} from './thing';
 import {CaseParameters, ObjectProps} from './interfaces';
 import {AbstractObject} from './object';
 
 /** Case commands allowed in the simulator. */
-type CaseCommand = 'run' | 'stop' | 'setup' | 'clean' | 'postprocess';
+type CaseCommand = 'run' | 'stop' | 'setup' | 'clean' | 'postprocess' | 'time';
+
+interface CaseTime {
+    "real": string,
+    "simulation": string,
+    "difference": number
+}
 
 /**
  * An abstract case.
@@ -205,6 +211,20 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     }
 
     /**
+     * Returns the current time
+     * parameters of a simulation.
+     * @return {Promise<CaseTime>} Current time parameters of the simulation.
+     */
+    public async getTime(): Promise<CaseTime> {
+        let data = await this.executeCmd('time', 'get');
+        return {
+            'real': data['real_time'],
+            'simulation': data['simulation_time'],
+            'difference': data['time_difference']
+        };
+    }
+
+    /**
      * Updates case parameters from a simulation server.
      * @async
      */
@@ -272,15 +292,17 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     /**
      * Executes a case command.
      * @param {CaseCommand} command Case command to execute.
+     * @param {"get" | "post"} method Method to execute command with.
      * @async
      * @protected
      */
-    protected async executeCmd(command: CaseCommand): Promise<void> {
-        let response = await axios.post(`${this.couplingUrl}/${command}`);
+    protected async executeCmd(command: CaseCommand, method: 'get' | 'post' = 'post'): Promise<any> {
+        let response: AxiosResponse = await axios.request({method, url: `${this.couplingUrl}/${command}`});
         if (response.status !== 200) {
             console.error(response.data);
         }
-    }
+        return response.data;
+}
 
     protected addPropertyHandlers(): void {
         this.thing.setPropertyReadHandler('meshQuality', async () => this.meshQuality);
@@ -288,6 +310,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         this.thing.setPropertyReadHandler('parallel', async () => this.parallel);
         this.thing.setPropertyReadHandler('cores', async () => this.cores);
         this.thing.setPropertyReadHandler('objects', async () => this.getObjects());
+        this.thing.setPropertyReadHandler('time', async () => this.getTime());
 
         this.thing.setPropertyWriteHandler('meshQuality', async (meshQuality) => {
             await this.setMeshQuality(meshQuality);
