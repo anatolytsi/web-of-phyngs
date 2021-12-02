@@ -25,5 +25,20 @@ def get_latest_time(case_dir: str) -> float or int:
     try:
         latest_time = sorted([float(val) for val in get_numerated_dirs(case_dir, exception='0')])[-1]
         return int(latest_time) if latest_time.is_integer() else latest_time
-    except IndexError:
+    except (IndexError, FileNotFoundError):
+        return 0
+
+
+def get_latest_time_parallel(case_dir: str) -> float or int:
+    """
+    Returns latest time of the simulation that
+    correspond to latest time result folder name
+    in parallel run
+    :param case_dir: case directory
+    :return: latest simulation time
+    """
+    try:
+        latest_time = sorted([float(val) for val in get_numerated_dirs(f'{case_dir}/processor0', exception='0')])[-1]
+        return int(latest_time) if latest_time.is_integer() else latest_time
+    except (IndexError, FileNotFoundError):
         return 0
