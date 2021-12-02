@@ -58,6 +58,7 @@ class WopObject(ABC):
             'dimensions': self.model.dimensions,
             'location': self.model.location,
             'rotation': self.model.rotation,
+            'template': self.template
         }}
 
     def prepare(self):
