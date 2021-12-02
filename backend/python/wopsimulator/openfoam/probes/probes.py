@@ -244,14 +244,9 @@ class ProbeParser(Thread):
         and saves it to corresponding probe.
         """
         path_to_probes_data = f'{self._case_dir}/postProcessing/probes/{region}'
-        scalar_pattern = f'^\\s*({NUMBER_PATTERN})\\s+'
-        vector_pattern = f'^\\s*({NUMBER_PATTERN})\\s+'
-        for _ in range(self._num_of_probes + 1):
-            scalar_pattern += f'({NUMBER_PATTERN})\\s*'
-            vector_pattern += f'{VECTOR_PATTERN}\\s*'
-        scalar_pattern = re.compile(scalar_pattern)
-        vector_pattern = re.compile(vector_pattern)
-        region_probes = [[num, probe] for num, probe in enumerate(Probe._instances) if probe.region == region]
+        scalar_pattern = re.compile(NUMBER_PATTERN)
+        vector_pattern = re.compile(VECTOR_PATTERN)
+        region_probes = [[num, probe] for num, probe in enumerate(Probe._instances, 0) if probe.region == region]
         for field in Probe._fields:
             try:
                 latest_result = get_latest_time(path_to_probes_data)
@@ -265,15 +260,16 @@ class ProbeParser(Thread):
                     while f.read(1) != b'\n':
                         f.seek(-2, os.SEEK_CUR)
                     last_line = f.readline().decode()
-                scalar_match = scalar_pattern.search(last_line)
-                vector_match = vector_pattern.search(last_line)
+                scalar_match = re.findall(scalar_pattern, last_line)
+                vector_match = vector_pattern.findall(last_line)
                 for number, probe in field_probes:
                     if vector_match:
-                        probe.time = float(vector_match.group(1))
-                        probe.value = [float(vector_match.group(3 * number + 2 + i)) for i in range(3)]
+                        probe.time = float(scalar_match[0])
+                        probe.value = list(map(float, vector_match[number]))
                     elif scalar_match:
-                        probe.time = float(scalar_match.group(1))
-                        probe.value = float(scalar_match.group(number + 2))
+                        scalar_match = list(map(float, scalar_match))
+                        probe.time = scalar_match[0]
+                        probe.value = scalar_match[number + 1]
 
     @staticmethod
     def _on_field_remove(line, fields_str, fields, used_fields):
