@@ -258,10 +258,9 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      * @param {string} name Name of an object.
      */
     public async removeObject(name: string): Promise<void> {
-        if (name in this.objects) {
-            await this.objects[name].destroy();
-            delete this.objects[name];
-        }
+        if (!(name in this.objects)) return;
+        await this.objects[name].destroy();
+        delete this.objects[name];
     }
 
     /**
@@ -269,14 +268,13 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      * @return {ObjectHrefs[]} Objects with names, types and HREFs
      */
     public getObjects(): ObjectHrefs[] {
+        let objects: ObjectHrefs[] = [];
         if (this.objects) {
-            let objects: ObjectHrefs[] = [];
             for (const name in this.objects) {
                 objects.push({name, type: this.objects[name].type, hrefs: this.objects[name].getHrefs()});
             }
-            return objects;
         }
-        return [];
+        return objects;
     }
 
     /**
