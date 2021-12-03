@@ -175,6 +175,11 @@ class WopSensor:
         """Sensor value getter"""
         return self._probe.value
 
+    def destroy(self):
+        """Destroys a Phyng Sensor by deleting a probe"""
+        self._probe.remove()
+        del self._probe
+
     def __getitem__(self, item):
         """Allow to access attributes of a class as in dictionary"""
         return getattr(self, item)
