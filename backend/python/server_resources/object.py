@@ -47,6 +47,7 @@ class Object(Resource):
         args = self.reqparse.parse_args()
         self.current_cases[case_name].add_object(obj_name, args['type'], args['template'], args['dimensions'],
                                                  args['location'], args['rotation'], args['field'])
+        save_case(case_name, self.current_cases[case_name])
         return '', 201
 
     @catch_error
