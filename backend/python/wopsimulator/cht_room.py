@@ -222,6 +222,7 @@ class ChtRoom(OpenFoamCase):
         elif obj_type == WopSensor.type_name:
             sensor = WopSensor(name, self.path, sns_field, self.background, location)
             self.sensors.update({sensor.name: sensor})
+            self.initialized = False
             return
         else:
             raise WrongObjectType(f'Wrong object type! Possible types are {CHT_ROOM_OBJ_TYPES}')
