@@ -4,6 +4,7 @@ import os
 from abc import ABC, abstractmethod
 
 from ..geometry.manipulator import Model
+from ..openfoam.common.filehandling import force_remove_dir
 from ..openfoam.probes.probes import Probe
 from ..openfoam.system.snappyhexmesh import SnappyHexMeshDict, SnappyRegion, SnappyCellZoneMesh
 
@@ -91,6 +92,25 @@ class WopObject(ABC):
         if region_boundaries:
             self._boundary_conditions = region_boundaries[self._bg_region]
             self._add_initial_boundaries()
+
+    def destroy(self):
+        if os.path.exists(path := f'{self._case_dir}/constant/triSurface/{self.name}.stl'):
+            os.remove(path)
+        if os.path.exists(path := f'{self._case_dir}/0/{self.name}'):
+            force_remove_dir(path)
+        if os.path.exists(path := f'{self._case_dir}/constant/{self.name}'):
+            force_remove_dir(path)
+        if os.path.exists(path := f'{self._case_dir}/system/{self.name}'):
+            force_remove_dir(path)
+        self._snappy_dict.remove(self.name)
+        if self._boundary_conditions:
+            for bc in self._boundary_conditions.values():
+                if self.name in bc:
+                    del bc[self.name]
+                if reg := f'{self.name}_to_{self._bg_region}' in bc:
+                    del bc[reg]
+                if reg := f'{self._bg_region}_to_{self.name}' in bc:
+                    del bc[reg]
 
     def __getitem__(self, item):
         """Allow to access attributes of a class as in dictionary"""

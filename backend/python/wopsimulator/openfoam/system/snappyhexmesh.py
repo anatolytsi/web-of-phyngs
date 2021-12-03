@@ -284,6 +284,12 @@ class SnappyHexMeshDict:
         with open(f'{self._case_dir}/system/snappyHexMeshDict', 'w') as f:
             f.writelines(file_output)
 
+    def remove(self, name):
+        try:
+            del self.meshes[name]
+        except KeyError:
+            raise KeyError(f'Mesh {name} does not exist in snappyHexMeshDict')
+
 
 def main():
     walls = SnappyRegion('walls', 'wall')

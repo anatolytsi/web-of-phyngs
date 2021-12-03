@@ -25,7 +25,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :param kwargs: OpenFOAM interface kwargs, i.e., case parameters
         """
         super(OpenFoamCase, self).__init__(*args, **kwargs)
-        self._objects = {}
+        self.objects = {}
         self._partitioned_mesh = None
         self.sensors = {}
         self.start_time = None
@@ -64,7 +64,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :return: list of min and max, e.g., [(x_min, x_max), ...]
         """
         all_x, all_y, all_z = set(), set(), set()
-        for obj in self._objects.values():
+        for obj in self.objects.values():
             obj_x, obj_y, obj_z = obj.model.geometry.get_used_coords()
             all_x = all_x | obj_x
             all_y = all_y | obj_y
@@ -83,7 +83,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         # Find the forbidden coordinates, i.e., all cell zones' coordinates
         forbidden_coords = [{'min': obj.model.location,
                              'max': [c1 + c2 for c1, c2 in zip(obj.model.location, obj.model.dimensions)]}
-                            for obj in self._objects.values() if type(obj.snappy) == SnappyCellZoneMesh]
+                            for obj in self.objects.values() if type(obj.snappy) == SnappyCellZoneMesh]
         point_found = False
         coords_allowed = [False for _ in range(len(forbidden_coords))]
         # If there are no forbidden coordinates
@@ -164,22 +164,30 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :param object_name: name of an object/sensor
         :return: object/sensor instance
         """
-        if object_name in self._objects:
-            return self._objects[object_name]
+        if object_name in self.objects:
+            return self.objects[object_name]
         elif object_name in self.sensors:
             return self.sensors[object_name]
         raise ObjectNotFound(f'Object with name {object_name} was not found')
+
+    def remove_object(self, object_name):
+        """
+        Removes an object with a specified name from case
+        :param object_name: object name to remove
+        """
+        self.objects[object_name].destroy()
+        del self.objects[object_name]
 
     def get_objects(self):
         """
         Gets all objects/sensors
         :return: objects/sensors dict
         """
-        return {**self._objects, **self.sensors}
+        return {**self.objects, **self.sensors}
 
     def prepare_geometry(self):
         """Prepares each objects geometry"""
-        for obj in self._objects.values():
+        for obj in self.objects.values():
             obj.prepare()
 
     def partition_mesh(self, partition_name: str):
@@ -187,7 +195,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Partitions mesh by producing a partitioned mesh out of partition regions
         :param partition_name: partitioned mesh name
         """
-        regions = [obj.snappy for obj in self._objects.values() if type(obj.snappy) == SnappyRegion]
+        regions = [obj.snappy for obj in self.objects.values() if type(obj.snappy) == SnappyRegion]
         region_paths = [f'{self.path}/constant/triSurface/{region.name}.stl' for region in regions]
         combine_stls(f'{self.path}/constant/triSurface/{partition_name}.stl', region_paths)
         self._partitioned_mesh = SnappyPartitionedMesh(partition_name, f'{partition_name}.stl')
@@ -199,7 +207,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         adds background mesh to blockMeshDict
         """
         # Get all partitions
-        partitions = [obj.snappy for obj in self._objects.values() if type(obj.snappy) == SnappyCellZoneMesh]
+        partitions = [obj.snappy for obj in self.objects.values() if type(obj.snappy) == SnappyCellZoneMesh]
         partitions.insert(0, self._partitioned_mesh)
         for partition in partitions:
             self.material_props.add_object(partition.name, partition.material_type, partition.material)
@@ -216,7 +224,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
 
     def bind_boundary_conditions(self):
         """Binds boundary conditions to objects"""
-        for obj in self._objects.values():
+        for obj in self.objects.values():
             obj.bind_region_boundaries(self.boundaries)
 
     def get_simulation_time_sec(self):
