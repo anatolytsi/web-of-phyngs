@@ -175,8 +175,15 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Removes an object with a specified name from case
         :param object_name: object name to remove
         """
-        self.objects[object_name].destroy()
-        del self.objects[object_name]
+        obj = self.get_object(object_name)
+        type_name = obj.type_name
+        obj.destroy()
+        if type_name == 'sensor':
+            del self.sensors[object_name]
+            self._probe_parser.remove_unused()
+        else:
+            del self.objects[object_name]
+        self.initialized = False
 
     def get_objects(self):
         """

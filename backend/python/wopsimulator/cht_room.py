@@ -233,10 +233,11 @@ class ChtRoom(OpenFoamCase):
         Removes an object with a specified name from case
         :param object_name: object name to remove
         """
-        type_name = self.objects[object_name].type_name
+        type_name = self.get_object(object_name).type_name
         super(ChtRoom, self).remove_object(object_name)
         type_name = f'{type_name}s' if 's' not in type_name[-1] else type_name
-        del self[type_name][object_name]
+        if type_name != 'sensors':
+            del self[type_name][object_name]
 
 
 def main():
