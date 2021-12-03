@@ -1,9 +1,10 @@
 """Web of Phyngs base Phyngs (Object and Sensor)"""
 import os
+import re
 
 from abc import ABC, abstractmethod
 
-import wget
+import gdown
 
 from ..geometry.manipulator import Model
 from ..openfoam.common.filehandling import force_remove_dir
@@ -46,9 +47,19 @@ class WopObject(ABC):
         self.snappy = None
         if url:
             self.path = f'{case_dir}/geometry/{name}.stl'
-            wget.download(url, self.path)
+            pattern = r'https://drive\.google\.com/file/d/([^/]+)(/view)?'
+            match = re.match(pattern, url)
+            if not match.group():
+                raise ConnectionError(f'Provided download URL ({url}) does not match pattern {pattern}')
+            url = f'https://drive.google.com/uc?id={match.group(1)}'
+            gdown.download(url, self.path, quiet=True)
             if not os.path.exists(self.path):
                 raise FileNotFoundError(f'Custom STL was not loaded for object {name}')
+            with open(self.path, 'r') as f:
+                stl = f.read()
+                stl_match = re.match(r'^solid [^\s]*\s[\S\s]+endsolid [^\s]*$', stl)
+                if not stl_match.group():
+                    raise OSError('Verify provided STL file for integrity')
         elif template:
             self.path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/{template}' \
                         f'{"" if template[-4:] == ".stl" else ".stl"}'
