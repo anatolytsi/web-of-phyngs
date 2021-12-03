@@ -86,59 +86,66 @@ export class Simulator extends AbstractThing {
     /**
      * Initializes a new case with a given name.
      * @param {string} name Name of a case to initialize.
+     * @return {Promise<any>} Init error or nothing.
      * @protected
      * @async
      */
-    protected async initCaseByName(name: string): Promise<void> {
-        let response = await axios.get(`${this.couplingUrl}/${name}`);
-        if (!(name in this.cases)) {
+    protected async initCaseByName(name: string): Promise<any> {
+        let response: AxiosResponse = await axios.get(`${this.couplingUrl}/${name}`);
+        if (!(name in this.cases) && responseIsSuccessful(response.status)) {
             this.cases[name] = this.constructExposedCase(response.data.type, name);
             await this.cases[name].ready;
             this.casesHrefs.push({name: name, hrefs: this.cases[name].getHrefs()});
+            return;
         }
+        return response.data;
     }
 
     /**
      * Loads available cases from the simulator backend.
-     * @return {Promise<boolean>} Cases loaded promise.
      * @protected
+     * @async
      */
-    protected loadAvailableCases(): Promise<boolean> {
-        return new Promise(async (resolve) => {
-            let response = await axios.get(`${this.couplingUrl}`);
-            let caseNames: Array<string> = response.data;
-            this.casesHrefs = [];
-            for (const name of caseNames) {
-                let normalName = `${name.replace('.case', '')}`;
-                await this.initCaseByName(normalName);
-            }
-            resolve(true);
-        })
+    protected async loadAvailableCases(): Promise<void> {
+        let response: AxiosResponse = await axios.get(`${this.couplingUrl}`);
+        if (responseIsUnsuccessful(response.status)) {
+            return response.data;
+        }
+        let caseNames: string[] = response.data;
+        this.casesHrefs = [];
+        for (const name of caseNames) {
+            let normalName = `${name.replace('.case', '')}`;
+            await this.initCaseByName(normalName);
+        }
     }
 
     /**
      * Creates case with given parameters on the simulator backend.
      * @param {CaseParameters} params Case parameters.
-     * @return {Promise<AxiosResponse>} Simulator backend response promise.
+     * @return {Promise<any>} Simulator backend response promise.
+     * @async
      */
-    public createCase(params: CaseParameters): Promise<AxiosResponse> {
+    public async createCase(params: CaseParameters): Promise<any> {
         let {name, ...data} = params;
-        return axios.post(`${this.couplingUrl}/${name}`, data);
+        let response: AxiosResponse = await axios.post(`${this.couplingUrl}/${name}`, data);
+        return response.data;
     }
 
     /**
      * Deletes case by its name.
      * @param {string} name Name of the case.
-     * @return {Promise<AxiosResponse>} Simulator backend response promise.
+     * @return {Promise<any>} Simulator backend response promise.
+     * @async
      */
-    public deleteCase(name: string): Promise<AxiosResponse> {
+    public async deleteCase(name: string): Promise<any> {
         if (name in this.cases) {
             let index = this.casesHrefs.findIndex(x => x.name === name);
             this.casesHrefs.splice(index, 1);
-            this.cases[name].destroy();
+            await this.cases[name].destroy();
             delete this.cases[name];
         }
-        return axios.delete(`${this.couplingUrl}/${name}`);
+        let response: AxiosResponse = await axios.delete(`${this.couplingUrl}/${name}`);
+        return response.data;
     }
 
     protected addPropertyHandlers(): void {
@@ -150,10 +157,10 @@ export class Simulator extends AbstractThing {
     protected addActionHandlers(): void {
         this.thing.setActionHandler('createCase', async (params) => {
             await this.createCase(params);
-            await this.initCaseByName(params.name);
+            return await this.initCaseByName(params.name);
         });
         this.thing.setActionHandler('deleteCase', async (name) => {
-            await this.deleteCase(name);
+            return await this.deleteCase(name);
         });
     }
 
