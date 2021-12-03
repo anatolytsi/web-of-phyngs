@@ -8,19 +8,8 @@
 import axios, {AxiosResponse} from 'axios';
 import {AbstractThing} from './thing';
 import {AbstractCase} from './case';
-import {CaseParameters} from './interfaces';
-import {AnyUri} from 'wot-thing-description-types';
+import {CaseParameters, CaseHrefs} from './interfaces';
 import {responseIsUnsuccessful, responseIsSuccessful} from "./helpers";
-
-/**
- * Case Hyperlink REFerences (HREFs).
- */
-interface CaseHrefs {
-    /** Case name. */
-    name: string;
-    /** Case HREFs. */
-    hrefs: AnyUri[]
-}
 
 /**
  * Case type constructor function.
@@ -95,7 +84,7 @@ export class Simulator extends AbstractThing {
         if (!(name in this.cases) && responseIsSuccessful(response.status)) {
             this.cases[name] = this.constructExposedCase(response.data.type, name);
             await this.cases[name].ready;
-            this.casesHrefs.push({name: name, hrefs: this.cases[name].getHrefs()});
+            this.casesHrefs.push({name, hrefs: this.cases[name].getHrefs()});
             return;
         }
         return response.data;

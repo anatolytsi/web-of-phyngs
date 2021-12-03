@@ -6,11 +6,13 @@
  * @since  29.11.2021
  */
 
+import {AnyUri} from "wot-thing-description-types";
+
 /**
  * Keys to prevent mutation of a
  * fixed length array.
  */
-type ArrayLengthMutationKeys = 'splice' | 'push' | 'pop' | 'shift' |  'unshift'
+type ArrayLengthMutationKeys = 'splice' | 'push' | 'pop' | 'shift' | 'unshift'
 
 /**
  * Fixed length array type, values are
@@ -20,7 +22,7 @@ export type FixedLengthArray<T, L extends number, TObj = [T, ...Array<T>]> =
     Pick<TObj, Exclude<keyof TObj, ArrayLengthMutationKeys>>
     & {
     readonly length: L
-    [ I : number ] : T
+    [I: number]: T
     [Symbol.iterator]: () => IterableIterator<T>
 }
 
@@ -107,4 +109,28 @@ export interface CaseParameters {
     parallel?: boolean
     /** Amount of cores to run in parallel. */
     cores?: number
+}
+
+/**
+ * Named Hyperlink REFerences (HREFs).
+ */
+interface NamedHrefs {
+    /** Thing name. */
+    name: string;
+    /** Thing HREFs. */
+    hrefs: AnyUri[]
+}
+
+/**
+ * Case Hyperlink REFerences (HREFs).
+ */
+export interface CaseHrefs extends NamedHrefs {
+}
+
+/**
+ * Object Hyperlink REFerences (HREFs).
+ */
+export interface ObjectHrefs extends NamedHrefs {
+    /** Object type */
+    type: string
 }
