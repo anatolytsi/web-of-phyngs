@@ -60,7 +60,7 @@ def create_pattern(prefix: str = '', suffix: str = ''):
         for symbol in symbols:
             if symbol in suffix:
                 suffix = suffix.replace(symbol, f'\\{symbol}')
-        suffix_re = f'{suffix}$'
+        suffix_re = f'{suffix}.*'
     return re.compile('%s%s' % (prefix_re, suffix_re))
 
 
