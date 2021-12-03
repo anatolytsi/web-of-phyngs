@@ -4,7 +4,7 @@
  * @return {boolean} Status successful.
  */
 export const responseIsSuccessful = (status: number): boolean => {
-    return status / 100 === 2;
+    return ~~(status / 100) === 2;
 }
 
 /**
@@ -13,5 +13,5 @@ export const responseIsSuccessful = (status: number): boolean => {
  * @return {boolean} Status unsuccessful.
  */
 export const responseIsUnsuccessful = (status: number): boolean => {
-    return status / 100 !== 2;
+    return ~~(status / 100) !== 2;
 }
