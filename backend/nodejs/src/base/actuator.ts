@@ -8,6 +8,7 @@
 import axios from 'axios';
 import {AbstractObject} from './object';
 import {ActuatorPropsCreated, ActuatorPropsTemplate, Size, Vector} from './interfaces';
+import {responseIsUnsuccessful} from "./helpers";
 
 /**
  * An abstract actuator.
@@ -48,7 +49,7 @@ export abstract class Actuator extends AbstractObject implements ActuatorPropsCr
     public async setDimensions(dimensions: Size): Promise<void> {
         this._dimensions = dimensions;
         let response = await axios.patch(`${this.couplingUrl}`, { dimensions });
-        if (response.status / 100 !== 2) {
+        if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }
     }
@@ -69,7 +70,7 @@ export abstract class Actuator extends AbstractObject implements ActuatorPropsCr
     public async setRotation(rotation: Vector): Promise<void> {
         this._rotation = rotation;
         let response = await axios.patch(`${this.couplingUrl}`, { rotation });
-        if (response.status / 100 !== 2) {
+        if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }
     }
@@ -90,7 +91,7 @@ export abstract class Actuator extends AbstractObject implements ActuatorPropsCr
     public async setTemplate(template: string): Promise<void> {
         this._template = template;
         let response = await axios.patch(`${this.couplingUrl}`, { template });
-        if (response.status / 100 !== 2) {
+        if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }
     }

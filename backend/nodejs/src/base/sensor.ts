@@ -8,6 +8,7 @@
 import axios from 'axios';
 import {AbstractObject} from './object';
 import {SensorProps} from './interfaces';
+import {responseIsUnsuccessful} from "./helpers";
 
 /** Sensors common TM. */
 const sensorTm: WoT.ThingDescription = require('../../tms/base/sensor.model.json');
@@ -44,7 +45,7 @@ export abstract class Sensor extends AbstractObject implements SensorProps {
      */
     protected async getValue(): Promise<any> {
         let response = await axios.get(`${this.couplingUrl}/value`);
-        if (response.status / 100 !== 2) {
+        if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }
         return response.data;

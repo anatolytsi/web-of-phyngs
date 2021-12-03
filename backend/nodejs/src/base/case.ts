@@ -9,6 +9,7 @@ import axios, {AxiosResponse} from 'axios';
 import {AbstractThing} from './thing';
 import {CaseParameters, ObjectProps} from './interfaces';
 import {AbstractObject} from './object';
+import {responseIsUnsuccessful} from "./helpers";
 
 /** Case commands allowed in the simulator. */
 type CaseCommand = 'run' | 'stop' | 'setup' | 'clean' | 'postprocess' | 'time';
@@ -298,7 +299,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      */
     protected async executeCmd(command: CaseCommand, method: 'get' | 'post' = 'post'): Promise<any> {
         let response: AxiosResponse = await axios.request({method, url: `${this.couplingUrl}/${command}`});
-        if (response.status !== 200) {
+        if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }
         return response.data;

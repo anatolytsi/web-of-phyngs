@@ -10,6 +10,7 @@ import {AbstractThing} from './thing';
 import {AbstractCase} from './case';
 import {CaseParameters} from './interfaces';
 import {AnyUri} from 'wot-thing-description-types';
+import {responseIsUnsuccessful, responseIsSuccessful} from "./helpers";
 
 /**
  * Case Hyperlink REFerences (HREFs).
