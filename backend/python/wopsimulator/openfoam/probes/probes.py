@@ -194,6 +194,17 @@ class Probe:
         with open(self.__class__._dict_path, 'w') as f:
             f.writelines(new_lines)
 
+    def remove(self):
+        """Removes probe from known instances"""
+        self.__class__._instances.remove(self)
+        used_fields = set()
+        used_regions = set()
+        for inst in self.__class__._instances:
+            used_fields.add(inst.field)
+            used_regions.add(inst.field)
+        self.__class__._fields = used_fields
+        self.__class__._regions = used_regions
+
 
 class ProbeParser(Thread):
     """
