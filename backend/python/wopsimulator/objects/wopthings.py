@@ -3,6 +3,8 @@ import os
 
 from abc import ABC, abstractmethod
 
+import wget
+
 from ..geometry.manipulator import Model
 from ..openfoam.common.filehandling import force_remove_dir
 from ..openfoam.probes.probes import Probe
@@ -16,8 +18,9 @@ class WopObject(ABC):
     """
     type_name = 'object'
 
-    def __init__(self, name: str, case_dir: str, model_type: str, bg_region: str, dimensions=(0, 0, 0),
-                 location=(0, 0, 0), rotation=(0, 0, 0), facing_zero=True, template=None, of_interface=None):
+    def __init__(self, name: str, case_dir: str, model_type: str, bg_region: str, url='',
+                 dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
+                 facing_zero=True, template=None, of_interface=None):
         """
         Web of Phyngs object initialization function
         :param name: name of an object
@@ -41,10 +44,20 @@ class WopObject(ABC):
         self._region = bg_region
         self._fields = []
         self.snappy = None
-        stl_path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/{template}' \
-                   f'{"" if template[-4:] == ".stl" else ".stl"}' if template else ''
+        if url:
+            self.path = f'{case_dir}/geometry/{name}.stl'
+            wget.download(url, self.path)
+            if not os.path.exists(self.path):
+                raise FileNotFoundError(f'Custom STL was not loaded for object {name}')
+        elif template:
+            self.path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/{template}' \
+                        f'{"" if template[-4:] == ".stl" else ".stl"}'
+            if not os.path.exists(self.path):
+                raise FileNotFoundError(f'Template STL does not exist for object {name}')
+        else:
+            self.path = ''
         self.template = template.split('/')[-1] if template else ''
-        self.model = Model(name, model_type, dimensions, location, rotation, facing_zero, stl_path)
+        self.model = Model(name, model_type, dimensions, location, rotation, facing_zero, self.path)
 
     @abstractmethod
     def _add_initial_boundaries(self):
@@ -64,6 +77,7 @@ class WopObject(ABC):
 
     def prepare(self):
         """Saves the model of an instance to a proper location (constant/triSurface)"""
+        self.path = f'{self._case_dir}/constant/triSurface/{self.name}.stl'
         self.model.save(f'{self._case_dir}/constant/triSurface')
 
     def bind_snappy(self, snappy_dict: SnappyHexMeshDict, snappy_type: str, region_type='wall', refinement_level=0):
