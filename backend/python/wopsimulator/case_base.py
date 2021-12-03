@@ -269,8 +269,8 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         if not get_time(self.path):
             self.start_time = time.time()
         if not self.initialized:
+            self.clean_case()
             self.setup()
-            # raise PermissionError(f'Case must be setup before running')
         super(OpenFoamCase, self).run()
 
     def __getitem__(self, item):
