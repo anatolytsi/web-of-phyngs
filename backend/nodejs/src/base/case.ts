@@ -9,7 +9,7 @@ import axios, {AxiosResponse} from 'axios';
 import {AbstractThing} from './thing';
 import {CaseParameters, ObjectProps} from './interfaces';
 import {AbstractObject} from './object';
-import {responseIsUnsuccessful} from "./helpers";
+import {responseIsSuccessful, responseIsUnsuccessful} from "./helpers";
 
 /** Case commands allowed in the simulator. */
 type CaseCommand = 'run' | 'stop' | 'setup' | 'clean' | 'postprocess' | 'time';
@@ -246,7 +246,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     public async addObject(props: ObjectProps): Promise<void> {
         let {name, ...data} = props;
         let response = await axios.post(`${this.couplingUrl}/object/${name}`, data);
-        if (response.status === 201) {
+        if (responseIsSuccessful(response.status)) {
             this.addObjectToDict(props);
         } else {
             console.error(response.data);

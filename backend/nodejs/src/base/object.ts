@@ -8,6 +8,7 @@
 import axios from 'axios';
 import {AbstractThing} from './thing';
 import {Coordinates, ObjectProps} from './interfaces';
+import {responseIsSuccessful} from "./helpers";
 
 /**
  * An abstract object.
@@ -99,7 +100,7 @@ export abstract class AbstractObject extends AbstractThing {
 
     public async destroy(): Promise<void> {
         let response = await axios.delete(this.couplingUrl);
-        if (response.status / 100 === 2) {
+        if (responseIsSuccessful(response.status)) {
             await super.destroy();
         }
     }
