@@ -37,8 +37,26 @@
       "description": "WoP simulation objects (actuators and sensors)",
       "type": "array",
       "items": {
-        "description": "WoP simulation object URL",
-        "type": "string"
+        "description": "WoP simulation object name, type and HREFs",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "WoP object name",
+            "type": "string"
+          },
+          "type": {
+            "description": "WoP object type",
+            "type": "string"
+          },
+          "hrefs": {
+            "description": "WoP object HREFs",
+            "type": "array",
+            "items": {
+              "description": "WoP object HREF",
+              "type": "string"
+            }
+          }
+        }
       }
     },
     "time": {

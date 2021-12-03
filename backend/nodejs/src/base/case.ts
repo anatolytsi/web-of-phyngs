@@ -7,7 +7,7 @@
  */
 import axios, {AxiosResponse} from 'axios';
 import {AbstractThing} from './thing';
-import {CaseParameters, ObjectProps} from './interfaces';
+import {CaseParameters, ObjectHrefs, ObjectProps} from './interfaces';
 import {AbstractObject} from './object';
 import {responseIsSuccessful, responseIsUnsuccessful} from "./helpers";
 
@@ -266,13 +266,13 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
 
     /**
      * Gets case objects with their HREFs.
-     * @return {string[][]} Objects with name and HREFs
+     * @return {ObjectHrefs[]} Objects with names, types and HREFs
      */
-    public getObjects(): string[][] {
+    public getObjects(): ObjectHrefs[] {
         if (this.objects) {
-            let objects: string[][] = [];
+            let objects: ObjectHrefs[] = [];
             for (const name in this.objects) {
-                objects.push(this.objects[name].getHrefs());
+                objects.push({name, type: this.objects[name].type, hrefs: this.objects[name].getHrefs()});
             }
             return objects;
         }
