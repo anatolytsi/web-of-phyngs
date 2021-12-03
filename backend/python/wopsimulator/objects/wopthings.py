@@ -94,6 +94,10 @@ class WopObject(ABC):
             self._add_initial_boundaries()
 
     def destroy(self):
+        """
+        Destroys a Phyng object by removing all
+        connected data, e.g., files, from simulation
+        """
         if os.path.exists(path := f'{self._case_dir}/constant/triSurface/{self.name}.stl'):
             os.remove(path)
         if os.path.exists(path := f'{self._case_dir}/0/{self.name}'):
