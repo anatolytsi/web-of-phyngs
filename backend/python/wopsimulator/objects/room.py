@@ -11,13 +11,16 @@ class WopRoom(WopObject):
     """
     type_name = 'walls'
 
-    def __init__(self, name, case_dir, bg_region: str, dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
+    def __init__(self, name, case_dir, bg_region: str, url='', custom=False,
+                 dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
                  template=None, of_interface=None):
         """
         Web of Phyngs room initialization function
         :param name: name of the room walls
         :param case_dir: case directory
         :param bg_region: background region name
+        :param url: room URL
+        :param custom: room was created from URL
         :param dimensions: dimensions [x, y, z]
         :param location: location coordinates [x, y, z]
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
@@ -27,8 +30,8 @@ class WopRoom(WopObject):
         self._temperature = 293.15
         model_type = 'stl' if template else 'box'
         template = f'rooms/{template}' if template else template
-        super(WopRoom, self).__init__(name, case_dir, model_type, bg_region, dimensions, location, rotation,
-                                      template=template, of_interface=of_interface)
+        super(WopRoom, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
+                                      rotation, template=template, of_interface=of_interface)
         self._fields = ['T']
 
     def _add_initial_boundaries(self):
