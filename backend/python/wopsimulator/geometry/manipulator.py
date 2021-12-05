@@ -222,7 +222,7 @@ class STL:
         maxy = self.mesh.y.max()
         minz = self.mesh.z.min()
         maxz = self.mesh.z.max()
-        return maxx - minx, maxy - miny, maxz - minz
+        return [float(maxx - minx), float(maxy - miny), float(maxz - minz)]
 
     def get_used_coords(self):
         """
