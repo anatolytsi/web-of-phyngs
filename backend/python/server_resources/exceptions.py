@@ -22,7 +22,6 @@ def catch_error(func):
             return str(e), 404
         except Exception as e:
             traceback.print_exc()
-            resp = (str(e), 500)
-            return resp
+            return str(e), 500
 
     return wrapper
