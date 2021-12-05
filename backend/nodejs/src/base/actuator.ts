@@ -9,6 +9,7 @@ import axios from 'axios';
 import {AbstractObject} from './object';
 import {ActuatorPropsCreated, ActuatorPropsTemplate, Size, Vector} from './interfaces';
 import {responseIsUnsuccessful} from "./helpers";
+import {AnyUri} from "wot-thing-description-types";
 
 /**
  * An abstract actuator.
@@ -22,6 +23,8 @@ export abstract class Actuator extends AbstractObject implements ActuatorPropsCr
     protected _dimensions: Size;
     /** Actuator rotation. */
     protected _rotation: Vector;
+    /** Actuator was created from custom STL model. */
+    protected _custom: boolean;
     /** Actuator template model name. */
     protected _template: string;
 
@@ -30,6 +33,7 @@ export abstract class Actuator extends AbstractObject implements ActuatorPropsCr
         super(host, wot, tm, caseName, props);
         this._rotation = 'rotation' in props && props.rotation ? props.rotation : [0, 0, 0];
         this._dimensions = 'dimensions' in props ? props.dimensions : [0, 0, 0];
+        this._custom = 'url' in props;
         this._template = 'template' in props ? props.template : '';
     }
 
@@ -73,6 +77,15 @@ export abstract class Actuator extends AbstractObject implements ActuatorPropsCr
         if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }
+    }
+
+    /**
+     * Gets flag indicating if Phyng
+     * was created from custom STL.
+     * @return {boolean} true if custom.
+     */
+    public get custom(): boolean {
+        return this._custom;
     }
 
     /**

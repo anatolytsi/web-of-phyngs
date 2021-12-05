@@ -40,6 +40,12 @@
       "readOnly": false,
       "writeOnly": false
     },
+    "custom": {
+      "description": "WoP Object created from custom STL",
+      "type": "boolean",
+      "readOnly": true,
+      "writeOnly": false
+    },
     "template": {
       "description": "WoP Object template",
       "type": "string",

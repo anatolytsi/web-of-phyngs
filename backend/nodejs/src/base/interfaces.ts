@@ -51,6 +51,8 @@ interface ObjectPropsBase {
  * actuators created by geometry and template.
  */
 export interface ActuatorPropsBase extends ObjectPropsBase {
+    /** Custom actuator STL URL */
+    url?: AnyUri,
     /** Actuator geometry rotation. */
     rotation?: Vector;
 }
