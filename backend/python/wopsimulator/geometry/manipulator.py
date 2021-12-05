@@ -211,7 +211,14 @@ class STL:
             for j in range(0, len(self.mesh.vectors[i])):
                 self.mesh.vectors[i][j] = self.mesh.vectors[i][j] + numpy.array(coords)
 
-    def calculate_dimensions(self):
+    def get_location(self) -> list:
+        """
+        Returns location of the imported STL
+        :return: [x, y, z] location
+        """
+        return [float(self.mesh.x.min()), float(self.mesh.y.min()), float(self.mesh.z.min())]
+
+    def calculate_dimensions(self) -> list:
         """
         Calculates dimensions of the imported STL
         :return: [x, y, z] dimensions
@@ -386,7 +393,11 @@ class Model:
                 return b
         elif self.model_type == self._stl_type:
             inst = STL(stl_path)
+            self.location = inst.get_location()
             self.dimensions = inst.calculate_dimensions()
+            self.center = [self.location[0] + self.dimensions[0] / 2,
+                           self.location[1] + self.dimensions[1] / 2,
+                           self.location[2] + self.dimensions[2] / 2]
             return inst
 
     def rotate(self, rotation: List[Num]):
