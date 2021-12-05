@@ -11,13 +11,16 @@ class WopWindow(WopObject):
     """
     type_name = 'window'
 
-    def __init__(self, name, case_dir, bg_region: str, dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
+    def __init__(self, name, case_dir, bg_region: str, url='', custom=False,
+                 dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
                  template=None, of_interface=None):
         """
         Web of Phyngs window initialization function
         :param name: name of the window
         :param case_dir: case directory
         :param bg_region: background region name
+        :param url: window URL
+        :param custom: window was created from URL
         :param dimensions: dimensions [x, y, z]
         :param location: location coordinates [x, y, z]
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
@@ -29,8 +32,8 @@ class WopWindow(WopObject):
         self._temperature = 293.15
         model_type = 'stl' if template else 'surface'
         template = f'windows/{template}' if template else template
-        super(WopWindow, self).__init__(name, case_dir, model_type, bg_region, dimensions, location, rotation,
-                                        template=template, of_interface=of_interface)
+        super(WopWindow, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
+                                        rotation, template=template, of_interface=of_interface)
         self._fields = 'all'
 
     def _add_initial_boundaries(self):

@@ -31,6 +31,7 @@ CONFIG_OBJ_ROTATION = 'rotation'
 CONFIG_SNS_FIELD = 'field'
 CONFIG_LOCATION = 'location'
 CONFIG_TEMPLATE = 'template'
+CONFIG_CUSTOM = 'custom'
 CONFIG_TEMPERATURE_KEY = 'temperature'
 CONFIG_VELOCITY_KEY = 'velocity'
 
@@ -81,6 +82,7 @@ class ChtRoom(OpenFoamCase):
                 CONFIG_OBJ_DIMENSIONS: self.walls.model.dimensions,
                 CONFIG_LOCATION: self.walls.model.location,
                 CONFIG_OBJ_ROTATION: self.walls.model.rotation,
+                CONFIG_CUSTOM: self.walls.custom,
                 CONFIG_TEMPLATE: self.walls.template,
                 CONFIG_TEMPERATURE_KEY: self.walls.temperature
             }
@@ -89,6 +91,7 @@ class ChtRoom(OpenFoamCase):
                 CONFIG_OBJ_DIMENSIONS: heater.model.dimensions,
                 CONFIG_LOCATION: heater.model.location,
                 CONFIG_OBJ_ROTATION: heater.model.rotation,
+                CONFIG_CUSTOM: heater.custom,
                 CONFIG_TEMPLATE: heater.template,
                 CONFIG_TEMPERATURE_KEY: heater.temperature
             }})
@@ -97,6 +100,7 @@ class ChtRoom(OpenFoamCase):
                 CONFIG_OBJ_DIMENSIONS: window.model.dimensions,
                 CONFIG_LOCATION: window.model.location,
                 CONFIG_OBJ_ROTATION: window.model.rotation,
+                CONFIG_CUSTOM: window.custom,
                 CONFIG_TEMPLATE: window.template,
                 CONFIG_TEMPERATURE_KEY: window.temperature,
                 CONFIG_VELOCITY_KEY: window.velocity
@@ -106,6 +110,7 @@ class ChtRoom(OpenFoamCase):
                 CONFIG_OBJ_DIMENSIONS: door.model.dimensions,
                 CONFIG_LOCATION: door.model.location,
                 CONFIG_OBJ_ROTATION: door.model.rotation,
+                CONFIG_CUSTOM: door.custom,
                 CONFIG_TEMPLATE: door.template,
                 CONFIG_TEMPERATURE_KEY: door.temperature,
                 CONFIG_VELOCITY_KEY: door.velocity
@@ -144,19 +149,19 @@ class ChtRoom(OpenFoamCase):
         self.background = case_param[CONFIG_BACKGROUND_KEY]
         if CONFIG_WALLS_KEY in case_param and case_param[CONFIG_WALLS_KEY]:
             walls = case_param[CONFIG_WALLS_KEY]
-            self.add_object(name=walls[CONFIG_NAME_KEY], obj_type='walls', dimensions=walls['dimensions'],
-                            location=walls['location'], template=walls['template'])
+            self.add_object(name=walls[CONFIG_NAME_KEY], custom=walls[CONFIG_CUSTOM], obj_type='walls',
+                            dimensions=walls['dimensions'], location=walls['location'], template=walls['template'])
         if CONFIG_HEATERS_KEY in case_param and case_param[CONFIG_HEATERS_KEY]:
             for name, heater in case_param[CONFIG_HEATERS_KEY].items():
-                self.add_object(name, 'heater', dimensions=heater[CONFIG_OBJ_DIMENSIONS],
+                self.add_object(name, 'heater', custom=heater[CONFIG_CUSTOM], dimensions=heater[CONFIG_OBJ_DIMENSIONS],
                                 location=heater[CONFIG_LOCATION], template=heater['template'])
         if CONFIG_WINDOWS_KEY in case_param and case_param[CONFIG_WINDOWS_KEY]:
             for name, window in case_param[CONFIG_WINDOWS_KEY].items():
-                self.add_object(name, 'window', dimensions=window[CONFIG_OBJ_DIMENSIONS],
+                self.add_object(name, 'window', custom=window[CONFIG_CUSTOM], dimensions=window[CONFIG_OBJ_DIMENSIONS],
                                 location=window[CONFIG_LOCATION], template=window['template'])
         if CONFIG_DOORS_KEY in case_param and case_param[CONFIG_DOORS_KEY]:
             for name, door in case_param[CONFIG_DOORS_KEY].items():
-                self.add_object(name, 'door', dimensions=door[CONFIG_OBJ_DIMENSIONS],
+                self.add_object(name, 'door', custom=door[CONFIG_CUSTOM], dimensions=door[CONFIG_OBJ_DIMENSIONS],
                                 location=door[CONFIG_LOCATION], template=door['template'])
         if CONFIG_SENSORS_KEY in case_param and case_param[CONFIG_SENSORS_KEY]:
             for name, sensor in case_param[CONFIG_SENSORS_KEY].items():
@@ -177,13 +182,15 @@ class ChtRoom(OpenFoamCase):
         self.bind_boundary_conditions()
         self.initialized = True
 
-    def add_object(self, name: str, obj_type: str, template: str = '',
+    def add_object(self, name: str, obj_type: str, url: str = '', custom=False, template: str = '',
                    dimensions: List[float] = (0, 0, 0), location: List[float] = (0, 0, 0),
                    rotation: List[float] = (0, 0, 0), sns_field: str = None):
         """
         Adds WoP object/sensor to a CHT case
         :param name: name of the object
         :param obj_type: type of an object, one of: 'heater', 'walls', 'door', 'window'
+        :param url: object URL
+        :param custom: object was created from URL
         :param template: object template
         :param dimensions: object dimensions
         :param location: object location
@@ -192,27 +199,27 @@ class ChtRoom(OpenFoamCase):
         """
         # TODO: check if name contains spaces
         if obj_type == WopHeater.type_name:
-            wop_object = WopHeater(name, self.path, self.background, dimensions=dimensions, location=location,
-                                   rotation=rotation, template=template, of_interface=self)
+            wop_object = WopHeater(name, self.path, self.background, url, custom, dimensions=dimensions,
+                                   location=location, rotation=rotation, template=template, of_interface=self)
             wop_object.bind_snappy(self.snappy_dict, 'cell_zone', refinement_level=2)
             self.heaters.update({name: wop_object})
         elif obj_type == WopWindow.type_name:
-            wop_object = WopWindow(name, self.path, self.background, dimensions=dimensions, location=location,
-                                   rotation=rotation, template=template, of_interface=self)
+            wop_object = WopWindow(name, self.path, self.background, url, custom, dimensions=dimensions,
+                                   location=location, rotation=rotation, template=template, of_interface=self)
             wop_object.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
             self.windows.update({wop_object.name: wop_object})
             if self.walls:
                 self.walls.model.geometry.cut_surface(wop_object.model.geometry)
         elif obj_type == WopDoor.type_name:
-            wop_object = WopDoor(name, self.path, self.background, dimensions=dimensions, location=location,
-                                 rotation=rotation, template=template, of_interface=self)
+            wop_object = WopDoor(name, self.path, self.background, url, custom, dimensions=dimensions,
+                                 location=location, rotation=rotation, template=template, of_interface=self)
             wop_object.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
             self.doors.update({wop_object.name: wop_object})
             if self.walls:
                 self.walls.model.geometry.cut_surface(wop_object.model.geometry)
         elif obj_type == WopRoom.type_name:
-            wop_object = WopRoom(name, self.path, self.background, dimensions=dimensions, location=location,
-                                 rotation=rotation, template=template, of_interface=self)
+            wop_object = WopRoom(name, self.path, self.background, url, custom, dimensions=dimensions,
+                                 location=location, rotation=rotation, template=template, of_interface=self)
             wop_object.bind_snappy(self.snappy_dict, 'region', 'wall')
             self.walls = wop_object
             for window in self.windows.values():

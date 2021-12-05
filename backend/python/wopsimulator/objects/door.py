@@ -11,12 +11,15 @@ class WopDoor(WopObject):
     """
     type_name = 'door'
 
-    def __init__(self, name, case_dir, bg_region: str, dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
+    def __init__(self, name, case_dir, bg_region: str, url='', custom=False,
+                 dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
                  template=None, of_interface=None):
         """
         Web of Phyngs door initialization function
         :param name: name of the door
         :param case_dir: case directory
+        :param url: door URL
+        :param custom: door was created from URL
         :param bg_region: background region name
         :param dimensions: dimensions [x, y, z]
         :param location: location coordinates [x, y, z]
@@ -29,8 +32,8 @@ class WopDoor(WopObject):
         self._temperature = 293.15
         model_type = 'stl' if template else 'surface'
         template = f'doors/{template}' if template else template
-        super(WopDoor, self).__init__(name, case_dir, model_type, bg_region, dimensions, location, rotation,
-                                      template=template, of_interface=of_interface)
+        super(WopDoor, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
+                                      rotation, template=template, of_interface=of_interface)
         self._fields = 'all'
 
     def _add_initial_boundaries(self):

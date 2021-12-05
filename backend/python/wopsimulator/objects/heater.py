@@ -11,7 +11,8 @@ class WopHeater(WopObject):
     """
     type_name = 'heater'
 
-    def __init__(self, name, case_dir, bg_region: str, dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
+    def __init__(self, name, case_dir, bg_region: str, url='', custom=False,
+                 dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
                  template=None, of_interface=None):
         """
         Web of Phyngs heater initialization function
@@ -27,8 +28,8 @@ class WopHeater(WopObject):
         self._temperature = 293.15
         model_type = 'stl' if template else 'box'
         template = f'heaters/{template}' if template else template
-        super(WopHeater, self).__init__(name, case_dir, model_type, bg_region, dimensions, location, rotation,
-                                        template=template, of_interface=of_interface)
+        super(WopHeater, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
+                                        rotation, template=template, of_interface=of_interface)
         self._region = name
         self._fields = ['T']
 

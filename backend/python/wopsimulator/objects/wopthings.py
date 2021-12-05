@@ -19,7 +19,7 @@ class WopObject(ABC):
     """
     type_name = 'object'
 
-    def __init__(self, name: str, case_dir: str, model_type: str, bg_region: str, url='',
+    def __init__(self, name: str, case_dir: str, model_type: str, bg_region: str, url='', custom=False,
                  dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
                  facing_zero=True, template=None, of_interface=None):
         """
@@ -27,6 +27,8 @@ class WopObject(ABC):
         :param name: name of an object
         :param case_dir: case directory
         :param bg_region: background region name
+        :param url: object URL
+        :param custom: object was created from URL
         :param dimensions: dimensions [x, y, z]
         :param location: location coordinates [x, y, z]
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
@@ -45,7 +47,9 @@ class WopObject(ABC):
         self._region = bg_region
         self._fields = []
         self.snappy = None
+        self.custom = custom
         if url:
+            model_type = 'stl'
             self.path = f'{case_dir}/geometry/{name}.stl'
             pattern = r'https://drive\.google\.com/file/d/([^/]+)(/view)?'
             match = re.match(pattern, url)
@@ -60,11 +64,16 @@ class WopObject(ABC):
                 stl_match = re.match(r'^solid [^\s]*\s[\S\s]+endsolid [^\s]*$', stl)
                 if not stl_match.group():
                     raise OSError('Verify provided STL file for integrity')
+            self.custom = True
+        elif custom:
+            self.path = f'{case_dir}/geometry/{name}.stl'
+            if not os.path.exists(self.path):
+                raise FileNotFoundError(f'Custom STL was not loaded for object {name}')
         elif template:
             self.path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/{template}' \
                         f'{"" if template[-4:] == ".stl" else ".stl"}'
             if not os.path.exists(self.path):
-                raise FileNotFoundError(f'Template STL does not exist for object {name}')
+                raise FileNotFoundError(f'Template {template} STL does not exist for object {name}')
         else:
             self.path = ''
         self.template = template.split('/')[-1] if template else ''
