@@ -428,6 +428,8 @@ class OpenFoamInterface(ABC):
         Runs solver and monitor threads
         :return: None
         """
+        if self.running:
+            return
         self.start_solving()
         self._probe_parser = ProbeParser(self.path)
         self._probe_parser.start()
@@ -440,5 +442,7 @@ class OpenFoamInterface(ABC):
         Stops solver and monitor threads
         :return: None
         """
+        if not self.running:
+            return
         self._probe_parser.stop()
         self.stop_solving()
