@@ -65,15 +65,15 @@ class WopObject(ABC):
                 if not stl_match.group():
                     raise OSError('Verify provided STL file for integrity')
             self.custom = True
-        elif custom:
-            self.path = f'{case_dir}/geometry/{name}.stl'
-            if not os.path.exists(self.path):
-                raise FileNotFoundError(f'Custom STL was not loaded for object {name}')
         elif template:
             self.path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/{template}' \
                         f'{"" if template[-4:] == ".stl" else ".stl"}'
             if not os.path.exists(self.path):
                 raise FileNotFoundError(f'Template {template} STL does not exist for object {name}')
+        elif custom:
+            self.path = f'{case_dir}/geometry/{name}.stl'
+            if not os.path.exists(self.path):
+                raise FileNotFoundError(f'Custom STL was not loaded for object {name}')
         else:
             self.path = ''
         self.template = template.split('/')[-1] if template else ''
