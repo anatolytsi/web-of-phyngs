@@ -217,7 +217,7 @@ class ProbeParser(Thread):
     results parsing thread
     """
 
-    def __init__(self, case_dir, period: int = 0.001):
+    def __init__(self, case_dir, period: int = 0.01):
         """
         Probe parser initialization function
         :param case_dir: case directory
