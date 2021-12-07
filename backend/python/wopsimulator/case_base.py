@@ -5,6 +5,7 @@ from typing import List
 
 from .exceptions import ObjectNotFound
 from .geometry.manipulator import combine_stls
+from .objects.wopthings import WopObject, WopSensor
 from .openfoam.common.parsing import get_latest_time, get_latest_time_parallel
 from .variables import CONFIG_DICT, CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, CONFIG_PARALLEL_KEY, \
     CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY

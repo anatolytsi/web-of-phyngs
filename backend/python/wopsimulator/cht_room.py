@@ -9,31 +9,10 @@ from .objects.room import WopRoom
 from .objects.window import WopWindow
 from .objects.heater import WopHeater
 from .objects.wopthings import WopSensor
-
-CHT_ROOM_OBJ_TYPES = [
-    WopHeater.type_name,
-    WopWindow.type_name,
-    WopRoom.type_name,
-    WopDoor.type_name,
-    WopSensor.type_name,
-    # TODO:
-    'furniture',
-]
-CONFIG_BACKGROUND_KEY = 'background'
-CONFIG_WALLS_KEY = 'walls'
-CONFIG_NAME_KEY = 'name'
-CONFIG_HEATERS_KEY = 'heaters'
-CONFIG_WINDOWS_KEY = 'windows'
-CONFIG_DOORS_KEY = 'doors'
-CONFIG_SENSORS_KEY = 'sensors'
-CONFIG_OBJ_DIMENSIONS = 'dimensions'
-CONFIG_OBJ_ROTATION = 'rotation'
-CONFIG_SNS_FIELD = 'field'
-CONFIG_LOCATION = 'location'
-CONFIG_TEMPLATE = 'template'
-CONFIG_CUSTOM = 'custom'
-CONFIG_TEMPERATURE_KEY = 'temperature'
-CONFIG_VELOCITY_KEY = 'velocity'
+from .variables import (CHT_ROOM_OBJ_TYPES, CONFIG_BACKGROUND_KEY, CONFIG_WALLS_KEY, CONFIG_NAME_KEY,
+                        CONFIG_HEATERS_KEY, CONFIG_WINDOWS_KEY, CONFIG_DOORS_KEY, CONFIG_SENSORS_KEY,
+                        CONFIG_OBJ_DIMENSIONS, CONFIG_OBJ_ROTATION, CONFIG_SNS_FIELD, CONFIG_LOCATION, CONFIG_TEMPLATE,
+                        CONFIG_CUSTOM, CONFIG_TEMPERATURE_KEY, CONFIG_VELOCITY_KEY)
 
 
 class ChtRoom(OpenFoamCase):
