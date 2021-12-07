@@ -274,6 +274,7 @@ class Model:
         self.dimensions = dimensions if dimensions is not None else [0, 0, 0]
         self.location = location if location is not None else [0, 0, 0]
         self.rotation = rotation if rotation is not None else [0, 0, 0]
+        self.facing_zero = facing_zero
         self.center = []
         self._initialized = False
         self._produced = False
