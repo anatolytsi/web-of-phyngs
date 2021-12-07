@@ -8,7 +8,8 @@ from .geometry.manipulator import combine_stls
 from .objects.wopthings import WopObject, WopSensor
 from .openfoam.common.parsing import get_latest_time, get_latest_time_parallel
 from .variables import CONFIG_DICT, CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, CONFIG_PARALLEL_KEY, \
-    CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY
+    CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY, CONFIG_OBJ_DIMENSIONS, \
+    CONFIG_OBJ_ROTATION, CONFIG_LOCATION, CONFIG_TEMPLATE, CONFIG_URL, CONFIG_SNS_FIELD, CONFIG_OBJ_NAME_KEY
 from .openfoam.interface import OpenFoamInterface
 from .openfoam.system.snappyhexmesh import SnappyRegion, SnappyPartitionedMesh, SnappyCellZoneMesh
 
@@ -172,6 +173,58 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         elif object_name in self.sensors:
             return self.sensors[object_name]
         raise ObjectNotFound(f'Object with name {object_name} was not found')
+
+    def modify_object(self, object_name: str, params: dict):
+        """
+        Modifies object by recreating it with new parameters
+        :param object_name: object name
+        :param params: object parameters to change, e.g., dimensions
+        """
+        geometric_set = {CONFIG_OBJ_DIMENSIONS, CONFIG_OBJ_ROTATION, CONFIG_LOCATION,
+                         CONFIG_TEMPLATE, CONFIG_URL, CONFIG_SNS_FIELD}
+        if not geometric_set.isdisjoint(params.keys()):
+            self.stop()
+            self.initialized = False
+            obj = self.get_object(object_name)
+            orig_params = {}
+            obj_type = obj.type_name
+            if obj.type_name == 'sensor':
+                new_params = {
+                    CONFIG_OBJ_NAME_KEY: obj.name,
+                    CONFIG_LOCATION: params[CONFIG_LOCATION] if params[CONFIG_LOCATION] else obj.model.location,
+                    CONFIG_SNS_FIELD: params[CONFIG_SNS_FIELD] if params[CONFIG_SNS_FIELD] else obj.field,
+                }
+                self.remove_object(object_name)
+                self.add_object(new_params[CONFIG_OBJ_NAME_KEY], obj_type, location=new_params[CONFIG_LOCATION],
+                                sns_field=new_params[CONFIG_SNS_FIELD])
+            else:
+                new_params = {
+                    CONFIG_OBJ_NAME_KEY: obj.name,
+                    CONFIG_OBJ_DIMENSIONS: obj.model.dimensions,
+                    CONFIG_LOCATION: params[CONFIG_LOCATION] if params[CONFIG_LOCATION] else obj.model.location,
+                    CONFIG_OBJ_ROTATION: params[CONFIG_OBJ_ROTATION] if params[CONFIG_OBJ_ROTATION]
+                    else obj.model.rotation,
+                    CONFIG_TEMPLATE: obj.template,
+                    CONFIG_URL: None
+                }
+                custom = obj.custom
+                if params[CONFIG_OBJ_DIMENSIONS]:
+                    new_params[CONFIG_OBJ_DIMENSIONS] = params[CONFIG_OBJ_DIMENSIONS]
+                    new_params[CONFIG_TEMPLATE] = ''
+                    custom = False
+                elif params[CONFIG_TEMPLATE]:
+                    new_params[CONFIG_OBJ_DIMENSIONS] = [0, 0, 0]
+                    new_params[CONFIG_TEMPLATE] = params[CONFIG_TEMPLATE]
+                    custom = False
+                elif params[CONFIG_URL]:
+                    new_params[CONFIG_OBJ_DIMENSIONS] = [0, 0, 0]
+                    new_params[CONFIG_TEMPLATE] = ''
+                    new_params[CONFIG_URL] = params[CONFIG_URL]
+                    custom = True
+                self.remove_object(object_name)
+                self.add_object(new_params[CONFIG_OBJ_NAME_KEY], obj_type, new_params[CONFIG_URL], custom,
+                                new_params[CONFIG_TEMPLATE], new_params[CONFIG_OBJ_DIMENSIONS],
+                                new_params[CONFIG_LOCATION], new_params[CONFIG_OBJ_ROTATION])
 
     def remove_object(self, object_name):
         """

@@ -53,8 +53,14 @@ class Object(Resource):
         return '', 201
 
     @catch_error
+    @auto_load_case
     def patch(self, case_name, obj_name):
-        pass
+        params = self.reqparse.parse_args()
+        if obj_name in self.current_cases[case_name].objects or obj_name in self.current_cases[case_name].sensors:
+            self.current_cases[case_name].modify_object(obj_name, params)
+            save_case(case_name, self.current_cases[case_name])
+            return '', 200
+        return f'Object/sensor {obj_name} does not exist in case {case_name}', 404
 
     @catch_error
     @auto_load_case
