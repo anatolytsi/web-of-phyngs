@@ -1,7 +1,7 @@
 import random
 import time
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Union
 
 from .exceptions import ObjectNotFound
 from .geometry.manipulator import combine_stls
@@ -161,7 +161,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         """
         pass
 
-    def get_object(self, object_name):
+    def get_object(self, object_name) -> Union[WopObject, WopSensor]:
         """
         Gets object/sensor by its name
         :param object_name: name of an object/sensor
