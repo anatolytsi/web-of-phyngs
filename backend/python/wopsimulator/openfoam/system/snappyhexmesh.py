@@ -288,7 +288,7 @@ class SnappyHexMeshDict:
         try:
             del self.meshes[name]
         except KeyError:
-            raise KeyError(f'Mesh {name} does not exist in snappyHexMeshDict')
+            print(f'Mesh {name} does not exist in snappyHexMeshDict, thus not deleted')
 
 
 def main():
