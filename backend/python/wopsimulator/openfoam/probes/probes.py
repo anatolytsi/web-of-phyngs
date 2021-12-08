@@ -53,7 +53,8 @@ def parse_probes_dict(dict_path: str,
     :param on_location_end: on location end found callback, must be of form: f(): return [str]
     :return: modified probes dictionary lines as a list
     """
-    lines = open(dict_path, 'r').readlines()
+    with open(dict_path, 'r') as f:
+        lines = f.readlines()
     new_lines = []
     fields_pattern = re.compile(r'^\s*fields\s*\(([\w\s]*)\);\n*$')
     region_pattern = re.compile(r'^\s*region\s*([\w]+);\n*$')

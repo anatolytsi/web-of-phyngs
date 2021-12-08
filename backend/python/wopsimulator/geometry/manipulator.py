@@ -452,7 +452,8 @@ def rename_solid_stl(stl_path: str, name: str):
     stl_path = stl_path if '.stl' in stl_path else f'{stl_path}.stl'
     if not os.path.exists(stl_path):
         raise FileNotFoundError(f'Path {stl_path} does not exist')
-    lines = open(stl_path, 'r').readlines()
+    with open(stl_path, 'r') as f:
+        lines = f.readlines()
     new_lines = []
     solid_pattern = re.compile(r'((end)?solid)')
     for line in lines:

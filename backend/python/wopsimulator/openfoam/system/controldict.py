@@ -126,7 +126,8 @@ class ControlDict:
     def _parse(self):
         """Parses controlDict"""
         if os.path.exists(path := f'{self._case_dir}/system/controlDict'):
-            lines = open(path).readlines()
+            with open(path, 'r') as f:
+                lines = f.readlines()
             lines_str = ''.join(lines)
             for name in self.__dict__.keys():
                 if name[0] == '_':

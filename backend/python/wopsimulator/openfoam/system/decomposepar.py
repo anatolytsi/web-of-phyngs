@@ -103,7 +103,8 @@ class DecomposeParDict:
     def _parse(self):
         """Parses decomposeParDict"""
         if os.path.exists(path := f'{self._case_dir}/system/decomposeParDict'):
-            lines = open(path).readlines()
+            with open(path, 'r') as f:
+                lines = f.readlines()
             lines_str = ''.join(lines)
             self.num_of_domains = int(re.search(f'{self._num_of_domains_str}\\s+(\\d+);', lines_str,
                                                 flags=re.MULTILINE).group(1))

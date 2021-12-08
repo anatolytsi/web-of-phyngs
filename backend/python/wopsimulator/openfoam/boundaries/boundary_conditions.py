@@ -171,7 +171,8 @@ class BoundaryConditionBase:
         filepath = self._filepath % self._time
         if not os.path.exists(filepath):
             raise FileNotFoundError(f'File {filepath} does not exist')
-        lines = open(filepath).readlines()
+        with open(filepath, 'r') as f:
+            lines = f.readlines()
         lines_str = ''.join(lines)
         # Parse and initialize internal field if it exists
         internal_field_dict = self._get_internal_field(lines_str)
@@ -204,7 +205,8 @@ class BoundaryConditionBase:
         def wrapper(self, *args, **kwargs):
             filepath = self._filepath % self._time
             if os.path.exists(filepath):
-                lines = open(filepath).readlines()
+                with open(filepath, 'r') as f:
+                    lines = f.readlines()
                 lines_str = ''.join(lines)
                 lines_str = func(self, *args, **kwargs, lines_str=lines_str)
                 with open(filepath, 'w') as f:
