@@ -189,7 +189,6 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             self.stop()
             self.initialized = False
             obj = self.get_object(object_name)
-            orig_params = {}
             obj_type = obj.type_name
             if obj.type_name == 'sensor':
                 new_params = {
