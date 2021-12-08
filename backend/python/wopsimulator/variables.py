@@ -18,6 +18,7 @@ CONFIG_MESH_QUALITY_KEY = 'mesh_quality'
 CONFIG_CLEAN_LIMIT_KEY = 'clean_limit'
 CONFIG_CORES_KEY = 'cores'
 CONFIG_INITIALIZED_KEY = 'initialized'
+CONFIG_STARTED_TIMESTAMP_KEY = 'started_timestamp'
 CONFIG_DICT = {
     CONFIG_TYPE_KEY: '',
     CONFIG_PATH_KEY: '',
