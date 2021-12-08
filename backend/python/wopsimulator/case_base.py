@@ -112,16 +112,17 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Dumps case parameters into dictionary
         :return: parameter dump dict
         """
-        config = CONFIG_DICT.copy()
-        config[CONFIG_TYPE_KEY] = self.case_type
-        config[CONFIG_PATH_KEY] = self.path
-        config[CONFIG_BLOCKING_KEY] = self.blocking
-        config[CONFIG_PARALLEL_KEY] = self.parallel
-        config[CONFIG_CORES_KEY] = self._cores
-        config[CONFIG_INITIALIZED_KEY] = self.initialized
-        config[CONFIG_MESH_QUALITY_KEY] = self.blockmesh_dict.mesh_quality
-        config[CONFIG_CLEAN_LIMIT_KEY] = self.clean_limit
-        config[CONFIG_STARTED_TIMESTAMP_KEY] = self.start_time
+        config = {
+            CONFIG_TYPE_KEY: self.case_type,
+            CONFIG_PATH_KEY: self.path,
+            CONFIG_BLOCKING_KEY: self.blocking,
+            CONFIG_PARALLEL_KEY: self.parallel,
+            CONFIG_CORES_KEY: self._cores,
+            CONFIG_INITIALIZED_KEY: self.initialized,
+            CONFIG_MESH_QUALITY_KEY: self.blockmesh_dict.mesh_quality,
+            CONFIG_CLEAN_LIMIT_KEY: self.clean_limit,
+            CONFIG_STARTED_TIMESTAMP_KEY: self.start_time
+        }
         return config
 
     def remove_initial_boundaries(self):
