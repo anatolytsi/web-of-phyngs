@@ -1,5 +1,5 @@
 import random
-import time
+import datetime
 from abc import ABC, abstractmethod
 from typing import List, Union
 
@@ -9,7 +9,8 @@ from .objects.wopthings import WopObject, WopSensor
 from .openfoam.common.parsing import get_latest_time, get_latest_time_parallel
 from .variables import CONFIG_DICT, CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, CONFIG_PARALLEL_KEY, \
     CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY, CONFIG_OBJ_DIMENSIONS, \
-    CONFIG_OBJ_ROTATION, CONFIG_LOCATION, CONFIG_TEMPLATE, CONFIG_URL, CONFIG_SNS_FIELD, CONFIG_OBJ_NAME_KEY
+    CONFIG_OBJ_ROTATION, CONFIG_LOCATION, CONFIG_TEMPLATE, CONFIG_URL, CONFIG_SNS_FIELD, CONFIG_OBJ_NAME_KEY, \
+    CONFIG_STARTED_TIMESTAMP_KEY
 from .openfoam.interface import OpenFoamInterface
 from .openfoam.system.snappyhexmesh import SnappyRegion, SnappyPartitionedMesh, SnappyCellZoneMesh
 
@@ -30,7 +31,8 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         self.objects = {}
         self._partitioned_mesh = None
         self.sensors = {}
-        self.start_time = None
+        self.start_time = kwargs[CONFIG_STARTED_TIMESTAMP_KEY] \
+            if CONFIG_STARTED_TIMESTAMP_KEY in kwargs and kwargs[CONFIG_STARTED_TIMESTAMP_KEY] else 0
         if loaded:
             if initialized:
                 self._setup_initialized_case(kwargs)
@@ -119,6 +121,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         config[CONFIG_INITIALIZED_KEY] = self.initialized
         config[CONFIG_MESH_QUALITY_KEY] = self.blockmesh_dict.mesh_quality
         config[CONFIG_CLEAN_LIMIT_KEY] = self.clean_limit
+        config[CONFIG_STARTED_TIMESTAMP_KEY] = self.start_time
         return config
 
     def remove_initial_boundaries(self):
@@ -290,12 +293,12 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         for obj in self.objects.values():
             obj.bind_region_boundaries(self.boundaries)
 
-    def get_simulation_time_sec(self):
+    def get_simulation_time_ms(self):
         """
-        Gets simulation time in epoch time
-        :return: epoch time
+        Gets simulation time in epoch ms
+        :return: epoch ms
         """
-        return self.start_time + self._time_probe.time
+        return self.start_time + self._time_probe.time * 1000
 
     def get_time(self) -> dict:
         """
@@ -303,15 +306,18 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         a difference between real and simulation
         :return: dictionary
         """
+        time_now = datetime.datetime.now()
+        timestamp_now = time_now.timestamp() * 1000
         times = {
-            'real_time': time.strftime('%d.%m.%y %H:%M:%S', time.localtime(time.time())),
-            'simulation_time': 0,
+            'real_time': time_now.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            'simulation_time': '0',
             'time_difference': 0
         }
         if self.start_time:
-            simulation_sec = self.get_simulation_time_sec()
-            times['simulation_time'] = time.strftime('%d.%m.%y %H:%M:%S', time.localtime(simulation_sec))
-            times['time_difference'] = simulation_sec - time.time()
+            simulation_ms = self.get_simulation_time_ms()
+            simulation_time = datetime.datetime.fromtimestamp(simulation_ms / 1000)
+            times['simulation_time'] = simulation_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+            times['time_difference'] = round((simulation_ms - timestamp_now) / 1000, 3)
         return times
 
     def run(self):
@@ -323,7 +329,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         if self.parallel:
             get_time = get_latest_time_parallel
         if not get_time(self.path):
-            self.start_time = time.time()
+            self.start_time = datetime.datetime.now().timestamp() * 1000
         if not self.initialized:
             self.clean_case()
             self.setup()
