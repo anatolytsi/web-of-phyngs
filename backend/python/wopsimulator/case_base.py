@@ -295,10 +295,36 @@ class OpenFoamCase(OpenFoamInterface, ABC):
 
     def get_simulation_time_ms(self):
         """
-        Gets simulation time in epoch ms
-        :return: epoch ms
+        Gets simulation time in datetime and epoch ms
+        :return: datetime and epoch ms
         """
-        return self.start_time + self._time_probe.time * 1000
+        simulation_timestamp = self.start_time + self._time_probe.time * 1000
+        simulation_time = datetime.datetime.fromtimestamp(simulation_timestamp / 1000)
+        return simulation_timestamp, simulation_time
+
+    @staticmethod
+    def get_current_time():
+        """
+        Gets current real time in datetime and epoch ms
+        :return: datetime and epoch ms
+        """
+        time_now = datetime.datetime.now()
+        timestamp_now = time_now.timestamp() * 1000
+        return timestamp_now, time_now
+
+    def get_time_difference(self, simulation_timestamp=None, timestamp_now=None):
+        """
+        Gets time difference in seconds
+        :param simulation_timestamp: simulation time in epoch ms
+        :param timestamp_now: real time in epoch ms
+        :return: time difference in seconds
+        """
+        if bool(simulation_timestamp) != bool(timestamp_now):
+            raise ValueError(f'Either both simulation time and now time or none should be specified')
+        if not simulation_timestamp and not timestamp_now:
+            simulation_timestamp, _ = self.get_simulation_time_ms()
+            timestamp_now, _ = self.get_current_time()
+        return round((simulation_timestamp - timestamp_now) / 1000, 3)
 
     def get_time(self) -> dict:
         """
@@ -306,18 +332,16 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         a difference between real and simulation
         :return: dictionary
         """
-        time_now = datetime.datetime.now()
-        timestamp_now = time_now.timestamp() * 1000
+        timestamp_now, time_now = self.get_current_time()
         times = {
             'real_time': time_now.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
             'simulation_time': '0',
             'time_difference': 0
         }
         if self.start_time:
-            simulation_ms = self.get_simulation_time_ms()
-            simulation_time = datetime.datetime.fromtimestamp(simulation_ms / 1000)
+            simulation_timestamp, simulation_time = self.get_simulation_time_ms()
             times['simulation_time'] = simulation_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-            times['time_difference'] = round((simulation_ms - timestamp_now) / 1000, 3)
+            times['time_difference'] = self.get_time_difference(simulation_timestamp, timestamp_now)
         return times
 
     def run(self):
