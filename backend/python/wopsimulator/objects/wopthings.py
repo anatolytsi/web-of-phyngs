@@ -77,7 +77,7 @@ class WopObject(ABC):
         else:
             self.path = ''
         self.template = template.split('/')[-1] if template else ''
-        self.model = Model(name, model_type, dimensions, location, rotation, facing_zero, self.path)
+        self.model = Model(name, model_type, dimensions, location, rotation, facing_zero, self.path, self._case_dir)
 
     @abstractmethod
     def _add_initial_boundaries(self):
@@ -95,6 +95,15 @@ class WopObject(ABC):
             'template': self.template,
             'custom': self.custom
         }}
+
+    def set_dimensions(self, dimensions: list):
+        self._of_interface.stop()
+        location = self.model.location
+        rotation = self.model.rotation
+        facing_zero = self.model.facing_zero
+        model_type = self.model.model_type
+        self.model = Model(self.name, model_type, dimensions, location, rotation, facing_zero, self.path)
+        self._of_interface.initialized = False
 
     def prepare(self):
         """Saves the model of an instance to a proper location (constant/triSurface)"""

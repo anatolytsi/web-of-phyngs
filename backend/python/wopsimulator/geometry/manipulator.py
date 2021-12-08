@@ -89,7 +89,7 @@ class Box(TriSurface):
     Box class (trisurface)
     """
 
-    def __init__(self, dimensions: List[Num], location: List[Num] = (0, 0, 0)):
+    def __init__(self, identifier: str, dimensions: List[Num], location: List[Num] = (0, 0, 0)):
         """
         Box class initialization function
         :param dimensions: dimensions [x, y, z]
@@ -99,6 +99,7 @@ class Box(TriSurface):
         self.dimensions = dimensions
         self.location = location
         self.faces = {}
+        self._identifier = identifier
         self.create(dimensions, location)
 
     def create(self, dimensions, location):
@@ -107,43 +108,44 @@ class Box(TriSurface):
         :param dimensions: dimensions [x, y, z]
         :param location: location coordinates [x, y, z]
         """
-        p1 = Point(location[0], location[1], location[2])
-        p2 = Point(location[0] + dimensions[0], location[1], location[2])
-        p3 = Point(location[0] + dimensions[0], location[1] + dimensions[1], location[2])
-        p4 = Point(location[0], location[1] + dimensions[1], location[2])
-        p5 = Point(location[0], location[1], location[2] + dimensions[2])
-        p6 = Point(location[0] + dimensions[0], location[1], location[2] + dimensions[2])
-        p7 = Point(location[0] + dimensions[0], location[1] + dimensions[1], location[2] + dimensions[2])
-        p8 = Point(location[0], location[1] + dimensions[1], location[2] + dimensions[2])
+        p1 = Point(self._identifier, location[0], location[1], location[2])
+        p2 = Point(self._identifier, location[0] + dimensions[0], location[1], location[2])
+        p3 = Point(self._identifier, location[0] + dimensions[0], location[1] + dimensions[1], location[2])
+        p4 = Point(self._identifier, location[0], location[1] + dimensions[1], location[2])
+        p5 = Point(self._identifier, location[0], location[1], location[2] + dimensions[2])
+        p6 = Point(self._identifier, location[0] + dimensions[0], location[1], location[2] + dimensions[2])
+        p7 = Point(self._identifier, location[0] + dimensions[0], location[1] + dimensions[1],
+                   location[2] + dimensions[2])
+        p8 = Point(self._identifier, location[0], location[1] + dimensions[1], location[2] + dimensions[2])
 
-        l1 = Line(p1, p2)
-        l2 = Line(p2, p3)
-        l3 = Line(p4, p3)
-        l4 = Line(p1, p4)
+        l1 = Line(self._identifier, p1, p2)
+        l2 = Line(self._identifier, p2, p3)
+        l3 = Line(self._identifier, p4, p3)
+        l4 = Line(self._identifier, p1, p4)
 
-        l5 = Line(p5, p6)
-        l6 = Line(p6, p7)
-        l7 = Line(p8, p7)
-        l8 = Line(p5, p8)
+        l5 = Line(self._identifier, p5, p6)
+        l6 = Line(self._identifier, p6, p7)
+        l7 = Line(self._identifier, p8, p7)
+        l8 = Line(self._identifier, p5, p8)
 
-        l9 = Line(p1, p5)
-        l10 = Line(p2, p6)
-        l11 = Line(p3, p7)
-        l12 = Line(p4, p8)
+        l9 = Line(self._identifier, p1, p5)
+        l10 = Line(self._identifier, p2, p6)
+        l11 = Line(self._identifier, p3, p7)
+        l12 = Line(self._identifier, p4, p8)
 
-        ll1 = Loop([l1, l2, -l3, -l4])  # bottom
-        ll2 = Loop([l8, l7, -l6, -l5])  # top
-        ll3 = Loop([l4, l12, -l8, -l9])  # front
-        ll4 = Loop([l10, l6, -l11, -l2])  # back
-        ll5 = Loop([l9, l5, -l10, -l1])  # right
-        ll6 = Loop([l3, l11, -l7, -l12])  # left
+        ll1 = Loop(self._identifier, [l1, l2, -l3, -l4])  # bottom
+        ll2 = Loop(self._identifier, [l8, l7, -l6, -l5])  # top
+        ll3 = Loop(self._identifier, [l4, l12, -l8, -l9])  # front
+        ll4 = Loop(self._identifier, [l10, l6, -l11, -l2])  # back
+        ll5 = Loop(self._identifier, [l9, l5, -l10, -l1])  # right
+        ll6 = Loop(self._identifier, [l3, l11, -l7, -l12])  # left
 
-        self.faces.update({'bottom': Surface(ll1)})
-        self.faces.update({'top': Surface(ll2)})
-        self.faces.update({'front': Surface(ll3)})
-        self.faces.update({'back': Surface(ll4)})
-        self.faces.update({'right': Surface(ll5)})
-        self.faces.update({'left': Surface(ll6)})
+        self.faces.update({'bottom': Surface(self._identifier, ll1)})
+        self.faces.update({'top': Surface(self._identifier, ll2)})
+        self.faces.update({'front': Surface(self._identifier, ll3)})
+        self.faces.update({'back': Surface(self._identifier, ll4)})
+        self.faces.update({'right': Surface(self._identifier, ll5)})
+        self.faces.update({'left': Surface(self._identifier, ll6)})
 
     def cut_surface(self, other):
         """
@@ -236,7 +238,7 @@ class STL:
         Determines the coordinates used by the box
         :return: sets for each coordinate [x, y, z]
         """
-        points = numpy.around(numpy.unique(self.mesh.vectors.reshape([int(self.mesh.vectors.size/3), 3]), axis=0), 2)
+        points = numpy.around(numpy.unique(self.mesh.vectors.reshape([int(self.mesh.vectors.size / 3), 3]), axis=0), 2)
         return set(points[:, 0].tolist()), set(points[:, 1].tolist()), set(points[:, 2].tolist())
 
 
@@ -255,7 +257,7 @@ class Model:
 
     def __init__(self, name: str, model_type: str, dimensions: List[Num] = (0, 0, 0),
                  location: List[Num] = (0, 0, 0), rotation: List[Num] = (0, 0, 0),
-                 facing_zero=True, stl_path: str = None):
+                 facing_zero=True, stl_path: str = None, identifier: str = 'geometry'):
         """
         Initializes a Model class
         :param name: name of a model, used for file naming and boundaries
@@ -265,6 +267,7 @@ class Model:
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
         :param facing_zero: normal vector direction towards zero coordinates, used for model_type = 'surface'
         :param stl_path: path to STL model, used for model_type = 'stl'
+        :param identifier: unique identifier associated with a case (if multiple cases are used)
         """
         if model_type not in self._model_types:
             raise TypeError(f'Geometry model type {model_type} is not defined. '
@@ -278,6 +281,7 @@ class Model:
         self.center = []
         self._initialized = False
         self._produced = False
+        self._identifier = identifier
         self.geometry = self._create_geometry_from_type(facing_zero=facing_zero, stl_path=stl_path)
 
     def _init(self):
@@ -357,28 +361,29 @@ class Model:
             else:
                 d = self.dimensions
                 l = self.location
-                p1 = Point(l[0], l[1], l[2])
+                p1 = Point(self._identifier, l[0], l[1], l[2])
                 if not d[0]:
-                    p2 = Point(l[0], l[1], l[2] + d[2])
-                    p3 = Point(l[0], l[1] + d[1], l[2] + d[2])
-                    p4 = Point(l[0], l[1] + d[1], l[2])
+                    p2 = Point(self._identifier, l[0], l[1], l[2] + d[2])
+                    p3 = Point(self._identifier, l[0], l[1] + d[1], l[2] + d[2])
+                    p4 = Point(self._identifier, l[0], l[1] + d[1], l[2])
                     c = [l[0], l[1] + d[1] / 2, l[2] + d[2] / 2]
                 elif not d[1]:
-                    p2 = Point(l[0] + d[0], l[1], l[2])
-                    p3 = Point(l[0] + d[0], l[1], l[2] + d[2])
-                    p4 = Point(l[0], l[1], l[2] + d[2])
+                    p2 = Point(self._identifier, l[0] + d[0], l[1], l[2])
+                    p3 = Point(self._identifier, l[0] + d[0], l[1], l[2] + d[2])
+                    p4 = Point(self._identifier, l[0], l[1], l[2] + d[2])
                     c = [l[0] + d[0] / 2, l[1], l[2] + d[2] / 2]
                 else:
-                    p2 = Point(l[0], l[1] + d[1], l[2])
-                    p3 = Point(l[0] + d[0], l[1] + d[1], l[2])
-                    p4 = Point(l[0] + d[0], l[1], l[2])
+                    p2 = Point(self._identifier, l[0], l[1] + d[1], l[2])
+                    p3 = Point(self._identifier, l[0] + d[0], l[1] + d[1], l[2])
+                    p4 = Point(self._identifier, l[0] + d[0], l[1], l[2])
                     c = [l[0] + d[0] / 2, l[1] + d[1] / 2, l[2]]
-                l1, l2, l3, l4 = Line(p1, p2), Line(p2, p3), Line(p3, p4), Line(p4, p1)
+                l1, l2 = Line(self._identifier, p1, p2), Line(self._identifier, p2, p3)
+                l3, l4 = Line(self._identifier, p3, p4), Line(self._identifier, p4, p1)
                 if facing_zero:
-                    ll = Loop([l1, l2, l3, l4])
+                    ll = Loop(self._identifier, [l1, l2, l3, l4])
                 else:
-                    ll = Loop([-l4, -l3, -l2, -l1])
-                s = Surface(ll)
+                    ll = Loop(self._identifier, [-l4, -l3, -l2, -l1])
+                s = Surface(self._identifier, ll)
                 s.rotate(self.rotation, c)
                 self.center = c
                 return s
@@ -386,7 +391,7 @@ class Model:
             if not all(self.dimensions):
                 raise ValueError(f'Model type {self._box_type} must be 3D. Check your dimensions')
             else:
-                b = Box(self.dimensions, self.location)
+                b = Box(self._identifier, self.dimensions, self.location)
                 self.center = [self.location[0] + self.dimensions[0] / 2,
                                self.location[1] + self.dimensions[1] / 2,
                                self.location[2] + self.dimensions[2] / 2]
