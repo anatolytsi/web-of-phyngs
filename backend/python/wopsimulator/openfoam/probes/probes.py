@@ -337,6 +337,16 @@ class ProbeParser(Thread):
             f.writelines(new_lines)
         self._num_of_probes = len(probe_locations)
 
+    def parse_probe(self, probe: Probe):
+        """
+        Parses data for initialized case with previous results
+        :param probe: probe to parse
+        """
+        if probe not in Probe._instances[self._case_dir] or \
+                not os.path.exists(f'{self._case_dir}/postProcessing/probes/{probe.region}'):
+            return
+        self._parse_region(probe.region)
+
     def run(self):
         """Thread function to parse data"""
         if not Probe._instances[self._case_dir]:

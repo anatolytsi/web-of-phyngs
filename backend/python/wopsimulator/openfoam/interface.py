@@ -338,6 +338,7 @@ class OpenFoamInterface(ABC):
                 region_dir = os.listdir(f'{self.path}/0/{region}')
                 if not self._time_probe:
                     self._time_probe = Probe(self.path, region_dir[0], region, [0, 0, 0])
+                    self._probe_parser.parse_probe(self._time_probe)
                 for field in region_dir:
                     cls_instance = BoundaryCondition(field, self.path, region=region)
                     if cls_instance:
