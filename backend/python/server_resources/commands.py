@@ -54,7 +54,6 @@ class Command(Resource):
             return COMMANDS
         if command == COMMAND_SAVE:
             save_case(case_name, self.current_cases[case_name])
-            self.current_cases[case_name].dump_case()
         elif command == COMMAND_CLEAN:
             self.current_cases[case_name].clean_case()
             save_case(case_name, self.current_cases[case_name])
