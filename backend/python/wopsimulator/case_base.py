@@ -7,10 +7,11 @@ from .exceptions import ObjectNotFound
 from .geometry.manipulator import combine_stls
 from .objects.wopthings import WopObject, WopSensor
 from .openfoam.common.parsing import get_latest_time, get_latest_time_parallel
-from .variables import CONFIG_DICT, CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, CONFIG_PARALLEL_KEY, \
+from .runtime_monitor import RunTimeMonitor
+from .variables import CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, CONFIG_PARALLEL_KEY, \
     CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY, CONFIG_OBJ_DIMENSIONS, \
     CONFIG_OBJ_ROTATION, CONFIG_LOCATION, CONFIG_TEMPLATE, CONFIG_URL, CONFIG_SNS_FIELD, CONFIG_OBJ_NAME_KEY, \
-    CONFIG_STARTED_TIMESTAMP_KEY
+    CONFIG_STARTED_TIMESTAMP_KEY, CONFIG_REALTIME_KEY
 from .openfoam.interface import OpenFoamInterface
 from .openfoam.system.snappyhexmesh import SnappyRegion, SnappyPartitionedMesh, SnappyCellZoneMesh
 
@@ -33,6 +34,9 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         self.sensors = {}
         self.start_time = kwargs[CONFIG_STARTED_TIMESTAMP_KEY] \
             if CONFIG_STARTED_TIMESTAMP_KEY in kwargs and kwargs[CONFIG_STARTED_TIMESTAMP_KEY] else 0
+        runtime_enabled = kwargs[CONFIG_REALTIME_KEY] \
+            if CONFIG_REALTIME_KEY in kwargs and kwargs[CONFIG_REALTIME_KEY] else False
+        self._runtime_monitor = RunTimeMonitor(runtime_enabled, 5, self.run, self.stop, self.get_time_difference)
         if loaded:
             if initialized:
                 self._setup_initialized_case(kwargs)
@@ -121,7 +125,8 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             CONFIG_INITIALIZED_KEY: self.initialized,
             CONFIG_MESH_QUALITY_KEY: self.blockmesh_dict.mesh_quality,
             CONFIG_CLEAN_LIMIT_KEY: self.clean_limit,
-            CONFIG_STARTED_TIMESTAMP_KEY: self.start_time
+            CONFIG_STARTED_TIMESTAMP_KEY: self.start_time,
+            CONFIG_REALTIME_KEY: self._runtime_monitor.enabled
         }
         return config
 
@@ -344,6 +349,38 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             times['time_difference'] = self.get_time_difference(simulation_timestamp, timestamp_now)
         return times
 
+    def enable_realtime(self):
+        """
+        Enables runtime monitor that tries
+        to keep simulation running at realtime
+        """
+        self._runtime_monitor.enabled = True
+        if self.running:
+            self._runtime_monitor.start()
+
+    def disable_realtime(self):
+        """Disables runtime monitor"""
+        self._runtime_monitor.enabled = False
+
+    @property
+    def realtime(self):
+        return self._runtime_monitor.enabled
+
+    @realtime.setter
+    def realtime(self, value):
+        if value:
+            self.enable_realtime()
+        else:
+            self.disable_realtime()
+
+    def clean_case(self):
+        """
+        Removes old results and logs in the case directory.
+        Resets start time
+        """
+        self.start_time = 0
+        super(OpenFoamCase, self).clean_case()
+
     def run(self):
         """
         Runs solver and monitor threads
@@ -360,6 +397,14 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             self.clean_case()
             self.setup()
         super(OpenFoamCase, self).run()
+        self._runtime_monitor.start()
+
+    def stop(self, **kwargs):
+        if 'runtime_checker' not in kwargs or not kwargs['runtime_checker']:
+            self._runtime_monitor.stop()
+        if not self.running:
+            return
+        super(OpenFoamCase, self).stop()
 
     def __getitem__(self, item):
         """Allow to access attributes of a class as in dictionary"""
@@ -367,7 +412,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
 
     def __setitem__(self, key, value):
         """Allow to set attributes of a class as in dictionary"""
-        if key != CONFIG_CLEAN_LIMIT_KEY:
+        if key not in (CONFIG_CLEAN_LIMIT_KEY, CONFIG_REALTIME_KEY):
             self.initialized = False
         if key == CONFIG_MESH_QUALITY_KEY:
             self.blockmesh_dict.mesh_quality = value

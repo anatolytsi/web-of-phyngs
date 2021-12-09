@@ -30,6 +30,8 @@ class Case(Resource):
                                    default=0)
         self.reqparse.add_argument('parallel', type=bool, help='Run case in parallel', default=True)
         self.reqparse.add_argument('cores', type=int, help='Number of cores for parallel run', default=4)
+        self.reqparse.add_argument('realtime', type=bool, help='Case solving is done close to realtime if possible',
+                                   default=True)
         self.reqparse.add_argument('background', type=str, help='Case background region', default='fluid')
         super(Case, self).__init__()
 
