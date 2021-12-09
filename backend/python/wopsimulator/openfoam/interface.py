@@ -62,7 +62,7 @@ class OpenFoamInterface(ABC):
         self._solver_mutex = Lock()
         self._probe_parser = ProbeParser(self.path)
         self._time_probe = None
-        self.running = False
+        self._running = False
 
     @property
     def cores(self):
@@ -89,6 +89,10 @@ class OpenFoamInterface(ABC):
                 self._cores //= 2
         else:
             self._cores = 1
+
+    @property
+    def running(self):
+        return self._running
 
     def remove_processor_dirs(self):
         """
@@ -205,7 +209,8 @@ class OpenFoamInterface(ABC):
         argv = ['mpirun', '-np', str(self.cores), self._solver_type, '-case', self.path, '-parallel']
         self._solver = BasicRunner(argv=argv, silent=silent, logname=self._solver_type)
         self._solver.start()
-        self.stop()
+        self._probe_parser.stop()
+        self._running = False
         print('Process terminated')
         self._solver_mutex.release()
         self._check_solver_run()
@@ -221,11 +226,8 @@ class OpenFoamInterface(ABC):
         argv = [self._solver_type, '-case', self.path]
         self._solver = BasicRunner(argv=argv, silent=silent, logname=self._solver_type)
         self._solver.start()
-        if self._solver.runOK():
-            if self.parallel:
-                self.run_reconstruct(all_regions=True)
-        else:
-            raise Exception(f'{self._solver_type} run failed')
+        self._probe_parser.stop()
+        self._running = False
         print('Quiting thread solver')
         self._solver_mutex.release()
         self._check_solver_run()
@@ -399,7 +401,7 @@ class OpenFoamInterface(ABC):
         else:
             self._solver_thread = Thread(target=self.run_solver, daemon=True)
             self._solver_thread.start()
-        self.running = True
+        self._running = True
         cleaner_thread.start()
 
     def stop_solving(self):
@@ -407,13 +409,15 @@ class OpenFoamInterface(ABC):
         Stops OpenFOAM solver
         :return: None
         """
+        if not self._running:
+            return
         if self.parallel:
             self._solver_process.terminate()
             # FIXME: somehow get when the process is really terminated and only then proceed
             time.sleep(1)  # Safe delay to make sure a full stop happened
         else:
             self._solver.stopWithoutWrite()
-        self.running = False
+        self._running = False
         self._solver_mutex.acquire()
         self._solver_mutex.release()
 
@@ -424,7 +428,7 @@ class OpenFoamInterface(ABC):
         time_path = f'{self.path}/processor0' if self.parallel else self.path
         deletion_time = 0
         margin = self.clean_limit / 2 // self.control_dict.write_interval * self.control_dict.write_interval
-        while self.running:
+        while self._running:
             latest_time = get_latest_time(time_path)
             if latest_time != deletion_time and not latest_time % self.clean_limit:
                 time.sleep(0.05)
@@ -445,7 +449,7 @@ class OpenFoamInterface(ABC):
         Runs solver and monitor threads
         :return: None
         """
-        if self.running:
+        if self._running:
             return
         self.start_solving()
         self._probe_parser.start()
@@ -458,7 +462,7 @@ class OpenFoamInterface(ABC):
         Stops solver and monitor threads
         :return: None
         """
-        if not self.running:
+        if not self._running:
             return
         self._probe_parser.stop()
         self.stop_solving()
