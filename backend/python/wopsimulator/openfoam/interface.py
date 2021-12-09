@@ -182,6 +182,18 @@ class OpenFoamInterface(ABC):
         if not runner.runOK():
             raise Exception(f'{argv[0]} run failed')
 
+    def _check_solver_run(self):
+        if not self._solver.runOK():
+            if self._solver.fatalError:
+                error = f'fatal error'
+            elif self._solver.fatalFPE:
+                error = f'fatal FPE'
+            elif self._solver.fatalStackdump:
+                error = f'fatal stack dump'
+            else:
+                error = 'unknown error'
+            raise Exception(f'{self._solver_type} run failed with {error}: {self._solver.data["errorText"]}')
+
     def run_solver_parallel(self, silent=True):
         """
         Runs solver using multiprocessing tools
@@ -196,6 +208,7 @@ class OpenFoamInterface(ABC):
         self.stop()
         print('Process terminated')
         self._solver_mutex.release()
+        self._check_solver_run()
 
     def run_solver(self, silent=True):
         """
@@ -215,6 +228,7 @@ class OpenFoamInterface(ABC):
             raise Exception(f'{self._solver_type} run failed')
         print('Quiting thread solver')
         self._solver_mutex.release()
+        self._check_solver_run()
 
     def run_decompose(self, all_regions: bool = False, copy_zero: bool = False, latest_time: bool = False,
                       force: bool = False):
