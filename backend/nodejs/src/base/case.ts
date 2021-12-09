@@ -134,8 +134,8 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     }
 
     /**
-     * Gets case name.
-     * @return {boolean} name of a case.
+     * Gets parallel flag.
+     * @return {boolean} parallel flag.
      */
     public get parallel(): boolean {
         return this._parallel;
@@ -148,12 +148,12 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      */
     public async setParallel(parallel: boolean): Promise<void> {
         this._parallel = parallel;
-        await axios.patch(this.couplingUrl, {parallel: parallel});
+        await axios.patch(this.couplingUrl, {parallel});
     }
 
     /**
-     * Gets case name.
-     * @return {number} name of a case.
+     * Gets number of cores for parallel run.
+     * @return {number} number of cores.
      */
     public get cores(): number {
         return this._cores;
@@ -167,7 +167,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     public async setCores(cores: number): Promise<void> {
         if (cores < 0) {
             this._cores = cores;
-            await axios.patch(this.couplingUrl, {cores: cores});
+            await axios.patch(this.couplingUrl, {cores});
         } else {
             console.log('Number of cores cannot be negative!')
         }
