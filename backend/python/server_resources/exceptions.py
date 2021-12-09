@@ -3,6 +3,11 @@ import traceback
 from wopsimulator.exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists, WrongObjectType, \
     ObjectNotFound
 
+simulator_exceptions = {
+    'texts': [],
+    'traces': []
+}
+
 
 def catch_error(func):
     """
@@ -15,13 +20,14 @@ def catch_error(func):
         try:
             return func(*args, **kwargs)
         except (CaseTypeError, CaseAlreadyExists, WrongObjectType,) as e:
-            traceback.print_exc()
-            return str(e), 400
+            error_text, status = str(e), 400
         except (CaseNotFound, ObjectNotFound) as e:
-            traceback.print_exc()
-            return str(e), 404
+            error_text, status = str(e), 404
         except Exception as e:
-            traceback.print_exc()
-            return str(e), 500
+            error_text, status = str(e), 500
+        traceback.print_exc()
+        simulator_exceptions['texts'].append(error_text)
+        simulator_exceptions['traces'].append(traceback.format_exc())
+        return error_text, status
 
     return wrapper
