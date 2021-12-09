@@ -43,6 +43,8 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     protected _parallel: boolean = true;
     /** Amount of cores to run in parallel. */
     protected _cores: number = 4;
+    /** Is case running in realtime. */
+    protected _realtime: boolean = false;
 
     /**
      * Abstract method to add a new object
@@ -169,6 +171,24 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         } else {
             console.log('Number of cores cannot be negative!')
         }
+    }
+
+    /**
+     * Gets realtime flag.
+     * @return {boolean} realtime flag.
+     */
+    public get realtime(): boolean {
+        return this._realtime;
+    }
+
+    /**
+     * Enable/disable case realtime solving.
+     * @param {boolean} realtime: realtime flag.
+     * @async
+     */
+    public async setRealtime(realtime: boolean): Promise<void> {
+        this._realtime = realtime;
+        await axios.patch(this.couplingUrl, {realtime});
     }
 
     /**
@@ -310,6 +330,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         this.thing.setPropertyReadHandler('cores', async () => this.cores);
         this.thing.setPropertyReadHandler('objects', async () => this.getObjects());
         this.thing.setPropertyReadHandler('time', async () => this.getTime());
+        this.thing.setPropertyReadHandler('realtime', async () => this.realtime);
 
         this.thing.setPropertyWriteHandler('meshQuality', async (meshQuality) => {
             await this.setMeshQuality(meshQuality);
@@ -322,6 +343,9 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         });
         this.thing.setPropertyWriteHandler('cores', async (cores) => {
             await this.setCores(cores);
+        });
+        this.thing.setPropertyWriteHandler('realtime', async (realtime) => {
+            await this.setRealtime(realtime);
         });
     }
 

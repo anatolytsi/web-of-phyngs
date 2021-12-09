@@ -77,6 +77,10 @@
           "unit": "ms"
         }
       }
+    },
+    "realtime": {
+      "description": "WoP simulation realtime run enabled",
+      "type": "boolean"
     }
   },
   "actions": {

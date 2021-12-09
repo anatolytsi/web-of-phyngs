@@ -108,9 +108,11 @@ export interface CaseParameters {
     /** Case result cleaning limit (0 - no cleaning). */
     cleanLimit?: number,
     /** Is case running in parallel. */
-    parallel?: boolean
+    parallel?: boolean,
     /** Amount of cores to run in parallel. */
-    cores?: number
+    cores?: number,
+    /** Is case running in realtime. */
+    realtime?: boolean
 }
 
 /**
