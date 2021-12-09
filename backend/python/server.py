@@ -4,6 +4,7 @@ import configparser
 from flask import Flask
 from flask_restful import Api
 
+from server_resources.exceptions import ErrorList
 from server_resources.case import Case, CaseList
 from server_resources.commands import Command
 from server_resources.object import Object, ObjectList, ObjectValue
@@ -29,6 +30,7 @@ class Server:
         self.api.add_resource(Object, '/case/<string:case_name>/object/<string:obj_name>', endpoint='object')
         self.api.add_resource(ObjectValue, '/case/<string:case_name>/object/<string:obj_name>/<string:obj_value>',
                               endpoint='object_value')
+        self.api.add_resource(ErrorList, '/errors')
 
     def run(self):
         self.app.run(self.host, self.port, self.debug)

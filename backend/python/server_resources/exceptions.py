@@ -1,5 +1,6 @@
 import traceback
 
+from flask_restful import Resource
 from wopsimulator.exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists, WrongObjectType, \
     ObjectNotFound
 
@@ -31,3 +32,15 @@ def catch_error(func):
         return error_text, status
 
     return wrapper
+
+
+class ErrorList(Resource):
+
+    @staticmethod
+    def get():
+        return simulator_exceptions
+
+    @staticmethod
+    def delete():
+        simulator_exceptions['texts'].clear()
+        simulator_exceptions['traces'].clear()
