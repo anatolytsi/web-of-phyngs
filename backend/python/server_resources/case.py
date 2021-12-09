@@ -3,6 +3,9 @@ from flask_restful import Resource, reqparse
 from .exceptions import catch_error
 from wopsimulator.loader import load_case, create_case, get_cases_names, save_case, remove_case
 
+from wopsimulator.variables import CONFIG_TYPE_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY, \
+    CONFIG_PARALLEL_KEY, CONFIG_CORES_KEY, CONFIG_REALTIME_KEY, CONFIG_BACKGROUND_KEY, CONFIG_DEFAULTS
+
 
 def auto_load_case(func):
     """
@@ -13,6 +16,7 @@ def auto_load_case(func):
 
     def wrapper(*args, **kwargs):
         if kwargs['case_name'] not in args[0].current_cases:
+            print(f'Loading case {kwargs["case_name"]}...')
             args[0].current_cases[kwargs['case_name']] = load_case(kwargs['case_name'])
         return func(*args, **kwargs)
 
@@ -24,15 +28,15 @@ class Case(Resource):
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('type', type=str, help='Web of Phyngs case type')
-        self.reqparse.add_argument('mesh_quality', type=int, help='Case mesh quality in percents', default=50)
-        self.reqparse.add_argument('clean_limit', type=int, help='Case maximum amount of results before cleaning',
-                                   default=0)
-        self.reqparse.add_argument('parallel', type=bool, help='Run case in parallel', default=True)
-        self.reqparse.add_argument('cores', type=int, help='Number of cores for parallel run', default=4)
-        self.reqparse.add_argument('realtime', type=bool, help='Case solving is done close to realtime if possible',
-                                   default=True)
-        self.reqparse.add_argument('background', type=str, help='Case background region', default='fluid')
+        self.reqparse.add_argument(CONFIG_TYPE_KEY, type=str, help='Web of Phyngs case type')
+        self.reqparse.add_argument(CONFIG_MESH_QUALITY_KEY, type=int, help='Case mesh quality in percents')
+        self.reqparse.add_argument(CONFIG_CLEAN_LIMIT_KEY, type=int,
+                                   help='Case maximum amount of results before cleaning')
+        self.reqparse.add_argument(CONFIG_PARALLEL_KEY, type=bool, help='Run case in parallel')
+        self.reqparse.add_argument(CONFIG_CORES_KEY, type=int, help='Number of cores for parallel run', )
+        self.reqparse.add_argument(CONFIG_REALTIME_KEY, type=bool,
+                                   help='Case solving is done close to realtime if possible')
+        self.reqparse.add_argument(CONFIG_BACKGROUND_KEY, type=str, help='Case background region')
         super(Case, self).__init__()
 
     @catch_error
@@ -43,6 +47,9 @@ class Case(Resource):
     @catch_error
     def post(self, case_name):
         args = self.reqparse.parse_args()
+        for key, default_value in CONFIG_DEFAULTS.items():
+            if key in args.keys():
+                args[key] = args[key] if args[key] else default_value
         case = create_case(case_name, args)
         self.current_cases[case_name] = case
         return '', 201
