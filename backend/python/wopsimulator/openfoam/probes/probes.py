@@ -363,6 +363,10 @@ class ProbeParser(Thread):
         print('Quiting probe parser thread')
         self._mutex.release()
 
+    def start(self) -> None:
+        super(ProbeParser, self).__init__(daemon=True)
+        super(ProbeParser, self).start()
+
     def stop(self):
         """Stops parsing thread"""
         self.running = False
