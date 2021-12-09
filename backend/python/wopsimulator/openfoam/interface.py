@@ -434,7 +434,6 @@ class OpenFoamInterface(ABC):
         if self.running:
             return
         self.start_solving()
-        self._probe_parser = ProbeParser(self.path)
         self._probe_parser.start()
         if self.blocking:
             self._solver_mutex.acquire()
