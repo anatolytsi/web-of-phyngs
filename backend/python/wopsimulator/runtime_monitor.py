@@ -1,5 +1,5 @@
 import time
-from threading import Thread
+from threading import Thread, Lock
 from typing import Callable
 
 CHECKER_SLEEP_TIME = 0.01
@@ -16,6 +16,7 @@ class RunTimeMonitor(Thread):
         self._run_case = case_runner
         self._stop_case = case_stopper
         self._get_time_diff = time_difference_getter
+        self._mutex = Lock()
         super(RunTimeMonitor, self).__init__(daemon=True)
 
     @property
@@ -31,6 +32,7 @@ class RunTimeMonitor(Thread):
     def run(self) -> None:
         previous_difference = 0
         self.running = True
+        self._mutex.acquire()
         while self.running and self._enabled:
             time_difference = self._get_time_diff()
             if (previous_difference - time_difference) >= CHECKER_DELAY_WAIT:
@@ -41,6 +43,7 @@ class RunTimeMonitor(Thread):
             elif time_difference <= 0:
                 self._run_case()
             time.sleep(CHECKER_SLEEP_TIME)
+        self._mutex.release()
 
     def start(self) -> None:
         if not self._enabled:
@@ -50,3 +53,5 @@ class RunTimeMonitor(Thread):
 
     def stop(self) -> None:
         self.running = False
+        self._mutex.acquire()
+        self._mutex.release()
