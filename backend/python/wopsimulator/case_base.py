@@ -349,11 +349,13 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Runs solver and monitor threads
         Case must be setup before running
         """
+        if self.running:
+            return
         get_time = get_latest_time
         if self.parallel:
             get_time = get_latest_time_parallel
         if not get_time(self.path):
-            self.start_time = datetime.datetime.now().timestamp() * 1000
+            self.start_time, _ = self.get_current_time()
         if not self.initialized:
             self.clean_case()
             self.setup()
