@@ -44,7 +44,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     /** Amount of cores to run in parallel. */
     protected _cores: number = 4;
     /** Is case running in realtime. */
-    protected _realtime: boolean = false;
+    protected _realtime: boolean = true;
 
     /**
      * Abstract method to add a new object
