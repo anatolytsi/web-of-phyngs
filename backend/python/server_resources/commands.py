@@ -63,6 +63,7 @@ class Command(Resource):
             save_case(case_name, self.current_cases[case_name])
         elif command == COMMAND_RUN:
             self.current_cases[case_name].run()
+            save_case(case_name, self.current_cases[case_name])
         elif command == COMMAND_STOP:
             self.current_cases[case_name].stop()
             save_case(case_name, self.current_cases[case_name])
