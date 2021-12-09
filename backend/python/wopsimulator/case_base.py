@@ -296,7 +296,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
     def get_simulation_time_ms(self):
         """
         Gets simulation time in datetime and epoch ms
-        :return: datetime and epoch ms
+        :return: epoch ms, datetime
         """
         simulation_timestamp = self.start_time + self._time_probe.time * 1000
         simulation_time = datetime.datetime.fromtimestamp(simulation_timestamp / 1000)
@@ -306,7 +306,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
     def get_current_time():
         """
         Gets current real time in datetime and epoch ms
-        :return: datetime and epoch ms
+        :return: epoch ms, datetime
         """
         time_now = datetime.datetime.now()
         timestamp_now = time_now.timestamp() * 1000
