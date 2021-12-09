@@ -148,6 +148,8 @@ class OpenFoamInterface(ABC):
         """
         self.remove_solutions()
         self.remove_logs()
+        if self._time_probe:
+            self._time_probe.time = 0
 
     def copy_stls(self, src_sub_dir: str = 'geometry', dst_sub_dir: str = 'constant/triSurface'):
         """
