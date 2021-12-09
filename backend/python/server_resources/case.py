@@ -56,7 +56,8 @@ class Case(Resource):
                 self.current_cases[case_name][key] = value
         save_case(case_name, self.current_cases[case_name])
         # Reload the case with new changes applied
-        self.current_cases[case_name] = load_case(case_name)
+        if not self.current_cases[case_name].initialized:
+            self.current_cases[case_name] = load_case(case_name)
 
     @catch_error
     def delete(self, case_name):
