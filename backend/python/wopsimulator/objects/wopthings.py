@@ -50,34 +50,54 @@ class WopObject(ABC):
         self.custom = custom
         if url:
             model_type = 'stl'
-            self.path = f'{case_dir}/geometry/{name}.stl'
-            pattern = r'https://drive\.google\.com/file/d/([^/]+)(/view)?'
-            match = re.match(pattern, url)
-            if not match.group():
-                raise ConnectionError(f'Provided download URL ({url}) does not match pattern {pattern}')
-            url = f'https://drive.google.com/uc?id={match.group(1)}'
-            gdown.download(url, self.path, quiet=True)
-            if not os.path.exists(self.path):
-                raise FileNotFoundError(f'Custom STL was not loaded for object {name}')
-            with open(self.path, 'r') as f:
-                stl = f.read()
-                stl_match = re.match(r'^solid [^\s]*\s[\S\s]+endsolid [^\s]*$', stl)
-                if not stl_match.group():
-                    raise OSError('Verify provided STL file for integrity')
-            self.custom = True
+            self._get_stl_from_url(url)
         elif template:
-            self.path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/{template}' \
-                        f'{"" if template[-4:] == ".stl" else ".stl"}'
-            if not os.path.exists(self.path):
-                raise FileNotFoundError(f'Template {template} STL does not exist for object {name}')
+            self._get_stl_from_template(template)
         elif custom:
-            self.path = f'{case_dir}/geometry/{name}.stl'
-            if not os.path.exists(self.path):
-                raise FileNotFoundError(f'Custom STL was not loaded for object {name}')
+            self._get_custom_stl()
         else:
             self.path = ''
         self.template = template.split('/')[-1] if template else ''
         self.model = Model(name, model_type, dimensions, location, rotation, facing_zero, self.path, self._case_dir)
+
+    def _get_stl_from_url(self, url):
+        """
+        Gets STL from a given URL
+        :param url: STL URL
+        """
+        self.path = f'{self._case_dir}/geometry/{self.name}.stl'
+        pattern = r'https://drive\.google\.com/file/d/([^/]+)(/view)?'
+        match = re.match(pattern, url)
+        if not match.group():
+            raise ConnectionError(f'Provided download URL ({url}) does not match pattern {pattern}')
+        url = f'https://drive.google.com/uc?id={match.group(1)}'
+        gdown.download(url, self.path, quiet=True)
+        if not os.path.exists(self.path):
+            raise FileNotFoundError(f'Custom STL was not loaded for object {self.name}')
+        with open(self.path, 'r') as f:
+            stl = f.read()
+            stl_match = re.match(r'^solid [^\s]*\s[\S\s]+endsolid [^\s]*$', stl)
+            if not stl_match.group():
+                raise OSError('Verify provided STL file for integrity')
+        self.custom = True
+
+    def _get_stl_from_template(self, template):
+        """
+        Gets STL from a template
+        :param template: STL template name
+        """
+        self.path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/{template}' \
+                    f'{"" if template[-4:] == ".stl" else ".stl"}'
+        if not os.path.exists(self.path):
+            raise FileNotFoundError(f'Template {template} STL does not exist for object {self.name}')
+
+    def _get_custom_stl(self):
+        """
+        Gets a custom (URL created) STL
+        """
+        self.path = f'{self._case_dir}/geometry/{self.name}.stl'
+        if not os.path.exists(self.path):
+            raise FileNotFoundError(f'Custom STL was not loaded for object {self.name}')
 
     @abstractmethod
     def _add_initial_boundaries(self):
