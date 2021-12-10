@@ -28,12 +28,17 @@ TYPES = [
     'solid'
 ]
 
-MATERIALS = [
+FLUID_MATERIALS = [
     'air',
-    'water',
+    'water'
+]
+
+SOLID_MATERIALS = [
     'aluminium',
     'copper'
 ]
+
+MATERIALS = FLUID_MATERIALS + SOLID_MATERIALS
 
 
 @dataclass
