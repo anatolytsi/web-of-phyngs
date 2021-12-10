@@ -108,13 +108,14 @@ class WopObject(ABC):
         pass
 
     def dump_settings(self):
-        return {self.name: {
+        dump = {self.name: {
             'dimensions': self.model.dimensions,
             'location': self.model.location,
             'rotation': self.model.rotation,
             'template': self.template,
             'custom': self.custom
         }}
+        return dump
 
     def set_dimensions(self, dimensions: list):
         self._of_interface.stop()
