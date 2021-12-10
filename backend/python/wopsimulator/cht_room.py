@@ -8,11 +8,12 @@ from .objects.door import WopDoor
 from .objects.room import WopRoom
 from .objects.window import WopWindow
 from .objects.heater import WopHeater
-from .objects.wopthings import WopSensor
+from .objects.wopthings import WopSensor, WopObject
 from .variables import (CHT_ROOM_OBJ_TYPES, CONFIG_BACKGROUND_KEY, CONFIG_WALLS_KEY, CONFIG_NAME_KEY,
                         CONFIG_HEATERS_KEY, CONFIG_WINDOWS_KEY, CONFIG_DOORS_KEY, CONFIG_SENSORS_KEY,
                         CONFIG_OBJ_DIMENSIONS, CONFIG_OBJ_ROTATION, CONFIG_SNS_FIELD, CONFIG_LOCATION, CONFIG_TEMPLATE,
-                        CONFIG_CUSTOM, CONFIG_TEMPERATURE_KEY, CONFIG_VELOCITY_KEY)
+                        CONFIG_CUSTOM, CONFIG_TEMPERATURE_KEY, CONFIG_VELOCITY_KEY, CONFIG_OBJ_MATERIAL,
+                        CONFIG_OBJ_NAME_KEY, CONFIG_URL)
 
 
 class ChtRoom(OpenFoamCase):
@@ -42,6 +43,23 @@ class ChtRoom(OpenFoamCase):
         self.remove_initial_boundaries()
         self.load_initial_objects(case_param)
         self.set_initial_objects(case_param)
+
+    def _get_model_param_set(self):
+        return super(ChtRoom, self)._get_model_param_set() | {CONFIG_OBJ_MATERIAL}
+
+    def _get_new_params(self, obj: WopObject, params: dict):
+        new_params = super(ChtRoom, self)._get_new_params(obj, params)
+        params[CONFIG_OBJ_MATERIAL] = None
+        if CONFIG_OBJ_MATERIAL in obj:
+            new_params.update({
+                CONFIG_OBJ_MATERIAL: params[CONFIG_OBJ_MATERIAL] if params[CONFIG_OBJ_MATERIAL] else obj.material
+            })
+        return new_params
+
+    def _add_obj_from_parameters(self, object_name, params: dict, custom: bool):
+        self.add_object(params[CONFIG_OBJ_NAME_KEY], object_name, params[CONFIG_URL], custom, params[CONFIG_TEMPLATE],
+                        params[CONFIG_OBJ_DIMENSIONS], params[CONFIG_LOCATION], params[CONFIG_OBJ_ROTATION],
+                        params[CONFIG_OBJ_MATERIAL])
 
     def dump_case(self):
         """
@@ -133,7 +151,8 @@ class ChtRoom(OpenFoamCase):
         if CONFIG_HEATERS_KEY in case_param and case_param[CONFIG_HEATERS_KEY]:
             for name, heater in case_param[CONFIG_HEATERS_KEY].items():
                 self.add_object(name, 'heater', custom=heater[CONFIG_CUSTOM], dimensions=heater[CONFIG_OBJ_DIMENSIONS],
-                                location=heater[CONFIG_LOCATION], template=heater['template'])
+                                location=heater[CONFIG_LOCATION], template=heater['template'],
+                                material=heater['material'])
         if CONFIG_WINDOWS_KEY in case_param and case_param[CONFIG_WINDOWS_KEY]:
             for name, window in case_param[CONFIG_WINDOWS_KEY].items():
                 self.add_object(name, 'window', custom=window[CONFIG_CUSTOM], dimensions=window[CONFIG_OBJ_DIMENSIONS],
@@ -163,7 +182,7 @@ class ChtRoom(OpenFoamCase):
 
     def add_object(self, name: str, obj_type: str, url: str = '', custom=False, template: str = '',
                    dimensions: List[float] = (0, 0, 0), location: List[float] = (0, 0, 0),
-                   rotation: List[float] = (0, 0, 0), sns_field: str = None):
+                   rotation: List[float] = (0, 0, 0), material: str = None, sns_field: str = None):
         """
         Adds WoP object/sensor to a CHT case
         :param name: name of the object
@@ -175,11 +194,13 @@ class ChtRoom(OpenFoamCase):
         :param location: object location
         :param rotation: object rotation
         :param sns_field: field to monitor for sensor
+        :param material: material of an object
         """
         # TODO: check if name contains spaces
         if obj_type == WopHeater.type_name:
             wop_object = WopHeater(name, self.path, self.background, url, custom, dimensions=dimensions,
-                                   location=location, rotation=rotation, template=template, of_interface=self)
+                                   location=location, rotation=rotation, template=template, of_interface=self,
+                                   material=material)
             wop_object.bind_snappy(self.snappy_dict, 'cell_zone', refinement_level=2)
             self.heaters.update({name: wop_object})
         elif obj_type == WopWindow.type_name:

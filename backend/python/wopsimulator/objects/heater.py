@@ -1,5 +1,6 @@
 from ..exceptions import ObjectSetValueFailed
 from ..openfoam.common.parsing import get_latest_time
+from ..openfoam.constant.material_properties import SOLID_MATERIALS
 from .behavior.cht import set_boundary_to_heater
 from .wopthings import WopObject
 
@@ -12,7 +13,7 @@ class WopHeater(WopObject):
     type_name = 'heater'
 
     def __init__(self, name, case_dir, bg_region: str, url='', custom=False,
-                 dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
+                 dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0), material='copper',
                  template=None, of_interface=None):
         """
         Web of Phyngs heater initialization function
@@ -22,6 +23,7 @@ class WopHeater(WopObject):
         :param dimensions: dimensions [x, y, z]
         :param location: location coordinates [x, y, z]
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
+        :param material: heater material
         :param template: template name
         :param of_interface: OpenFoam interface
         """
@@ -52,7 +54,18 @@ class WopHeater(WopObject):
     def dump_settings(self):
         settings = super(WopHeater, self).dump_settings()
         settings[self.name].update({'temperature': self._temperature})
+        settings[self.name].update({'material': self.material})
         return settings
+
+    @property
+    def material(self):
+        return self.snappy.material
+
+    @material.setter
+    def material(self, material):
+        if material not in SOLID_MATERIALS:
+            return
+        self.snappy.material = material
 
     @property
     def temperature(self):

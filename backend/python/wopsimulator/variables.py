@@ -52,6 +52,7 @@ CONFIG_DEFAULTS = {
 CONFIG_OBJ_NAME_KEY = 'name'
 CONFIG_OBJ_DIMENSIONS = 'dimensions'
 CONFIG_OBJ_ROTATION = 'rotation'
+CONFIG_OBJ_MATERIAL = 'material'
 CONFIG_SNS_FIELD = 'field'
 CONFIG_LOCATION = 'location'
 CONFIG_TEMPLATE = 'template'
