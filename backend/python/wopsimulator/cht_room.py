@@ -49,7 +49,6 @@ class ChtRoom(OpenFoamCase):
 
     def _get_new_params(self, obj: WopObject, params: dict):
         new_params = super(ChtRoom, self)._get_new_params(obj, params)
-        params[CONFIG_OBJ_MATERIAL] = None
         if CONFIG_OBJ_MATERIAL in obj:
             new_params.update({
                 CONFIG_OBJ_MATERIAL: params[CONFIG_OBJ_MATERIAL] if params[CONFIG_OBJ_MATERIAL] else obj.material

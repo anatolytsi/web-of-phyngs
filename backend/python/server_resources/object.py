@@ -33,6 +33,7 @@ class Object(Resource):
         self.reqparse.add_argument('location', type=list, help='Object location', location='json')
         self.reqparse.add_argument('rotation', type=list, help='Object rotation', location='json')
         self.reqparse.add_argument('template', type=str, help='Object template geometry')
+        self.reqparse.add_argument('material', type=str, help='Object material')
         self.reqparse.add_argument('field', type=str, help='Sensor field')
         super(Object, self).__init__()
 
@@ -48,7 +49,8 @@ class Object(Resource):
         args = self.reqparse.parse_args()
         self.current_cases[case_name].add_object(obj_name, args['type'], url=args['url'], template=args['template'],
                                                  dimensions=args['dimensions'], location=args['location'],
-                                                 rotation=args['rotation'], sns_field=args['field'])
+                                                 rotation=args['rotation'], sns_field=args['field'],
+                                                 material=args['material'])
         save_case(case_name, self.current_cases[case_name])
         return '', 201
 
