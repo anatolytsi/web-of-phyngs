@@ -74,49 +74,15 @@ class ChtRoom(OpenFoamCase):
         config[CONFIG_SENSORS_KEY] = {}
         config[CONFIG_WALLS_KEY] = {}
         if self.walls:
-            config[CONFIG_WALLS_KEY] = {
-                CONFIG_NAME_KEY: self.walls.name,
-                CONFIG_OBJ_DIMENSIONS: self.walls.model.dimensions,
-                CONFIG_LOCATION: self.walls.model.location,
-                CONFIG_OBJ_ROTATION: self.walls.model.rotation,
-                CONFIG_CUSTOM: self.walls.custom,
-                CONFIG_TEMPLATE: self.walls.template,
-                CONFIG_TEMPERATURE_KEY: self.walls.temperature
-            }
+            config[CONFIG_WALLS_KEY] = self.walls.dump_settings()
         for name, heater in self.heaters.items():
-            config[CONFIG_HEATERS_KEY].update({name: {
-                CONFIG_OBJ_DIMENSIONS: heater.model.dimensions,
-                CONFIG_LOCATION: heater.model.location,
-                CONFIG_OBJ_ROTATION: heater.model.rotation,
-                CONFIG_CUSTOM: heater.custom,
-                CONFIG_TEMPLATE: heater.template,
-                CONFIG_TEMPERATURE_KEY: heater.temperature
-            }})
+            config[CONFIG_HEATERS_KEY].update({name: heater.dump_settings()})
         for name, window in self.windows.items():
-            config[CONFIG_WINDOWS_KEY].update({name: {
-                CONFIG_OBJ_DIMENSIONS: window.model.dimensions,
-                CONFIG_LOCATION: window.model.location,
-                CONFIG_OBJ_ROTATION: window.model.rotation,
-                CONFIG_CUSTOM: window.custom,
-                CONFIG_TEMPLATE: window.template,
-                CONFIG_TEMPERATURE_KEY: window.temperature,
-                CONFIG_VELOCITY_KEY: window.velocity
-            }})
+            config[CONFIG_WINDOWS_KEY].update({name: window.dump_settings()})
         for name, door in self.doors.items():
-            config[CONFIG_DOORS_KEY].update({name: {
-                CONFIG_OBJ_DIMENSIONS: door.model.dimensions,
-                CONFIG_LOCATION: door.model.location,
-                CONFIG_OBJ_ROTATION: door.model.rotation,
-                CONFIG_CUSTOM: door.custom,
-                CONFIG_TEMPLATE: door.template,
-                CONFIG_TEMPERATURE_KEY: door.temperature,
-                CONFIG_VELOCITY_KEY: door.velocity
-            }})
+            config[CONFIG_DOORS_KEY].update({name: door.dump_settings()})
         for name, sensor in self.sensors.items():
-            config[CONFIG_SENSORS_KEY].update({name: {
-                CONFIG_SNS_FIELD: sensor.field,
-                CONFIG_LOCATION: sensor.location
-            }})
+            config[CONFIG_SENSORS_KEY].update({name: sensor.dump_settings()})
         return config
 
     def set_initial_objects(self, case_param: dict):
@@ -147,20 +113,21 @@ class ChtRoom(OpenFoamCase):
         if CONFIG_WALLS_KEY in case_param and case_param[CONFIG_WALLS_KEY]:
             walls = case_param[CONFIG_WALLS_KEY]
             self.add_object(name=walls[CONFIG_NAME_KEY], custom=walls[CONFIG_CUSTOM], obj_type='walls',
-                            dimensions=walls['dimensions'], location=walls['location'], template=walls['template'])
+                            dimensions=walls[CONFIG_OBJ_DIMENSIONS], location=walls[CONFIG_LOCATION],
+                            template=walls[CONFIG_TEMPLATE])
         if CONFIG_HEATERS_KEY in case_param and case_param[CONFIG_HEATERS_KEY]:
             for name, heater in case_param[CONFIG_HEATERS_KEY].items():
                 self.add_object(name, 'heater', custom=heater[CONFIG_CUSTOM], dimensions=heater[CONFIG_OBJ_DIMENSIONS],
-                                location=heater[CONFIG_LOCATION], template=heater['template'],
-                                material=heater['material'])
+                                location=heater[CONFIG_LOCATION], template=heater[CONFIG_TEMPLATE],
+                                material=heater[CONFIG_OBJ_MATERIAL])
         if CONFIG_WINDOWS_KEY in case_param and case_param[CONFIG_WINDOWS_KEY]:
             for name, window in case_param[CONFIG_WINDOWS_KEY].items():
                 self.add_object(name, 'window', custom=window[CONFIG_CUSTOM], dimensions=window[CONFIG_OBJ_DIMENSIONS],
-                                location=window[CONFIG_LOCATION], template=window['template'])
+                                location=window[CONFIG_LOCATION], template=window[CONFIG_TEMPLATE])
         if CONFIG_DOORS_KEY in case_param and case_param[CONFIG_DOORS_KEY]:
             for name, door in case_param[CONFIG_DOORS_KEY].items():
                 self.add_object(name, 'door', custom=door[CONFIG_CUSTOM], dimensions=door[CONFIG_OBJ_DIMENSIONS],
-                                location=door[CONFIG_LOCATION], template=door['template'])
+                                location=door[CONFIG_LOCATION], template=door[CONFIG_TEMPLATE])
         if CONFIG_SENSORS_KEY in case_param and case_param[CONFIG_SENSORS_KEY]:
             for name, sensor in case_param[CONFIG_SENSORS_KEY].items():
                 self.add_object(name, 'sensor', location=sensor[CONFIG_LOCATION],
