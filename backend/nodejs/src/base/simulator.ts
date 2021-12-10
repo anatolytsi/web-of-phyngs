@@ -115,7 +115,7 @@ export class Simulator extends AbstractThing {
      * @async
      */
     public async getErrors(): Promise<SimulationErrors> {
-        let response: AxiosResponse = await axios.get(`${this.couplingUrl}/errors`);
+        let response: AxiosResponse = await axios.get(`${this.host}/errors`);
         return response.data;
     }
 
