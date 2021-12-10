@@ -184,56 +184,79 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             return self.sensors[object_name]
         raise ObjectNotFound(f'Object with name {object_name} was not found')
 
+    def _reinit_sensor_from_parameters(self, sensor: WopSensor, params: dict):
+        """
+        Reinitializes sensor from given parameters
+        :param sensor: sensor to reinitialize
+        :param params: new parameters
+        """
+        new_params = {
+            CONFIG_OBJ_NAME_KEY: sensor.name,
+            CONFIG_LOCATION: params[CONFIG_LOCATION] if params[CONFIG_LOCATION] else sensor.location,
+            CONFIG_SNS_FIELD: params[CONFIG_SNS_FIELD] if params[CONFIG_SNS_FIELD] else sensor.field,
+        }
+        self.remove_object(sensor.name)
+        self.add_object(new_params[CONFIG_OBJ_NAME_KEY], sensor.type_name, location=new_params[CONFIG_LOCATION],
+                        sns_field=new_params[CONFIG_SNS_FIELD])
+
+    def _reinit_object_from_parameters(self, obj: WopObject, params: dict):
+        """
+        Reinitializes object from given parameters
+        :param obj: object to reinitialize
+        :param params: new parameters
+        """
+        new_params = {
+            CONFIG_OBJ_NAME_KEY: obj.name,
+            CONFIG_OBJ_DIMENSIONS: obj.model.dimensions,
+            CONFIG_LOCATION: params[CONFIG_LOCATION] if params[CONFIG_LOCATION] else obj.model.location,
+            CONFIG_OBJ_ROTATION: params[CONFIG_OBJ_ROTATION] if params[CONFIG_OBJ_ROTATION]
+            else obj.model.rotation,
+            CONFIG_TEMPLATE: obj.template,
+            CONFIG_URL: None
+        }
+        custom = obj.custom
+        if params[CONFIG_OBJ_DIMENSIONS]:
+            new_params[CONFIG_OBJ_DIMENSIONS] = params[CONFIG_OBJ_DIMENSIONS]
+            new_params[CONFIG_TEMPLATE] = ''
+            custom = False
+        elif params[CONFIG_TEMPLATE]:
+            new_params[CONFIG_OBJ_DIMENSIONS] = [0, 0, 0]
+            new_params[CONFIG_TEMPLATE] = params[CONFIG_TEMPLATE]
+            custom = False
+        elif params[CONFIG_URL]:
+            new_params[CONFIG_OBJ_DIMENSIONS] = [0, 0, 0]
+            new_params[CONFIG_TEMPLATE] = ''
+            new_params[CONFIG_URL] = params[CONFIG_URL]
+            custom = True
+        self.remove_object(obj.name)
+        self.add_object(new_params[CONFIG_OBJ_NAME_KEY], obj.type_name, new_params[CONFIG_URL], custom,
+                        new_params[CONFIG_TEMPLATE], new_params[CONFIG_OBJ_DIMENSIONS],
+                        new_params[CONFIG_LOCATION], new_params[CONFIG_OBJ_ROTATION])
+
+    @staticmethod
+    def _get_model_param_set():
+        """
+        Gets a set that defines model parameters
+        :return: model parameters set
+        """
+        return {CONFIG_OBJ_DIMENSIONS, CONFIG_OBJ_ROTATION, CONFIG_LOCATION, CONFIG_TEMPLATE, CONFIG_URL,
+                CONFIG_SNS_FIELD, CONFIG_OBJ_MATERIAL}
+
     def modify_object(self, object_name: str, params: dict):
         """
         Modifies object by recreating it with new parameters
         :param object_name: object name
         :param params: object parameters to change, e.g., dimensions
         """
-        geometric_set = {CONFIG_OBJ_DIMENSIONS, CONFIG_OBJ_ROTATION, CONFIG_LOCATION,
-                         CONFIG_TEMPLATE, CONFIG_URL, CONFIG_SNS_FIELD}
-        if not geometric_set.isdisjoint(params.keys()):
+        model_param_set = self._get_model_param_set()
+        if not model_param_set.isdisjoint(params.keys()):
             self.stop()
             self.initialized = False
             obj = self.get_object(object_name)
-            obj_type = obj.type_name
             if obj.type_name == 'sensor':
-                new_params = {
-                    CONFIG_OBJ_NAME_KEY: obj.name,
-                    CONFIG_LOCATION: params[CONFIG_LOCATION] if params[CONFIG_LOCATION] else obj.model.location,
-                    CONFIG_SNS_FIELD: params[CONFIG_SNS_FIELD] if params[CONFIG_SNS_FIELD] else obj.field,
-                }
-                self.remove_object(object_name)
-                self.add_object(new_params[CONFIG_OBJ_NAME_KEY], obj_type, location=new_params[CONFIG_LOCATION],
-                                sns_field=new_params[CONFIG_SNS_FIELD])
+                self._reinit_sensor_from_parameters(obj, params)
             else:
-                new_params = {
-                    CONFIG_OBJ_NAME_KEY: obj.name,
-                    CONFIG_OBJ_DIMENSIONS: obj.model.dimensions,
-                    CONFIG_LOCATION: params[CONFIG_LOCATION] if params[CONFIG_LOCATION] else obj.model.location,
-                    CONFIG_OBJ_ROTATION: params[CONFIG_OBJ_ROTATION] if params[CONFIG_OBJ_ROTATION]
-                    else obj.model.rotation,
-                    CONFIG_TEMPLATE: obj.template,
-                    CONFIG_URL: None
-                }
-                custom = obj.custom
-                if params[CONFIG_OBJ_DIMENSIONS]:
-                    new_params[CONFIG_OBJ_DIMENSIONS] = params[CONFIG_OBJ_DIMENSIONS]
-                    new_params[CONFIG_TEMPLATE] = ''
-                    custom = False
-                elif params[CONFIG_TEMPLATE]:
-                    new_params[CONFIG_OBJ_DIMENSIONS] = [0, 0, 0]
-                    new_params[CONFIG_TEMPLATE] = params[CONFIG_TEMPLATE]
-                    custom = False
-                elif params[CONFIG_URL]:
-                    new_params[CONFIG_OBJ_DIMENSIONS] = [0, 0, 0]
-                    new_params[CONFIG_TEMPLATE] = ''
-                    new_params[CONFIG_URL] = params[CONFIG_URL]
-                    custom = True
-                self.remove_object(object_name)
-                self.add_object(new_params[CONFIG_OBJ_NAME_KEY], obj_type, new_params[CONFIG_URL], custom,
-                                new_params[CONFIG_TEMPLATE], new_params[CONFIG_OBJ_DIMENSIONS],
-                                new_params[CONFIG_LOCATION], new_params[CONFIG_OBJ_ROTATION])
+                self._reinit_object_from_parameters(obj, params)
 
     def remove_object(self, object_name):
         """
