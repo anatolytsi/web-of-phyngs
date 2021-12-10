@@ -199,21 +199,40 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         self.add_object(new_params[CONFIG_OBJ_NAME_KEY], sensor.type_name, location=new_params[CONFIG_LOCATION],
                         sns_field=new_params[CONFIG_SNS_FIELD])
 
+    @staticmethod
+    def _get_new_params(obj: WopObject, params: dict):
+        """
+        Gets new parameters of an object according to present key - values
+        :param obj: WoP object
+        :param params: new parameters
+        :return: new parameters combined with old dict
+        """
+        return {
+            CONFIG_OBJ_NAME_KEY: obj.name,
+            CONFIG_OBJ_DIMENSIONS: obj.model.dimensions,
+            CONFIG_LOCATION: params[CONFIG_LOCATION] if params[CONFIG_LOCATION] else obj.model.location,
+            CONFIG_OBJ_ROTATION: params[CONFIG_OBJ_ROTATION] if params[CONFIG_OBJ_ROTATION] else obj.model.rotation,
+            CONFIG_TEMPLATE: obj.template,
+            CONFIG_URL: None
+        }
+
+    def _add_obj_from_parameters(self, object_name, params: dict, custom: bool):
+        """
+        Adds object from parameters
+        :param object_name: object name
+        :param params: object parameters
+        :param custom: is custom flag
+        """
+        self.add_object(params[CONFIG_OBJ_NAME_KEY], object_name, params[CONFIG_URL], custom, params[CONFIG_TEMPLATE],
+                        params[CONFIG_OBJ_DIMENSIONS], params[CONFIG_LOCATION], params[CONFIG_OBJ_ROTATION])
+
     def _reinit_object_from_parameters(self, obj: WopObject, params: dict):
         """
         Reinitializes object from given parameters
         :param obj: object to reinitialize
         :param params: new parameters
         """
-        new_params = {
-            CONFIG_OBJ_NAME_KEY: obj.name,
-            CONFIG_OBJ_DIMENSIONS: obj.model.dimensions,
-            CONFIG_LOCATION: params[CONFIG_LOCATION] if params[CONFIG_LOCATION] else obj.model.location,
-            CONFIG_OBJ_ROTATION: params[CONFIG_OBJ_ROTATION] if params[CONFIG_OBJ_ROTATION]
-            else obj.model.rotation,
-            CONFIG_TEMPLATE: obj.template,
-            CONFIG_URL: None
-        }
+        new_params = self._get_new_params(obj, params)
         custom = obj.custom
         if params[CONFIG_OBJ_DIMENSIONS]:
             new_params[CONFIG_OBJ_DIMENSIONS] = params[CONFIG_OBJ_DIMENSIONS]
@@ -228,10 +247,9 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             new_params[CONFIG_TEMPLATE] = ''
             new_params[CONFIG_URL] = params[CONFIG_URL]
             custom = True
+        object_name = obj.name
         self.remove_object(obj.name)
-        self.add_object(new_params[CONFIG_OBJ_NAME_KEY], obj.type_name, new_params[CONFIG_URL], custom,
-                        new_params[CONFIG_TEMPLATE], new_params[CONFIG_OBJ_DIMENSIONS],
-                        new_params[CONFIG_LOCATION], new_params[CONFIG_OBJ_ROTATION])
+        self._add_obj_from_parameters(object_name, new_params, custom)
 
     @staticmethod
     def _get_model_param_set():
@@ -240,7 +258,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :return: model parameters set
         """
         return {CONFIG_OBJ_DIMENSIONS, CONFIG_OBJ_ROTATION, CONFIG_LOCATION, CONFIG_TEMPLATE, CONFIG_URL,
-                CONFIG_SNS_FIELD, CONFIG_OBJ_MATERIAL}
+                CONFIG_SNS_FIELD}
 
     def modify_object(self, object_name: str, params: dict):
         """
