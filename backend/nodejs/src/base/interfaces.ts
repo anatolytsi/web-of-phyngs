@@ -40,10 +40,10 @@ export type Size = FixedLengthArray<number, 3>;
  * base for actuator base and sensor.
  */
 interface ObjectPropsBase {
-    name: string;
-    type: string;
+    name: string
+    type: string
     /** Object location. */
-    location?: Coordinates;
+    location?: Coordinates
 }
 
 /**
@@ -52,9 +52,9 @@ interface ObjectPropsBase {
  */
 export interface ActuatorPropsBase extends ObjectPropsBase {
     /** Custom actuator STL URL */
-    url?: AnyUri,
+    url?: AnyUri
     /** Actuator geometry rotation. */
-    rotation?: Vector;
+    rotation?: Vector
 }
 
 /**
@@ -63,7 +63,7 @@ export interface ActuatorPropsBase extends ObjectPropsBase {
  */
 export interface ActuatorPropsCreated extends ActuatorPropsBase {
     /** Actuator geometry dimensions. */
-    dimensions: Size;
+    dimensions: Size
 }
 
 /**
@@ -72,7 +72,7 @@ export interface ActuatorPropsCreated extends ActuatorPropsBase {
  */
 export interface ActuatorPropsTemplate extends ActuatorPropsBase {
     /** Actuator template name. */
-    template: string;
+    template: string
 }
 
 /**
@@ -86,7 +86,7 @@ export type ActuatorProps = ActuatorPropsCreated | ActuatorPropsTemplate;
  */
 export interface SensorProps extends ObjectPropsBase {
     /** Sensor field to monitor (e.g., "T"). */
-    field: string;
+    field: string
 }
 
 /**
@@ -100,17 +100,17 @@ export type ObjectProps = ActuatorProps | SensorProps;
  */
 export interface CaseParameters {
     /** Case name. */
-    name: string,
+    name: string
     /** Case type. */
-    type: string,
+    type: string
     /** Case mesh quality. */
-    meshQuality?: number,
+    meshQuality?: number
     /** Case result cleaning limit (0 - no cleaning). */
-    cleanLimit?: number,
+    cleanLimit?: number
     /** Is case running in parallel. */
-    parallel?: boolean,
+    parallel?: boolean
     /** Amount of cores to run in parallel. */
-    cores?: number,
+    cores?: number
     /** Is case running in realtime. */
     realtime?: boolean
     /** Case simulation end time. */
@@ -122,7 +122,7 @@ export interface CaseParameters {
  */
 interface NamedHrefs {
     /** Thing name. */
-    name: string;
+    name: string
     /** Thing HREFs. */
     hrefs: AnyUri[]
 }
@@ -145,6 +145,8 @@ export interface ObjectHrefs extends NamedHrefs {
  * Simulation errors object to read.
  */
 export interface SimulationErrors {
+    /** Error shortened texts array. */
     texts: string[]
+    /** Full error traces array. */
     traces: string[]
 }
