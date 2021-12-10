@@ -13,7 +13,7 @@ class WopWindow(WopObject):
 
     def __init__(self, name, case_dir, bg_region: str, url='', custom=False,
                  dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
-                 template=None, of_interface=None):
+                 template=None, of_interface=None, **kwargs):
         """
         Web of Phyngs window initialization function
         :param name: name of the window

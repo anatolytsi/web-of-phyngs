@@ -21,7 +21,7 @@ class WopObject(ABC):
 
     def __init__(self, name: str, case_dir: str, model_type: str, bg_region: str, url='', custom=False,
                  dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
-                 facing_zero=True, template=None, of_interface=None):
+                 facing_zero=True, template=None, of_interface=None, **kwargs):
         """
         Web of Phyngs object initialization function
         :param name: name of an object
