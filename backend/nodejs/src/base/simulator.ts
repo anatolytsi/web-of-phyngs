@@ -75,11 +75,11 @@ export class Simulator extends AbstractThing {
     /**
      * Initializes a new case with a given name.
      * @param {string} name Name of a case to initialize.
-     * @return {Promise<any>} Init error or nothing.
+     * @return {Promise<string | void>} Init error or nothing.
      * @protected
      * @async
      */
-    protected async initCaseByName(name: string): Promise<any> {
+    protected async initCaseByName(name: string): Promise<string | void> {
         let response: AxiosResponse = await axios.get(`${this.couplingUrl}/${name}`);
         if (!(name in this.cases) && responseIsSuccessful(response.status)) {
             this.cases[name] = this.constructExposedCase(response.data.type, name);
@@ -92,10 +92,11 @@ export class Simulator extends AbstractThing {
 
     /**
      * Loads available cases from the simulator backend.
+     * @return {Promise<string | void>} Load error or nothing.
      * @protected
      * @async
      */
-    protected async loadAvailableCases(): Promise<void> {
+    protected async loadAvailableCases(): Promise<string | void> {
         let response: AxiosResponse = await axios.get(`${this.couplingUrl}`);
         if (responseIsUnsuccessful(response.status)) {
             return response.data;
@@ -121,10 +122,10 @@ export class Simulator extends AbstractThing {
     /**
      * Creates case with given parameters on the simulator backend.
      * @param {CaseParameters} params Case parameters.
-     * @return {Promise<any>} Simulator backend response promise.
+     * @return {Promise<string>} Simulator backend response promise.
      * @async
      */
-    public async createCase(params: CaseParameters): Promise<any> {
+    public async createCase(params: CaseParameters): Promise<string> {
         let {name, ...data} = params;
         let response: AxiosResponse = await axios.post(`${this.couplingUrl}/${name}`, data);
         return response.data;
@@ -133,10 +134,10 @@ export class Simulator extends AbstractThing {
     /**
      * Deletes case by its name.
      * @param {string} name Name of the case.
-     * @return {Promise<any>} Simulator backend response promise.
+     * @return {Promise<string>} Simulator backend response promise.
      * @async
      */
-    public async deleteCase(name: string): Promise<any> {
+    public async deleteCase(name: string): Promise<string> {
         if (name in this.cases) {
             let index = this.casesHrefs.findIndex(x => x.name === name);
             this.casesHrefs.splice(index, 1);
