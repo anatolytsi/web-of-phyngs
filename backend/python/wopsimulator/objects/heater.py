@@ -1,4 +1,5 @@
 from ..exceptions import ObjectSetValueFailed
+from ..openfoam.system.snappyhexmesh import SnappyHexMeshDict
 from ..openfoam.common.parsing import get_latest_time
 from ..openfoam.constant.material_properties import SOLID_MATERIALS
 from .behavior.cht import set_boundary_to_heater
@@ -34,11 +35,16 @@ class WopHeater(WopObject):
                                         rotation, template=template, of_interface=of_interface)
         self._region = name
         self._fields = ['T']
+        self._material = material
 
     def _add_initial_boundaries(self):
         """Adds initial boundaries of a heater"""
         set_boundary_to_heater(self.name, self._bg_region, self._boundary_conditions, self.temperature)
         self._boundary_conditions[self.name]['T'].internalField.value = self._temperature
+
+    def bind_snappy(self, snappy_dict: SnappyHexMeshDict, snappy_type: str, region_type='wall', refinement_level=0):
+        super(WopHeater, self).bind_snappy(snappy_dict, snappy_type, region_type, refinement_level)
+        self.material = self._material
 
     def bind_region_boundaries(self, region_boundaries: dict):
         """
