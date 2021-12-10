@@ -1,3 +1,4 @@
+from datetime import datetime
 import traceback
 
 from flask_restful import Resource
@@ -18,6 +19,7 @@ def catch_error(func):
     """
 
     def wrapper(*args, **kwargs):
+        time_now = datetime.now()
         try:
             return func(*args, **kwargs)
         except (CaseTypeError, CaseAlreadyExists, WrongObjectType,) as e:
@@ -26,6 +28,7 @@ def catch_error(func):
             error_text, status = str(e), 404
         except Exception as e:
             error_text, status = str(e), 500
+        error_text = f'{time_now.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}: {error_text}'
         traceback.print_exc()
         simulator_exceptions['texts'].append(error_text)
         simulator_exceptions['traces'].append(traceback.format_exc())
