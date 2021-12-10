@@ -29,7 +29,7 @@ class OpenFoamInterface(ABC):
     """
 
     def __init__(self, solver_type, path='.', blocking=True, parallel=False, cores=1, mesh_quality=50,
-                 clean_limit=0, **kwargs):
+                 clean_limit=0, end_time=10000, **kwargs):
         """
         OpenFOAM Interface initialization function
         :param solver_type: solver type, e.g., chtMultiRegionFoam TODO: check for solver type
@@ -47,6 +47,7 @@ class OpenFoamInterface(ABC):
         self.cores = cores
         self.clean_limit = clean_limit
         self.control_dict = ControlDict(self.path, solver_type)
+        self.control_dict.end_time = end_time
         self.decompose_dict = DecomposeParDict(self.path, self.cores, 'simple')
         self.blockmesh_dict = BlockMeshDict(self.path)
         self.blockmesh_dict.mesh_quality = mesh_quality
@@ -93,6 +94,14 @@ class OpenFoamInterface(ABC):
     @property
     def running(self):
         return self._running
+
+    @property
+    def end_time(self):
+        return self.control_dict.end_time
+
+    @end_time.setter
+    def end_time(self, value):
+        self.control_dict.end_time = value
 
     def remove_processor_dirs(self):
         """

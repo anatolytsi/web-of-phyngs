@@ -11,7 +11,7 @@ from .runtime_monitor import RunTimeMonitor
 from .variables import CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, CONFIG_PARALLEL_KEY, \
     CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY, CONFIG_OBJ_DIMENSIONS, \
     CONFIG_OBJ_ROTATION, CONFIG_LOCATION, CONFIG_TEMPLATE, CONFIG_URL, CONFIG_SNS_FIELD, CONFIG_OBJ_NAME_KEY, \
-    CONFIG_STARTED_TIMESTAMP_KEY, CONFIG_REALTIME_KEY
+    CONFIG_STARTED_TIMESTAMP_KEY, CONFIG_REALTIME_KEY, CONFIG_END_TIME_KEY
 from .openfoam.interface import OpenFoamInterface
 from .openfoam.system.snappyhexmesh import SnappyRegion, SnappyPartitionedMesh, SnappyCellZoneMesh
 
@@ -126,7 +126,8 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             CONFIG_MESH_QUALITY_KEY: self.blockmesh_dict.mesh_quality,
             CONFIG_CLEAN_LIMIT_KEY: self.clean_limit,
             CONFIG_STARTED_TIMESTAMP_KEY: self.start_time,
-            CONFIG_REALTIME_KEY: self._runtime_monitor.enabled
+            CONFIG_REALTIME_KEY: self._runtime_monitor.enabled,
+            CONFIG_END_TIME_KEY: self.end_time
         }
         return config
 
@@ -412,12 +413,14 @@ class OpenFoamCase(OpenFoamInterface, ABC):
 
     def __setitem__(self, key, value):
         """Allow to set attributes of a class as in dictionary"""
-        if key not in (CONFIG_CLEAN_LIMIT_KEY, CONFIG_REALTIME_KEY):
+        if key not in (CONFIG_CLEAN_LIMIT_KEY, CONFIG_REALTIME_KEY, CONFIG_END_TIME_KEY):
             self.initialized = False
         if key == CONFIG_MESH_QUALITY_KEY:
             self.blockmesh_dict.mesh_quality = value
         else:
             setattr(self, key, value)
+        if key == CONFIG_END_TIME_KEY:
+            self.control_dict.save()
 
     def __iter__(self):
         """Allow to iterate over attribute names of a class"""

@@ -45,6 +45,8 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     protected _cores: number = 4;
     /** Is case running in realtime. */
     protected _realtime: boolean = true;
+    /** Case simulation end time. */
+    protected _endtime: number = 1000;
 
     /**
      * Abstract method to add a new object
@@ -192,6 +194,24 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     }
 
     /**
+     * Gets simulation endtime.
+     * @return {number} simulation endtime.
+     */
+    public get endtime(): number {
+        return this._endtime;
+    }
+
+    /**
+     * Sets simulation end time.
+     * @param {number} endtime: simulation endtime.
+     * @async
+     */
+    public async setEndtime(endtime: number): Promise<void> {
+        this._endtime = endtime;
+        await axios.patch(this.couplingUrl, {endtime});
+    }
+
+    /**
      * Runs a case.
      * @async
      */
@@ -331,6 +351,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         this.thing.setPropertyReadHandler('objects', async () => this.getObjects());
         this.thing.setPropertyReadHandler('time', async () => this.getTime());
         this.thing.setPropertyReadHandler('realtime', async () => this.realtime);
+        this.thing.setPropertyReadHandler('endtime', async () => this.endtime);
 
         this.thing.setPropertyWriteHandler('meshQuality', async (meshQuality) => {
             await this.setMeshQuality(meshQuality);
@@ -346,6 +367,9 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         });
         this.thing.setPropertyWriteHandler('realtime', async (realtime) => {
             await this.setRealtime(realtime);
+        });
+        this.thing.setPropertyWriteHandler('endtime', async (endtime) => {
+            await this.setEndtime(endtime);
         });
     }
 

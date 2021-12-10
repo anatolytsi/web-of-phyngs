@@ -113,6 +113,8 @@ export interface CaseParameters {
     cores?: number,
     /** Is case running in realtime. */
     realtime?: boolean
+    /** Case simulation end time. */
+    endtime?: number
 }
 
 /**
