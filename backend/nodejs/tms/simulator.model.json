@@ -27,6 +27,28 @@
           }
         }
       }
+    },
+    "errors": {
+      "description": "Get all errors appeared during simulation of the cases",
+      "type": "object",
+      "properties": {
+        "texts": {
+          "description": "Error shortened texts array",
+          "type": "array",
+          "items": {
+            "description": "Shortened error text",
+            "type": "string"
+          }
+        },
+        "traces": {
+          "description": "Full error traces array",
+          "type": "array",
+          "items": {
+            "description": "Full error trace",
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "actions": {

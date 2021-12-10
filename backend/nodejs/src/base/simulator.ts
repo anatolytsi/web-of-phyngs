@@ -8,7 +8,7 @@
 import axios, {AxiosResponse} from 'axios';
 import {AbstractThing} from './thing';
 import {AbstractCase} from './case';
-import {CaseParameters, CaseHrefs} from './interfaces';
+import {CaseParameters, CaseHrefs, SimulationErrors} from './interfaces';
 import {responseIsUnsuccessful, responseIsSuccessful} from "./helpers";
 
 /**
@@ -109,6 +109,16 @@ export class Simulator extends AbstractThing {
     }
 
     /**
+     * Returns simulation errors object.
+     * @return {Promise<SimulationErrors>} Simulator errors object.
+     * @async
+     */
+    public async getErrors(): Promise<SimulationErrors> {
+        let response: AxiosResponse = await axios.get(`${this.couplingUrl}/errors`);
+        return response.data;
+    }
+
+    /**
      * Creates case with given parameters on the simulator backend.
      * @param {CaseParameters} params Case parameters.
      * @return {Promise<any>} Simulator backend response promise.
@@ -140,6 +150,9 @@ export class Simulator extends AbstractThing {
     protected addPropertyHandlers(): void {
         this.thing.setPropertyReadHandler('cases', async () => {
             return this.casesHrefs;
+        });
+        this.thing.setPropertyReadHandler('errors', async () => {
+            return await this.getErrors();
         });
     }
 

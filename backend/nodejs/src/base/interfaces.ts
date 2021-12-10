@@ -138,3 +138,11 @@ export interface ObjectHrefs extends NamedHrefs {
     /** Object type */
     type: string
 }
+
+/**
+ * Simulation errors object to read.
+ */
+export interface SimulationErrors {
+    texts: string[]
+    traces: string[]
+}
