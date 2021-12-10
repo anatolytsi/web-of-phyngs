@@ -157,7 +157,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
     @abstractmethod
     def add_object(self, name: str, obj_type: str, url: str = '', custom=False, template: str = '',
                    dimensions: List[float] = (0, 0, 0), location: List[float] = (0, 0, 0),
-                   rotation: List[float] = (0, 0, 0), sns_field: str = None):
+                   rotation: List[float] = (0, 0, 0), sns_field: str = None, **kwargs):
         """
         Adds WoP object/sensor to a case
         :param name: name of the object
