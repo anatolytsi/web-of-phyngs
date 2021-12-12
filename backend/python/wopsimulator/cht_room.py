@@ -3,6 +3,7 @@ from typing import List
 
 from .exceptions import WrongObjectType
 from .openfoam.common.parsing import get_latest_time
+from .openfoam.constant.material_properties import FLUID_MATERIALS
 from .case_base import OpenFoamCase
 from .objects.door import WopDoor
 from .objects.room import WopRoom
