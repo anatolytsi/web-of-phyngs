@@ -93,13 +93,13 @@ class ChtRoom(OpenFoamCase):
         if self.walls:
             config[CONFIG_WALLS_KEY] = self.walls.dump_settings()
         for name, heater in self.heaters.items():
-            config[CONFIG_HEATERS_KEY].update({name: heater.dump_settings()})
+            config[CONFIG_HEATERS_KEY].update(heater.dump_settings())
         for name, window in self.windows.items():
-            config[CONFIG_WINDOWS_KEY].update({name: window.dump_settings()})
+            config[CONFIG_WINDOWS_KEY].update(window.dump_settings())
         for name, door in self.doors.items():
-            config[CONFIG_DOORS_KEY].update({name: door.dump_settings()})
+            config[CONFIG_DOORS_KEY].update(door.dump_settings())
         for name, sensor in self.sensors.items():
-            config[CONFIG_SENSORS_KEY].update({name: sensor.dump_settings()})
+            config[CONFIG_SENSORS_KEY].update(sensor.dump_settings())
         return config
 
     def set_initial_objects(self, case_param: dict):
