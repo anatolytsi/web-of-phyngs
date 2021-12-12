@@ -57,7 +57,7 @@ class WopHeater(WopObject):
             self._boundary_conditions = region_boundaries
             self._add_initial_boundaries()
 
-    def dump_settings(self):
+    def dump_settings(self) -> dict:
         settings = super(WopHeater, self).dump_settings()
         settings[self.name].update({'temperature': self._temperature})
         settings[self.name].update({'material': self.material})
@@ -70,7 +70,8 @@ class WopHeater(WopObject):
     @material.setter
     def material(self, material):
         if material not in SOLID_MATERIALS:
-            return
+            raise ValueError(f'Background material cannot be {material}, '
+                             f'possible values are {", ".join(SOLID_MATERIALS)}')
         self.snappy.material = material
 
     @property

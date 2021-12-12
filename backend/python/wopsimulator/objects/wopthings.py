@@ -107,7 +107,7 @@ class WopObject(ABC):
         """
         pass
 
-    def dump_settings(self):
+    def dump_settings(self) -> dict:
         dump = {self.name: {
             'dimensions': self.model.dimensions,
             'location': self.model.location,
