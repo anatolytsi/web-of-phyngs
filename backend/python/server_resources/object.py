@@ -14,10 +14,12 @@ class ObjectList(Resource):
         obj_list = []
         for obj in self.current_cases[case_name].get_objects().values():
             dump = obj.dump_settings()
-            dump_dict = list(dump.values())[0]
-            dump_dict['name'] = list(dump.keys())[0]
-            dump_dict['type'] = obj.type_name
-            obj_list.append(dump_dict)
+            if 'name' not in dump.keys():
+                name = list(dump.keys())[0]
+                dump = list(dump.values())[0]
+                dump['name'] = name
+            dump['type'] = obj.type_name
+            obj_list.append(dump)
         return obj_list
 
 
