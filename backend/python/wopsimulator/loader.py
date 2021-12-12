@@ -1,20 +1,33 @@
 """
 Case loader
 """
+import os
 import json
 from pathlib import Path
+from typing import Union, Type
 
+from .case_base import OpenFoamCase
 from .cht_room import ChtRoom
 from .exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists
 from .openfoam.common.filehandling import force_remove_dir, copy_tree
-from .variables import *
+from .variables import PY_BACKEND_DIR, CONFIG_PATH_KEY, CONFIG_TYPE_KEY, CUR_FILE_DIR, CONFIG_DEFAULTS
 
 CASE_TYPES = {
     ChtRoom.case_type: ChtRoom,
 }
 
+CASE_CLS_TYPES = Union[
+    Type[ChtRoom],
+    # Add your custom case types here
+]
 
-def load_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/wop-config.json'):
+CASE_INST_TYPE = Union[
+    ChtRoom,
+    # Add your custom case types here
+]
+
+
+def load_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/wop-config.json') -> CASE_INST_TYPE:
     """
     Loads case from wop-config.json
     :param case_name: name of the loaded case
@@ -29,7 +42,7 @@ def load_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/wop-config.j
             raise CaseNotFound(f'Path for case "{case_name}" is not defined')
         if CONFIG_TYPE_KEY in config[case_name] and \
                 (case_type_name := config[case_name][CONFIG_TYPE_KEY]) in CASE_TYPES.keys():
-            case_cls = CASE_TYPES[case_type_name]
+            case_cls: CASE_CLS_TYPES = CASE_TYPES[case_type_name]
         else:
             raise CaseTypeError(f'Case type is wrong or not specified! Expected one of: {", ".join(CASE_TYPES)}')
         case = case_cls(**config[case_name], loaded=True)
@@ -38,7 +51,7 @@ def load_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/wop-config.j
 
 
 def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEND_DIR,
-                config_path: str = f'{PY_BACKEND_DIR}/wop-config.json', replace_old: bool = False):
+                config_path: str = f'{PY_BACKEND_DIR}/wop-config.json', replace_old: bool = False) -> CASE_INST_TYPE:
     """
     Creates a new WoP Simulator case by finding a OpenFOAM case template by a specified type, copying it to a path
     specified, and adding all this data to a wop-config.json.
@@ -52,7 +65,7 @@ def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEN
     if case_param[CONFIG_TYPE_KEY] not in CASE_TYPES.keys():
         raise CaseTypeError(f'Case type is wrong or not specified! '
                             f'Got "{case_param[CONFIG_TYPE_KEY]}", expected one of: {", ".join(CASE_TYPES)}')
-    case_cls = CASE_TYPES[case_param[CONFIG_TYPE_KEY]]
+    case_cls: CASE_CLS_TYPES = CASE_TYPES[case_param[CONFIG_TYPE_KEY]]
 
     # Load/Create config
     Path(config_path).touch(exist_ok=True)
@@ -75,7 +88,7 @@ def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEN
 
     # TODO: JSON schema validation
 
-    case_config = CONFIG_DICT.copy()
+    case_config = CONFIG_DEFAULTS.copy()
     for key, value in case_param.items():
         case_config[key] = value
     case_config[CONFIG_PATH_KEY] = case_path
@@ -88,7 +101,7 @@ def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEN
     return case
 
 
-def save_case(case_name: str, case, config_path: str = f'{PY_BACKEND_DIR}/wop-config.json'):
+def save_case(case_name: str, case: OpenFoamCase, config_path: str = f'{PY_BACKEND_DIR}/wop-config.json'):
     """
     Saves WoP Simulator case parameters into wop-config.json.
     :param case_name: name of the project to name a new copied case and to refer to from wop-config.json
