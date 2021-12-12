@@ -13,18 +13,18 @@ from .variables import (CHT_ROOM_OBJ_TYPES, CONFIG_BACKGROUND_KEY, CONFIG_WALLS_
                         CONFIG_HEATERS_KEY, CONFIG_WINDOWS_KEY, CONFIG_DOORS_KEY, CONFIG_SENSORS_KEY,
                         CONFIG_OBJ_DIMENSIONS, CONFIG_OBJ_ROTATION, CONFIG_SNS_FIELD, CONFIG_LOCATION, CONFIG_TEMPLATE,
                         CONFIG_CUSTOM, CONFIG_TEMPERATURE_KEY, CONFIG_VELOCITY_KEY, CONFIG_OBJ_MATERIAL,
-                        CONFIG_OBJ_NAME_KEY, CONFIG_URL)
+                        CONFIG_OBJ_NAME_KEY, CONFIG_URL, CONFIG_MATERIAL_KEY)
 
 
 class ChtRoom(OpenFoamCase):
     """Conjugate Heat Transfer (CHT) OpenFOAM case"""
     case_type = 'cht_room'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, material='air', **kwargs):
         """
         Conjugate Heat Transfer case initialization function
         :param args: OpenFOAM base case args
-        :param args: OpenFOAM base case kwargs
+        :param kwargs: OpenFOAM base case kwargs
         """
         self.heaters = {}
         self.windows = {}
@@ -32,6 +32,7 @@ class ChtRoom(OpenFoamCase):
         self.furniture = {}
         self.walls = None
         self.background = 'fluid'
+        self._material = material
         super(ChtRoom, self).__init__('chtMultiRegionFoam', *args, **kwargs)
 
     def _setup_uninitialized_case(self, case_param: dict):
@@ -60,6 +61,21 @@ class ChtRoom(OpenFoamCase):
                         params[CONFIG_OBJ_DIMENSIONS], params[CONFIG_LOCATION], params[CONFIG_OBJ_ROTATION],
                         params[CONFIG_OBJ_MATERIAL])
 
+    def prepare_partitioned_mesh(self):
+        super(ChtRoom, self).prepare_partitioned_mesh()
+        self._partitioned_mesh.material = self._material
+
+    @property
+    def material(self):
+        return self._material
+
+    @material.setter
+    def material(self, material):
+        if material not in FLUID_MATERIALS:
+            raise ValueError(f'Background material cannot be {material}, '
+                             f'possible values are {", ".join(FLUID_MATERIALS)}')
+        self._material = material
+
     def dump_case(self):
         """
         Dumps CHT case parameters into dictionary
@@ -67,6 +83,7 @@ class ChtRoom(OpenFoamCase):
         """
         config = super(ChtRoom, self).dump_case()
         config[CONFIG_BACKGROUND_KEY] = self.background
+        config[CONFIG_MATERIAL_KEY] = self.material
         config[CONFIG_HEATERS_KEY] = {}
         config[CONFIG_WINDOWS_KEY] = {}
         config[CONFIG_DOORS_KEY] = {}

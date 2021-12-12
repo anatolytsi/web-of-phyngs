@@ -5,7 +5,7 @@ from wopsimulator.loader import load_case, create_case, get_cases_names, save_ca
 
 from wopsimulator.variables import CONFIG_TYPE_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY, \
     CONFIG_PARALLEL_KEY, CONFIG_CORES_KEY, CONFIG_REALTIME_KEY, CONFIG_BACKGROUND_KEY, CONFIG_DEFAULTS, \
-    CONFIG_END_TIME_KEY
+    CONFIG_END_TIME_KEY, CONFIG_MATERIAL_KEY
 
 
 def auto_load_case(func):
@@ -38,6 +38,7 @@ class Case(Resource):
         self.reqparse.add_argument(CONFIG_REALTIME_KEY, type=bool,
                                    help='Case solving is done close to realtime if possible')
         self.reqparse.add_argument(CONFIG_BACKGROUND_KEY, type=str, help='Case background region')
+        self.reqparse.add_argument(CONFIG_MATERIAL_KEY, type=str, help='CHT case simulation background material')
         self.reqparse.add_argument(CONFIG_END_TIME_KEY, type=int, help='Case simulation end time')
         super(Case, self).__init__()
 
