@@ -2,6 +2,7 @@ import os
 import re
 import math
 import time
+import traceback
 from threading import Thread, Lock
 from typing import Union, List
 
@@ -90,6 +91,7 @@ class Probe:
     _instances = {}
     _fields = {}
     _regions = {}
+    _locations = {}
 
     def __new__(cls, case_dir: str, field: str, region: str, location: List[Num]):
         """
@@ -105,17 +107,48 @@ class Probe:
         if case_dir not in cls._dict_path.keys():
             cls._dict_path[case_dir] = dict_path
             cls._instances[case_dir] = []
-            cls._fields[case_dir] = set()
-            cls._regions[case_dir] = set()
+            cls._fields[case_dir] = []
+            cls._regions[case_dir] = []
+            cls._locations[case_dir] = []
         if not os.path.exists(dict_path):
             location_str = f'{" " * 4}({" ".join([str(l) for l in location])})\n'
             with open(dict_path, 'w') as f:
                 f.writelines(PROBE_DICT_FILE_TEMPLATE % (field, region, location_str))
-        instance = super(Probe, cls).__new__(cls)
-        cls._fields[case_dir].add(field)
-        cls._regions[case_dir].add(region)
-        cls._instances[case_dir].append(instance)
+        instance, _ = cls._get_instance_and_idx(case_dir, field, region, location)
+        if not instance:
+            instance = super(Probe, cls).__new__(cls)
+            cls._fields[case_dir].append(field)
+            cls._regions[case_dir].append(region)
+            cls._locations[case_dir].append(location)
+            cls._instances[case_dir].append(instance)
         return instance
+
+    @classmethod
+    def _get_instance_and_idx(cls, case_dir, field, region, location):
+        in_fields = True if field in cls._fields[case_dir] else False
+        in_regions = True if region in cls._regions[case_dir] else False
+        in_locations = True if location in cls._locations[case_dir] else False
+        if all([in_fields, in_regions, in_locations]):
+            values = list(zip(cls._fields[case_dir], cls._regions[case_dir], cls._locations[case_dir]))
+            idx = values.index((field, region, location))
+            return cls._instances[case_dir][idx], idx
+        return None, None
+
+    @classmethod
+    def get_instances(cls, case_dir: str) -> list:
+        return cls._instances[case_dir] if case_dir in cls._instances else None
+
+    @classmethod
+    def get_fields(cls, case_dir: str) -> set:
+        return set(cls._fields[case_dir]) if case_dir in cls._fields else None
+
+    @classmethod
+    def get_regions(cls, case_dir: str) -> set:
+        return set(cls._regions[case_dir]) if case_dir in cls._regions else None
+
+    @classmethod
+    def get_locations(cls, case_dir: str) -> set:
+        return set(cls._locations[case_dir]) if case_dir in cls._locations else None
 
     def __init__(self, case_dir: str, field: str, region: str, location: List[Num]):
         """
@@ -129,10 +162,20 @@ class Probe:
         self._added = False
         self.field = field
         self.region = region
-        self.location = location
+        self._location = location
         self.value = 0
         self.time = 0
         self._add_probe_to_dict()
+
+    @property
+    def location(self):
+        return self._location
+
+    @location.setter
+    def location(self, location):
+        _, idx = self._get_instance_and_idx(self._case_dir, self.field, self.region, self.location)
+        self.__class__._locations[self._case_dir][idx] = location
+        self._location = location
 
     def _on_region_callback(self, line, region):
         """
@@ -172,7 +215,7 @@ class Probe:
         :return: document line string
         """
         if all([1 if math.isclose(probe1, probe2, abs_tol=0.5) else 0
-                for probe1, probe2 in zip(self.location, location)]):
+                for probe1, probe2 in zip(self._location, location)]):
             self.location = location
             self._added = True
         return line
@@ -202,14 +245,11 @@ class Probe:
 
     def remove(self):
         """Removes probe from known instances"""
-        self.__class__._instances[self._case_dir].remove(self)
-        used_fields = set()
-        used_regions = set()
-        for inst in self.__class__._instances[self._case_dir]:
-            used_fields.add(inst.field)
-            used_regions.add(inst.field)
-        self.__class__._fields[self._case_dir] = used_fields
-        self.__class__._regions[self._case_dir] = used_regions
+        _, idx = self._get_instance_and_idx(self._case_dir, self.field, self.region, self.location)
+        self.__class__._regions[self._case_dir].pop(idx)
+        self.__class__._fields[self._case_dir].pop(idx)
+        self.__class__._locations[self._case_dir].pop(idx)
+        self.__class__._instances[self._case_dir].pop(idx)
 
 
 class ProbeParser(Thread):
@@ -263,9 +303,9 @@ class ProbeParser(Thread):
         path_to_probes_data = f'{self._case_dir}/postProcessing/probes/{region}'
         scalar_pattern = re.compile(NUMBER_PATTERN)
         vector_pattern = re.compile(VECTOR_PATTERN)
-        region_probes = [[num, probe] for num, probe in enumerate(Probe._instances[self._case_dir], 0)
+        region_probes = [[num, probe] for num, probe in enumerate(Probe.get_instances(self._case_dir), 0)
                          if probe.region == region]
-        for field in Probe._fields[self._case_dir]:
+        for field in Probe.get_fields(self._case_dir):
             try:
                 latest_result = get_latest_time(path_to_probes_data)
             except FileNotFoundError:
@@ -326,11 +366,11 @@ class ProbeParser(Thread):
         if not os.path.exists(probe_dict):
             self._num_of_probes = 0
             return
-        probe_locations = [probe.location for probe in Probe._instances[self._case_dir]]
+        probe_locations = [probe.location for probe in Probe.get_instances(self._case_dir)]
         new_lines = parse_probes_dict(
             probe_dict,
             on_field=lambda line, fields_str, fields: self._on_field_remove(line, fields_str, fields,
-                                                                            Probe._fields[self._case_dir]),
+                                                                            Probe.get_fields(self._case_dir)),
             on_location=lambda line, loc_str, loc: self._on_location_remove(line, loc_str, loc, probe_locations)
         )
         with open(probe_dict, 'w') as f:
@@ -342,14 +382,14 @@ class ProbeParser(Thread):
         Parses data for initialized case with previous results
         :param probe: probe to parse
         """
-        if probe not in Probe._instances[self._case_dir] or \
+        if probe not in Probe.get_instances(self._case_dir) or \
                 not os.path.exists(f'{self._case_dir}/postProcessing/probes/{probe.region}'):
             return
         self._parse_region(probe.region)
 
     def run(self):
         """Thread function to parse data"""
-        if not Probe._instances[self._case_dir]:
+        if not Probe.get_instances(self._case_dir):
             # No probes were initialized
             return
         self.running = True
@@ -357,7 +397,7 @@ class ProbeParser(Thread):
         self._mutex.acquire()
         print('Starting probe parser thread')
         while self.running:
-            for region in Probe._regions[self._case_dir]:
+            for region in Probe.get_regions(self._case_dir):
                 self._parse_region(region)
             time.sleep(self.parsing_period)
         print('Quiting probe parser thread')
