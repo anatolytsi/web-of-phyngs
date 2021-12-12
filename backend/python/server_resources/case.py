@@ -67,6 +67,7 @@ class Case(Resource):
         save_case(case_name, self.current_cases[case_name])
         # Reload the case with new changes applied
         if not self.current_cases[case_name].initialized:
+            del self.current_cases[case_name]
             self.current_cases[case_name] = load_case(case_name)
 
     @catch_error
