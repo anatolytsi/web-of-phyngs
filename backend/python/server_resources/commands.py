@@ -75,4 +75,4 @@ class Command(Resource):
                     self.current_cases[case_name].run_reconstruct(all_regions=True)
                 else:
                     self.current_cases[case_name].run_reconstruct(region=args['region'], fields=args['fields'])
-        return '', 201
+        return '', 200
