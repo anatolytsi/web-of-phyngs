@@ -23,6 +23,10 @@ from .system.decomposepar import DecomposeParDict
 from .system.snappyhexmesh import SnappyHexMeshDict
 
 
+class RunFailed(Exception):
+    pass
+
+
 class OpenFoamInterface(ABC):
     """
     OpenFOAM Interface class. Serves as a wrapper of OpenFOAM commands
@@ -193,7 +197,7 @@ class OpenFoamInterface(ABC):
         runner = BasicRunner(argv=argv, silent=silent, logname=argv[0])
         runner.start()
         if not runner.runOK():
-            raise Exception(f'{argv[0]} run failed')
+            raise RunFailed(f'{argv[0]} run failed')
 
     def _check_solver_run(self):
         if not self._solver.runOK():
@@ -205,7 +209,7 @@ class OpenFoamInterface(ABC):
                 error = f'fatal stack dump'
             else:
                 error = 'unknown error'
-            raise Exception(f'{self._solver_type} run failed with {error}: {self._solver.data["errorText"]}')
+            raise RunFailed(f'{self._solver_type} run failed with {error}: {self._solver.data["errorText"]}')
 
     def run_solver_parallel(self, silent=True):
         """
