@@ -420,6 +420,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Removes old results and logs in the case directory.
         Resets start time
         """
+        self.stop()
         self.start_time = 0
         super(OpenFoamCase, self).clean_case()
 
@@ -456,6 +457,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         """Allow to set attributes of a class as in dictionary"""
         if key not in (CONFIG_CLEAN_LIMIT_KEY, CONFIG_REALTIME_KEY, CONFIG_END_TIME_KEY):
             self.initialized = False
+            self.stop()
         if key == CONFIG_MESH_QUALITY_KEY:
             self.blockmesh_dict.mesh_quality = value
         else:
