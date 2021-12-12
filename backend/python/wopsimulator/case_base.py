@@ -442,12 +442,10 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         super(OpenFoamCase, self).run()
         self._runtime_monitor.start()
 
-    def stop(self, **kwargs):
-        if 'runtime_checker' not in kwargs or not kwargs['runtime_checker']:
+    def stop(self, runtime_checker=False, **kwargs):
+        if not runtime_checker:
             self._runtime_monitor.stop()
-        if not self.running:
-            return
-        super(OpenFoamCase, self).stop()
+        super(OpenFoamCase, self).stop(**kwargs)
 
     def __getitem__(self, item):
         """Allow to access attributes of a class as in dictionary"""

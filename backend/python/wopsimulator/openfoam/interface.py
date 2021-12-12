@@ -466,7 +466,7 @@ class OpenFoamInterface(ABC):
             self._solver_mutex.acquire()
             self._solver_mutex.release()
 
-    def stop(self):
+    def stop(self, stop_solver=True, **kwargs):
         """
         Stops solver and monitor threads
         :return: None
@@ -474,4 +474,5 @@ class OpenFoamInterface(ABC):
         if not self._running:
             return
         self._probe_parser.stop()
-        self.stop_solving()
+        if stop_solver:
+            self.stop_solving()
