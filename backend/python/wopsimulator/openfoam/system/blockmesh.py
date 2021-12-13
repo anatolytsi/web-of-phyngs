@@ -180,8 +180,6 @@ class Boundary:
 
 class BlockMeshDict:
     """BlockMesh dictionary file representation as a class"""
-    _min_block_size = 0.1
-    _max_block_size = 0.7
 
     def __init__(self, case_dir, mesh_quality: int = 50):
         """
@@ -191,10 +189,17 @@ class BlockMeshDict:
         """
         self.scale = 1
         self._case_dir = case_dir
+        self._mesh_quality = mesh_quality
         self.vertices = []
         self.blocks = []
         self.edges = []
         self.boundaries = []
+        self._min_block_size = 0.1
+        self._max_block_size = 0.7
+        self._calculate_quality_coefficients()
+        self._calculate_mesh_quality()
+
+    def _calculate_quality_coefficients(self):
         self._avg_block_size = (self._min_block_size + self._max_block_size) / 2
         percents = [0, 50, 100]
         values = [self._max_block_size, self._avg_block_size, self._min_block_size]
@@ -209,7 +214,15 @@ class BlockMeshDict:
         self._quality_a = (sum_percents * sum_values - n * sum_of_mult) / (percents_sq_sum - n * percents_sum_sq)
         self._quality_b = (sum_percents * sum_of_mult - percents_sum_sq * sum_values) / \
                           (percents_sq_sum - n * percents_sum_sq)
-        self.mesh_quality = mesh_quality
+
+    def _calculate_mesh_quality(self):
+        self._calculate_quality_coefficients()
+        if 0 > self._mesh_quality or self._mesh_quality > 100:
+            raise ValueError(f'Mesh quality is defined in percentage '
+                             f'(0%-100%), but {self._mesh_quality} was provided')
+        self._block_size = self._quality_a * self._mesh_quality + self._quality_b
+        for block in self.blocks:
+            self._calculate_mesh(block)
 
     @property
     def mesh_quality(self):
@@ -222,13 +235,8 @@ class BlockMeshDict:
         Mesh quality setter
         :param mesh_quality: mesh quality in percents
         """
-        if 0 > mesh_quality or mesh_quality > 100:
-            raise ValueError(f'Mesh quality is defined in percentage '
-                             f'(0%-100%), but {mesh_quality} was provided')
-        self._block_size = self._quality_a * mesh_quality + self._quality_b
-        for block in self.blocks:
-            self._calculate_mesh(block)
         self._mesh_quality = mesh_quality
+        self._calculate_mesh_quality()
 
     def _calculate_mesh(self, block):
         """
@@ -263,6 +271,10 @@ class BlockMeshDict:
         if block not in self.blocks:
             self.vertices.extend(vertices)
             self.blocks.append(block)
+            dimensions = block.get_dimensions()
+            self._min_block_size = 0.1 * max(dimensions) / 3
+            self._max_block_size = 0.7 * max(dimensions) / 3
+            self._calculate_mesh_quality()
             self._calculate_mesh(block)
 
     def save(self):
