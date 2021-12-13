@@ -118,6 +118,7 @@ class PyFoamSolver(Thread):
             self._solver.start()
             _check_runner_errors(self._solver_type, self._solver)
             print('Quiting solver thread')
+            self._solver = None
 
     def stop(self, signal):
         """Stops solving"""
