@@ -37,8 +37,7 @@ class Case(Resource):
         self.reqparse.add_argument(CONFIG_CORES_KEY, type=int, help='Number of cores for parallel run', )
         self.reqparse.add_argument(CONFIG_REALTIME_KEY, type=bool,
                                    help='Case solving is done close to realtime if possible')
-        self.reqparse.add_argument(CONFIG_BACKGROUND_KEY, type=str, help='Case background region')
-        self.reqparse.add_argument(CONFIG_MATERIAL_KEY, type=str, help='CHT case simulation background material')
+        self.reqparse.add_argument(CONFIG_BACKGROUND_KEY, type=str, help='CHT case background region material')
         self.reqparse.add_argument(CONFIG_END_TIME_KEY, type=int, help='Case simulation end time')
         super(Case, self).__init__()
 

@@ -14,14 +14,14 @@ from .variables import (CHT_ROOM_OBJ_TYPES, CONFIG_BACKGROUND_KEY, CONFIG_WALLS_
                         CONFIG_HEATERS_KEY, CONFIG_WINDOWS_KEY, CONFIG_DOORS_KEY, CONFIG_SENSORS_KEY,
                         CONFIG_OBJ_DIMENSIONS, CONFIG_OBJ_ROTATION, CONFIG_SNS_FIELD, CONFIG_LOCATION, CONFIG_TEMPLATE,
                         CONFIG_CUSTOM, CONFIG_TEMPERATURE_KEY, CONFIG_VELOCITY_KEY, CONFIG_OBJ_MATERIAL,
-                        CONFIG_OBJ_NAME_KEY, CONFIG_URL, CONFIG_MATERIAL_KEY)
+                        CONFIG_OBJ_NAME_KEY, CONFIG_URL)
 
 
 class ChtRoom(OpenFoamCase):
     """Conjugate Heat Transfer (CHT) OpenFOAM case"""
     case_type = 'cht_room'
 
-    def __init__(self, *args, material='air', **kwargs):
+    def __init__(self, *args, background='air', **kwargs):
         """
         Conjugate Heat Transfer case initialization function
         :param args: OpenFOAM base case args
@@ -32,8 +32,9 @@ class ChtRoom(OpenFoamCase):
         self.doors = {}
         self.furniture = {}
         self.walls = None
-        self.background = 'fluid'
-        self._material = material
+        self.background_name = 'fluid'
+        self._background_material = background
+        self.background = background
         super(ChtRoom, self).__init__('chtMultiRegionFoam', *args, **kwargs)
 
     def _setup_uninitialized_case(self, case_param: dict):
@@ -64,18 +65,18 @@ class ChtRoom(OpenFoamCase):
 
     def prepare_partitioned_mesh(self):
         super(ChtRoom, self).prepare_partitioned_mesh()
-        self._partitioned_mesh.material = self._material
+        self._partitioned_mesh.material = self._background_material
 
     @property
-    def material(self):
-        return self._material
+    def background(self):
+        return self._background_material
 
-    @material.setter
-    def material(self, material):
-        if material not in FLUID_MATERIALS:
-            raise ValueError(f'Background material cannot be {material}, '
-                             f'possible values are {", ".join(FLUID_MATERIALS)}')
-        self._material = material
+    @background.setter
+    def background(self, background_material):
+        if background_material not in FLUID_MATERIALS:
+            raise ValueError(f'Background material cannot be "{background_material}", '
+                             f'possible values are: {", ".join(FLUID_MATERIALS)}')
+        self._background_material = background_material
 
     def dump_case(self):
         """
@@ -84,7 +85,6 @@ class ChtRoom(OpenFoamCase):
         """
         config = super(ChtRoom, self).dump_case()
         config[CONFIG_BACKGROUND_KEY] = self.background
-        config[CONFIG_MATERIAL_KEY] = self.material
         config[CONFIG_HEATERS_KEY] = {}
         config[CONFIG_WINDOWS_KEY] = {}
         config[CONFIG_DOORS_KEY] = {}
@@ -126,7 +126,7 @@ class ChtRoom(OpenFoamCase):
         Loads CHT case objects parameters from case_param dict
         :param case_param: loaded case parameters
         """
-        self.background = case_param[CONFIG_BACKGROUND_KEY]
+        # self.background = case_param[CONFIG_BACKGROUND_KEY]
         if CONFIG_WALLS_KEY in case_param and case_param[CONFIG_WALLS_KEY]:
             walls = case_param[CONFIG_WALLS_KEY]
             self.add_object(name=walls[CONFIG_NAME_KEY], custom=walls[CONFIG_CUSTOM], obj_type='walls',
@@ -153,7 +153,7 @@ class ChtRoom(OpenFoamCase):
     def setup(self):
         """Setups CHT case"""
         self.prepare_geometry()
-        self.partition_mesh(self.background)
+        self.partition_mesh(self.background_name)
         self.prepare_partitioned_mesh()
         self.clean_case()
         self.run_block_mesh()
@@ -182,27 +182,27 @@ class ChtRoom(OpenFoamCase):
         """
         # TODO: check if name contains spaces
         if obj_type == WopHeater.type_name:
-            wop_object = WopHeater(name, self.path, self.background, url, custom, dimensions=dimensions,
+            wop_object = WopHeater(name, self.path, self.background_name, url, custom, dimensions=dimensions,
                                    location=location, rotation=rotation, template=template, of_interface=self,
                                    material=material)
             wop_object.bind_snappy(self.snappy_dict, 'cell_zone', refinement_level=2)
             self.heaters.update({name: wop_object})
         elif obj_type == WopWindow.type_name:
-            wop_object = WopWindow(name, self.path, self.background, url, custom, dimensions=dimensions,
+            wop_object = WopWindow(name, self.path, self.background_name, url, custom, dimensions=dimensions,
                                    location=location, rotation=rotation, template=template, of_interface=self)
             wop_object.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
             self.windows.update({wop_object.name: wop_object})
             if self.walls:
                 self.walls.model.geometry.cut_surface(wop_object.model.geometry)
         elif obj_type == WopDoor.type_name:
-            wop_object = WopDoor(name, self.path, self.background, url, custom, dimensions=dimensions,
+            wop_object = WopDoor(name, self.path, self.background_name, url, custom, dimensions=dimensions,
                                  location=location, rotation=rotation, template=template, of_interface=self)
             wop_object.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
             self.doors.update({wop_object.name: wop_object})
             if self.walls:
                 self.walls.model.geometry.cut_surface(wop_object.model.geometry)
         elif obj_type == WopRoom.type_name:
-            wop_object = WopRoom(name, self.path, self.background, url, custom, dimensions=dimensions,
+            wop_object = WopRoom(name, self.path, self.background_name, url, custom, dimensions=dimensions,
                                  location=location, rotation=rotation, template=template, of_interface=self)
             wop_object.bind_snappy(self.snappy_dict, 'region', 'wall')
             self.walls = wop_object
@@ -211,7 +211,7 @@ class ChtRoom(OpenFoamCase):
             for door in self.windows.values():
                 wop_object.model.geometry.cut_surface(door.model.geometry)
         elif obj_type == WopSensor.type_name:
-            sensor = WopSensor(name, self.path, sns_field, self.background, location)
+            sensor = WopSensor(name, self.path, sns_field, self.background_name, location)
             self.sensors.update({sensor.name: sensor})
             self.initialized = False
             return

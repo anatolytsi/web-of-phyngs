@@ -177,25 +177,25 @@ const chtObjectConstructors: { [type: string]: Function } = {
  * @class ChtCase
  */
 export class ChtCase extends AbstractCase {
-    /** Background region name. */
-    protected _background: string = 'fluid';
+    /** Background region material. */
+    protected _background: string = 'air';
 
     /**
-     * Gets background region name.
-     * @return {string} Background region name.
+     * Gets background region material name.
+     * @return {string} Background region material name.
      */
     public get background(): string {
         return this._background;
     }
 
     /**
-     * Sets background region name.
-     * @param {string} background Background region name to set.
+     * Sets background region material name.
+     * @param {string} background Background region material name to set.
      * @async
      */
-    public async setBackground(background: string): Promise<void>  {
+    public async setBackground(background: string): Promise<void> {
         this._background = background;
-        let response = await axios.patch(this.couplingUrl, {background: background});
+        let response = await axios.patch(this.couplingUrl, {background});
         if (response.status / 100 !== 2) {
             console.error(response.data);
         }
