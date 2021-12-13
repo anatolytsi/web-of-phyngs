@@ -18,7 +18,7 @@ let simulationHostAddress = new Promise(resolve => {
     simulationHostAddressResolver = resolve;
 })
 let CASE_PARAMS: CaseConstructorType = {
-    'cht_room': {
+    'cht': {
         'constructor': (host: string, wot: WoT.WoT,
                         tm: WoT.ThingDescription, name: string) => new ChtCase(host, wot, tm, name),
         'tm': require('../tms/behavior/cht/case.model.json')

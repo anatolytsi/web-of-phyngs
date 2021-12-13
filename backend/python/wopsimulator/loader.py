@@ -7,22 +7,22 @@ from pathlib import Path
 from typing import Union, Type
 
 from .case_base import OpenFoamCase
-from .cht_room import ChtRoom
+from .cht_case import ChtCase
 from .exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists
 from .openfoam.common.filehandling import force_remove_dir, copy_tree
 from .variables import PY_BACKEND_DIR, CONFIG_PATH_KEY, CONFIG_TYPE_KEY, CUR_FILE_DIR, CONFIG_DEFAULTS, WOP_CONFIG_FILE
 
 CASE_TYPES = {
-    ChtRoom.case_type: ChtRoom,
+    ChtCase.case_type: ChtCase,
 }
 
 CASE_CLS_TYPES = Union[
-    Type[ChtRoom],
+    Type[ChtCase],
     # Add your custom case types here
 ]
 
 CASE_INST_TYPE = Union[
-    ChtRoom,
+    ChtCase,
     # Add your custom case types here
 ]
 

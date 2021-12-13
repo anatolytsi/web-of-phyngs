@@ -17,9 +17,9 @@ from .variables import (CHT_ROOM_OBJ_TYPES, CONFIG_BACKGROUND_KEY, CONFIG_WALLS_
                         CONFIG_OBJ_NAME_KEY, CONFIG_URL)
 
 
-class ChtRoom(OpenFoamCase):
+class ChtCase(OpenFoamCase):
     """Conjugate Heat Transfer (CHT) OpenFOAM case"""
-    case_type = 'cht_room'
+    case_type = 'cht'
 
     def __init__(self, *args, background='air', **kwargs):
         """
@@ -35,23 +35,23 @@ class ChtRoom(OpenFoamCase):
         self.background_name = 'fluid'
         self._background_material = background
         self.background = background
-        super(ChtRoom, self).__init__('chtMultiRegionFoam', *args, **kwargs)
+        super(ChtCase, self).__init__('chtMultiRegionFoam', *args, **kwargs)
 
     def _setup_uninitialized_case(self, case_param: dict):
         """
         Setups the loaded uninitialized CHT case
         :param case_param: loaded case parameters
         """
-        super(ChtRoom, self)._setup_uninitialized_case(case_param)
+        super(ChtCase, self)._setup_uninitialized_case(case_param)
         self.remove_initial_boundaries()
         self.load_initial_objects(case_param)
         self.set_initial_objects(case_param)
 
     def _get_model_param_set(self):
-        return super(ChtRoom, self)._get_model_param_set() | {CONFIG_OBJ_MATERIAL}
+        return super(ChtCase, self)._get_model_param_set() | {CONFIG_OBJ_MATERIAL}
 
     def _get_new_params(self, obj: WopObject, params: dict):
-        new_params = super(ChtRoom, self)._get_new_params(obj, params)
+        new_params = super(ChtCase, self)._get_new_params(obj, params)
         if CONFIG_OBJ_MATERIAL in obj:
             new_params.update({
                 CONFIG_OBJ_MATERIAL: params[CONFIG_OBJ_MATERIAL] if params[CONFIG_OBJ_MATERIAL] else obj.material
@@ -64,7 +64,7 @@ class ChtRoom(OpenFoamCase):
                         params[CONFIG_OBJ_MATERIAL])
 
     def prepare_partitioned_mesh(self):
-        super(ChtRoom, self).prepare_partitioned_mesh()
+        super(ChtCase, self).prepare_partitioned_mesh()
         self._partitioned_mesh.material = self._background_material
 
     @property
@@ -83,7 +83,7 @@ class ChtRoom(OpenFoamCase):
         Dumps CHT case parameters into dictionary
         :return: parameter dump dict
         """
-        config = super(ChtRoom, self).dump_case()
+        config = super(ChtCase, self).dump_case()
         config[CONFIG_BACKGROUND_KEY] = self.background
         config[CONFIG_HEATERS_KEY] = {}
         config[CONFIG_WINDOWS_KEY] = {}
@@ -226,7 +226,7 @@ class ChtRoom(OpenFoamCase):
         :param object_name: object name to remove
         """
         type_name = self.get_object(object_name).type_name
-        super(ChtRoom, self).remove_object(object_name)
+        super(ChtCase, self).remove_object(object_name)
         type_name = f'{type_name}s' if 's' not in type_name[-1] else type_name
         if type_name != 'sensors':
             del self[type_name][object_name]
@@ -251,7 +251,7 @@ def main():
     heater_location = [1, 1, 0.2]
     sensor_location = [1.5, 2, 1]
 
-    room = ChtRoom(case_dir, blocking=False, parallel=is_run_parallel, cores=4)
+    room = ChtCase(case_dir, blocking=False, parallel=is_run_parallel, cores=4)
     room.add_object(name='walls', obj_type='walls', dimensions=room_dimensions)
     room.add_object('inlet', 'window', dimensions=window_dimension, location=window_location)
     room.add_object('outlet', 'door', dimensions=door_dimension, location=door_location)
