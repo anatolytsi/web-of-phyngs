@@ -349,16 +349,10 @@ class OpenFoamInterface(ABC):
         if not self._running:
             return
         self._solver_thread.stop(int(self.control_dict.stop_at_write_now_signal))
-        try:
-            acquired = self._solver_lock.acquire(timeout=1)
-            self._solver_lock.release()
-            if not acquired:
-                raise RuntimeError
-        except RuntimeError:
-            self._solver_thread.kill()
-        finally:
-            self._solver_thread = None
-            self._running = False
+        self._solver_lock.acquire()
+        self._solver_lock.release()
+        self._solver_thread = None
+        self._running = False
 
     def result_cleaner(self):
         """Thread to clean the results periodically"""

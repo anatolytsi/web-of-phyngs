@@ -121,31 +121,15 @@ class PyFoamSolver(Thread):
 
     def stop(self, signal):
         """Stops solving"""
-        pid = self._solver.run.threadPid
+        pid = self._solver.run.run.pid
+        process = psutil.Process(pid)
         if self._parallel:
-            mpi_pid = pid
-            success = False
-            while not success:
-                try:
-                    process = psutil.Process(mpi_pid)
-                    process_name = process.name()
-                    # print(f'Found process {process_name} with pid {mpi_pid}')
-                    if process_name == 'mpirun':
-                        success = True
-                    else:
-                        mpi_pid += 1
-                except Exception:
-                    mpi_pid += 1
-            # NOTE: threadPid is only an ID of a pipe, but the mpirun itself is other thread
-            kill(mpi_pid, signal)
-        else:
-            # NOT TESTED YET
-            kill(self._solver.run.threadPid, signal)
+            process.children()[0].send_signal(signal)
+        process.send_signal(signal)
 
     def kill(self):
         """Kill solving thread"""
         self._solver.run.run.send_signal(SIGINT)
-        # self._solver.kill()
         self._solver = None
         try:
             self._stop()
