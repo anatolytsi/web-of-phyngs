@@ -2,11 +2,11 @@ import os
 import re
 import math
 import time
-import traceback
 from threading import Thread, Lock
 from typing import Union, List
 
-from ..common.parsing import VECTOR_PATTERN, NUMBER_PATTERN, get_latest_time
+from ..common.filehandling import get_latest_time
+from ..common.parsing import VECTOR_PATTERN, NUMBER_PATTERN
 
 Num = Union[int, float, None]
 

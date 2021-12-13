@@ -1,5 +1,5 @@
 from ..exceptions import ObjectSetValueFailed
-from ..openfoam.common.parsing import get_latest_time
+from ..openfoam.common.filehandling import get_latest_time
 from .behavior.cht import set_boundary_to_wall, set_boundary_to_inlet, update_boundaries
 from .wopthings import WopObject
 

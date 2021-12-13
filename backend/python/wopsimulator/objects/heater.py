@@ -1,6 +1,6 @@
 from ..exceptions import ObjectSetValueFailed
 from ..openfoam.system.snappyhexmesh import SnappyHexMeshDict
-from ..openfoam.common.parsing import get_latest_time
+from ..openfoam.common.filehandling import get_latest_time
 from ..openfoam.constant.material_properties import SOLID_MATERIALS
 from .behavior.cht import set_boundary_to_heater
 from .wopthings import WopObject

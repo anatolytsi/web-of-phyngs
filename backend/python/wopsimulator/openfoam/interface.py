@@ -13,8 +13,7 @@ from numpy import arange
 
 from .boundaries.boundary_conditions import BoundaryCondition
 from .common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern, \
-    force_remove_dir, remove_files_in_dir_with_pattern, copy_tree
-from .common.parsing import get_latest_time
+    force_remove_dir, remove_files_in_dir_with_pattern, copy_tree, get_latest_time, get_latest_time_parallel
 from .constant.material_properties import MaterialProperties
 from .probes.probes import ProbeParser, Probe
 from .system.blockmesh import BlockMeshDict

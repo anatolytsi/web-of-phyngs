@@ -6,7 +6,7 @@ from typing import List, Union
 from .exceptions import ObjectNotFound
 from .geometry.manipulator import combine_stls
 from .objects.wopthings import WopObject, WopSensor
-from .openfoam.common.parsing import get_latest_time, get_latest_time_parallel
+from .openfoam.common.filehandling import get_latest_time, get_latest_time_parallel
 from .runtime_monitor import RunTimeMonitor
 from .variables import CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, CONFIG_PARALLEL_KEY, \
     CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY, CONFIG_OBJ_DIMENSIONS, \

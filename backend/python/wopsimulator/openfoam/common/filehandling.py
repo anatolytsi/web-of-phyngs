@@ -2,6 +2,8 @@ import os
 import shutil
 import re
 
+from .parsing import NUMBER_PATTERN
+
 
 def force_remove_dir(src_dir):
     shutil.rmtree(src_dir, ignore_errors=True)
@@ -101,3 +103,32 @@ def remove_dirs_with_pattern(directory: str,
                     force_remove_dir(item_path)
             elif is_recursive:
                 remove_dirs_with_pattern(item_path, prefix, suffix, exception, is_recursive)
+
+
+def get_latest_time(case_dir: str) -> float or int:
+    """
+    Returns latest time of the simulation that
+    correspond to latest time result folder name
+    :param case_dir: case directory
+    :return: latest simulation time
+    """
+    try:
+        latest_time = sorted([float(val) for val in get_numerated_dirs(case_dir, exception='0')])[-1]
+        return int(latest_time) if latest_time.is_integer() else latest_time
+    except (IndexError, FileNotFoundError):
+        return 0
+
+
+def get_latest_time_parallel(case_dir: str) -> float or int:
+    """
+    Returns latest time of the simulation that
+    correspond to latest time result folder name
+    in parallel run
+    :param case_dir: case directory
+    :return: latest simulation time
+    """
+    try:
+        latest_time = sorted([float(val) for val in get_numerated_dirs(f'{case_dir}/processor0', exception='0')])[-1]
+        return int(latest_time) if latest_time.is_integer() else latest_time
+    except (IndexError, FileNotFoundError):
+        return 0
