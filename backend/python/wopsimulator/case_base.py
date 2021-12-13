@@ -431,14 +431,14 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         """
         if self.running:
             return
+        if not self.initialized:
+            self.clean_case()
+            self.setup()
         get_time = get_latest_time
         if self.parallel:
             get_time = get_latest_time_parallel
         if not get_time(self.path):
             self.start_time, _ = self.get_current_time()
-        if not self.initialized:
-            self.clean_case()
-            self.setup()
         super(OpenFoamCase, self).run()
         self._runtime_monitor.start()
 
