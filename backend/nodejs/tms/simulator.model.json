@@ -49,6 +49,24 @@
           }
         }
       }
+    },
+    "postProcessingServer": {
+      "description": "Post processing server settings",
+      "type": "object",
+      "properties": {
+        "hostname": {
+          "description": "Server hostname",
+          "type": "string"
+        },
+        "port": {
+          "description": "Server port",
+          "type": "int"
+        },
+        "multiClients": {
+          "description": "Server support for multiple clients",
+          "type": "boolean"
+        }
+      }
     }
   },
   "actions": {
@@ -59,6 +77,12 @@
     "deleteCase": {
       "description": "Delete case with a specified name",
       "type": "string"
+    },
+    "startPostProcessingServer": {
+      "description": "Start post-processing server"
+    },
+    "stopPostProcessingServer": {
+      "description": "Stop post-processing server"
     }
   }
 }

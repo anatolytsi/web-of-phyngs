@@ -10,6 +10,7 @@ import {AbstractThing} from './thing';
 import {AbstractCase} from './case';
 import {CaseParameters, CaseHrefs, SimulationErrors} from './interfaces';
 import {responseIsUnsuccessful, responseIsSuccessful} from "./helpers";
+import internal from "stream";
 
 /**
  * Case type constructor function.
@@ -36,6 +37,49 @@ export interface CaseConstructorType {
 }
 
 /**
+ * Post-processing server parameters response.
+ */
+interface PostProcServerParamResp {
+    hostname: string
+    server_port: number
+    multi_clients: boolean
+    client_host: string
+    connection_id: string
+    cslog: string
+    disable_further_connections: boolean
+    disable_registry: boolean
+    disable_xdisplay_test: boolean
+    enable_bt: boolean
+    enable_satellite_message_ids: boolean
+    enable_streaming: boolean
+    force_offscreen_rendering: boolean
+    force_onscreen_rendering: boolean
+    multi_clients_debug: boolean
+    print_monitors: boolean
+    reverse_connection: boolean
+    test_plugin: string
+    test_plugin_path: string
+    test_dimensions_x: string
+    test_dimensions_y: string
+    tile_mullion_x: string
+    tile_mullion_y: string
+    timeout: string
+    use_offscreen_rendering: string
+}
+
+/**
+ * Post-processing server parameters interface.
+ */
+interface PostProcServerParam {
+    /** Server hostname. */
+    hostname: string
+    /** Server port. */
+    port: number
+    /** Server support for multiple clients. */
+    multiClients: boolean
+}
+
+/**
  * A simulator Thing. Provides a WoT wrapper to simulator backend.
  * @class Simulator
  */
@@ -48,14 +92,22 @@ export class Simulator extends AbstractThing {
     /** Case types constructors, used to
      * instantiate cases according to their type. */
     protected caseTypesConstructors: CaseConstructorType;
+    /** Post-processing server parameters. */
+    protected postProcServerParams: PostProcServerParam;
 
     constructor(host: string, wot: WoT.WoT, tm: WoT.ThingDescription, caseTypesConstructors: CaseConstructorType) {
         super(host, wot, tm);
+        this.postProcServerParams = {
+            hostname: 'localhost',
+            port: 11111,
+            multiClients: true
+        }
         this.cases = {};
         this.casesHrefs = []
         this.couplingUrl = `${this.host}/case`
         this.caseTypesConstructors = caseTypesConstructors;
-        this.loadAvailableCases()
+        this.loadAvailableCases();
+        this.getPostProcServerParams();
     }
 
     /**
@@ -110,6 +162,69 @@ export class Simulator extends AbstractThing {
     }
 
     /**
+     * Gets post-processing parameters.
+     * @return {Promise<string | void>} Get error or nothing.
+     * @protected
+     * @async
+     */
+    protected async getPostProcServerParams(): Promise<string | void> {
+        let response: AxiosResponse = await axios.get(`${this.host}/postprocess`);
+        if (responseIsUnsuccessful(response.status)) {
+            return response.data;
+        }
+        let data: PostProcServerParamResp = response.data;
+        this.postProcServerParams = {
+            hostname: data.hostname,
+            port: data.server_port,
+            multiClients: data.multi_clients,
+        }
+    }
+
+    /**
+     * Updates post-processing parameters.
+     * @return {Promise<string | void>} Update error or nothing.
+     * @protected
+     * @async
+     */
+    protected async updatePostProcServerParams(postProcServerParams: PostProcServerParam): Promise<string | void> {
+        this.postProcServerParams.hostname = postProcServerParams.hostname || this.postProcServerParams.hostname;
+        this.postProcServerParams.port = postProcServerParams.port || this.postProcServerParams.port;
+        this.postProcServerParams.multiClients = postProcServerParams.multiClients || this.postProcServerParams.multiClients;
+        // this.postProcServerParams = postProcServerParams;
+        console.log(postProcServerParams)
+        let response: AxiosResponse = await axios.put(`${this.host}/postprocess`, postProcServerParams);
+        if (responseIsUnsuccessful(response.status)) {
+            return response.data;
+        }
+    }
+
+    /**
+     * Starts post-processing server.
+     * @return {Promise<string | void>} Server start error or nothing.
+     * @protected
+     * @async
+     */
+    protected async startPostProcessingServer(): Promise<string | void> {
+        let response: AxiosResponse = await axios.post(`${this.host}/postprocess/start`);
+        if (responseIsUnsuccessful(response.status)) {
+            return response.data;
+        }
+    }
+
+    /**
+     * Stops post-processing server.
+     * @return {Promise<string | void>} Server stop error or nothing.
+     * @protected
+     * @async
+     */
+    protected async stopPostProcessingServer(): Promise<string | void> {
+        let response: AxiosResponse = await axios.post(`${this.host}/postprocess/stop`);
+        if (responseIsUnsuccessful(response.status)) {
+            return response.data;
+        }
+    }
+
+    /**
      * Returns simulation errors object.
      * @return {Promise<SimulationErrors>} Simulator errors object.
      * @async
@@ -155,6 +270,12 @@ export class Simulator extends AbstractThing {
         this.thing.setPropertyReadHandler('errors', async () => {
             return await this.getErrors();
         });
+        this.thing.setPropertyReadHandler('postProcessingServer', async () => {
+            return this.postProcServerParams;
+        });
+        this.thing.setPropertyWriteHandler('postProcessingServer', async (postProcServerParams) => {
+            return await this.updatePostProcServerParams(postProcServerParams);
+        });
     }
 
     protected addActionHandlers(): void {
@@ -164,6 +285,12 @@ export class Simulator extends AbstractThing {
         });
         this.thing.setActionHandler('deleteCase', async (name) => {
             return await this.deleteCase(name);
+        });
+        this.thing.setActionHandler('startPostProcessingServer', async () => {
+            return await this.startPostProcessingServer();
+        });
+        this.thing.setActionHandler('stopPostProcessingServer', async () => {
+            return await this.stopPostProcessingServer();
         });
     }
 

@@ -10,6 +10,7 @@ from server_resources.exceptions import ErrorList
 from server_resources.case import Case, CaseList
 from server_resources.commands import Command
 from server_resources.object import Object, ObjectList, ObjectValue
+from server_resources.postprocess import Postprocess
 
 
 class Server:
@@ -33,6 +34,7 @@ class Server:
         self.api.add_resource(ObjectValue, '/case/<string:case_name>/object/<string:obj_name>/<string:obj_value>',
                               endpoint='object_value')
         self.api.add_resource(ErrorList, '/errors')
+        self.api.add_resource(Postprocess, '/postprocess', '/postprocess/<string:command>')
 
     def run(self):
         self.app.run(self.host, self.port, self.debug)
