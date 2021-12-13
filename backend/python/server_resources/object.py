@@ -1,3 +1,4 @@
+import werkzeug.datastructures
 from flask_restful import Resource, reqparse
 
 from .case import auto_load_case
@@ -31,6 +32,7 @@ class Object(Resource):
         self.reqparse.add_argument('name', type=str, help='Object name')
         self.reqparse.add_argument('type', type=str, help='Object type')
         self.reqparse.add_argument('url', type=str, help='Object STL url')
+        self.reqparse.add_argument('file', type=werkzeug.datastructures.FileStorage, location='files')
         self.reqparse.add_argument('dimensions', type=list, help='Object dimensions', location='json')
         self.reqparse.add_argument('location', type=list, help='Object location', location='json')
         self.reqparse.add_argument('rotation', type=list, help='Object rotation', location='json')
@@ -49,6 +51,12 @@ class Object(Resource):
     @auto_load_case
     def post(self, case_name, obj_name):
         args = self.reqparse.parse_args()
+        file = args['file']
+        if file and '.stl' in file.filename:
+            file.save(f'{self.current_cases[case_name].path}/geometry/{obj_name}.stl')
+            self.current_cases[case_name].modify_object(obj_name, {'custom': True})
+            save_case(case_name, self.current_cases[case_name])
+            return '', 200
         self.current_cases[case_name].add_object(obj_name, args['type'], url=args['url'], template=args['template'],
                                                  dimensions=args['dimensions'], location=args['location'],
                                                  rotation=args['rotation'], sns_field=args['field'],

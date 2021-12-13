@@ -11,7 +11,7 @@ from .runtime_monitor import RunTimeMonitor
 from .variables import CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, CONFIG_PARALLEL_KEY, \
     CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY, CONFIG_OBJ_DIMENSIONS, \
     CONFIG_OBJ_ROTATION, CONFIG_LOCATION, CONFIG_TEMPLATE, CONFIG_URL, CONFIG_SNS_FIELD, CONFIG_OBJ_NAME_KEY, \
-    CONFIG_STARTED_TIMESTAMP_KEY, CONFIG_REALTIME_KEY, CONFIG_END_TIME_KEY
+    CONFIG_STARTED_TIMESTAMP_KEY, CONFIG_REALTIME_KEY, CONFIG_END_TIME_KEY, CONFIG_CUSTOM
 from .openfoam.interface import OpenFoamInterface
 from .openfoam.system.snappyhexmesh import SnappyRegion, SnappyPartitionedMesh, SnappyCellZoneMesh
 
@@ -210,8 +210,8 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         return {
             CONFIG_OBJ_NAME_KEY: obj.name,
             CONFIG_OBJ_DIMENSIONS: obj.model.dimensions,
-            CONFIG_LOCATION: params[CONFIG_LOCATION] if params[CONFIG_LOCATION] else obj.model.location,
-            CONFIG_OBJ_ROTATION: params[CONFIG_OBJ_ROTATION] if params[CONFIG_OBJ_ROTATION] else obj.model.rotation,
+            CONFIG_LOCATION: params[CONFIG_LOCATION] if CONFIG_LOCATION in params and params[CONFIG_LOCATION] else obj.model.location,
+            CONFIG_OBJ_ROTATION: params[CONFIG_OBJ_ROTATION] if CONFIG_OBJ_ROTATION in params and params[CONFIG_OBJ_ROTATION] else obj.model.rotation,
             CONFIG_TEMPLATE: obj.template,
             CONFIG_URL: None
         }
@@ -234,15 +234,19 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         """
         new_params = self._get_new_params(obj, params)
         custom = obj.custom
-        if params[CONFIG_OBJ_DIMENSIONS]:
+        if CONFIG_OBJ_DIMENSIONS in params and params[CONFIG_OBJ_DIMENSIONS]:
             new_params[CONFIG_OBJ_DIMENSIONS] = params[CONFIG_OBJ_DIMENSIONS]
             new_params[CONFIG_TEMPLATE] = ''
             custom = False
-        elif params[CONFIG_TEMPLATE]:
+        elif CONFIG_TEMPLATE in params and params[CONFIG_TEMPLATE]:
             new_params[CONFIG_OBJ_DIMENSIONS] = [0, 0, 0]
             new_params[CONFIG_TEMPLATE] = params[CONFIG_TEMPLATE]
             custom = False
-        elif params[CONFIG_URL]:
+        elif CONFIG_CUSTOM in params and params[CONFIG_CUSTOM]:
+            new_params[CONFIG_OBJ_DIMENSIONS] = [0, 0, 0]
+            new_params[CONFIG_TEMPLATE] = ''
+            custom = params[CONFIG_CUSTOM]
+        elif CONFIG_URL in params and params[CONFIG_URL]:
             new_params[CONFIG_OBJ_DIMENSIONS] = [0, 0, 0]
             new_params[CONFIG_TEMPLATE] = ''
             new_params[CONFIG_URL] = params[CONFIG_URL]
@@ -258,7 +262,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :return: model parameters set
         """
         return {CONFIG_OBJ_DIMENSIONS, CONFIG_OBJ_ROTATION, CONFIG_LOCATION, CONFIG_TEMPLATE, CONFIG_URL,
-                CONFIG_SNS_FIELD}
+                CONFIG_SNS_FIELD, CONFIG_CUSTOM}
 
     def modify_object(self, object_name: str, params: dict):
         """

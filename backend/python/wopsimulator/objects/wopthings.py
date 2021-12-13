@@ -48,13 +48,14 @@ class WopObject(ABC):
         self._fields = []
         self.snappy = None
         self.custom = custom
-        if url:
+        if custom:
+            self._get_custom_stl()
             model_type = 'stl'
-            self._get_stl_from_url(url)
         elif template:
             self._get_stl_from_template(template)
-        elif custom:
-            self._get_custom_stl()
+        elif url:
+            model_type = 'stl'
+            self._get_stl_from_url(url)
         else:
             self.path = ''
         self.template = template.split('/')[-1] if template else ''

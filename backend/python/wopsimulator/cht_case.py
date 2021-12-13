@@ -54,7 +54,7 @@ class ChtCase(OpenFoamCase):
         new_params = super(ChtCase, self)._get_new_params(obj, params)
         if CONFIG_OBJ_MATERIAL in obj:
             new_params.update({
-                CONFIG_OBJ_MATERIAL: params[CONFIG_OBJ_MATERIAL] if params[CONFIG_OBJ_MATERIAL] else obj.material
+                CONFIG_OBJ_MATERIAL: params[CONFIG_OBJ_MATERIAL] if CONFIG_OBJ_MATERIAL in params and params[CONFIG_OBJ_MATERIAL] else obj.material
             })
         return new_params
 
