@@ -6,7 +6,7 @@ from .openfoam.common.filehandling import get_latest_time
 from .openfoam.constant.material_properties import FLUID_MATERIALS
 from .case_base import OpenFoamCase
 from .objects.door import WopDoor
-from .objects.room import WopRoom
+from .objects.walls import WopWalls
 from .objects.window import WopWindow
 from .objects.heater import WopHeater
 from .objects.wopthings import WopSensor, WopObject
@@ -201,9 +201,9 @@ class ChtRoom(OpenFoamCase):
             self.doors.update({wop_object.name: wop_object})
             if self.walls:
                 self.walls.model.geometry.cut_surface(wop_object.model.geometry)
-        elif obj_type == WopRoom.type_name:
-            wop_object = WopRoom(name, self.path, self.background_name, url, custom, dimensions=dimensions,
-                                 location=location, rotation=rotation, template=template, of_interface=self)
+        elif obj_type == WopWalls.type_name:
+            wop_object = WopWalls(name, self.path, self.background_name, url, custom, dimensions=dimensions,
+                                  location=location, rotation=rotation, template=template, of_interface=self)
             wop_object.bind_snappy(self.snappy_dict, 'region', 'wall')
             self.walls = wop_object
             for window in self.windows.values():

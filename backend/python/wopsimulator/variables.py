@@ -2,7 +2,7 @@ import os
 
 from .objects.door import WopDoor
 from .objects.heater import WopHeater
-from .objects.room import WopRoom
+from .objects.walls import WopWalls
 from .objects.window import WopWindow
 from .objects.wopthings import WopSensor
 
@@ -67,7 +67,7 @@ CONFIG_VELOCITY_KEY = 'velocity'
 CHT_ROOM_OBJ_TYPES = [
     WopHeater.type_name,
     WopWindow.type_name,
-    WopRoom.type_name,
+    WopWalls.type_name,
     WopDoor.type_name,
     WopSensor.type_name,
     # TODO:
