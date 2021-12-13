@@ -114,10 +114,10 @@ class PyFoamSolver(Thread):
     def run(self):
         """Solving thread"""
         with self._lock:
-            print('Entering thread solver')
+            print('Entering solver thread')
             self._solver.start()
             _check_runner_errors(self._solver_type, self._solver)
-            print('Quiting thread solver')
+            print('Quiting solver thread')
 
     def stop(self, signal):
         """Stops solving"""
