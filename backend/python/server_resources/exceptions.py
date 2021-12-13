@@ -26,11 +26,15 @@ def load_exceptions():
     if os.path.exists(ERROR_FILEPATH):
         try:
             with open(ERROR_FILEPATH, 'r') as f:
-                error_json = json.load(f)
+                error_json = dict(json.load(f))
             if ERR_TEXT_KEY in error_json and ERR_TRACE_KEY in error_json:
-                simulator_exceptions = dict(error_json)
+                simulator_exceptions[ERR_TEXT_KEY] = error_json[ERR_TEXT_KEY][:]
+                simulator_exceptions[ERR_TRACE_KEY] = error_json[ERR_TRACE_KEY][:]
         except Exception:
             pass
+
+
+load_exceptions()
 
 
 def dump_exceptions():
@@ -48,8 +52,8 @@ def log_error(error: BaseException):
     tb = error.__traceback__
     traceback.print_exception(type(error), error, tb)
     error_traceback = traceback.format_exception(type(error), error, tb)
-    simulator_exceptions[ERR_TEXT_KEY].append(error_text)
-    simulator_exceptions[ERR_TRACE_KEY].append(error_traceback)
+    simulator_exceptions[ERR_TEXT_KEY].insert(0, error_text)
+    simulator_exceptions[ERR_TRACE_KEY].insert(0, error_traceback)
     dump_exceptions()
 
 
