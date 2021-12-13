@@ -1,4 +1,6 @@
+import atexit
 import os
+import signal
 import configparser
 
 from flask import Flask
@@ -37,6 +39,8 @@ class Server:
 
 
 def main():
+    # Kill all spawned processes before exiting
+    atexit.register(lambda: os.killpg(os.getpid(), signal.SIGINT))
     config = configparser.ConfigParser()
     config.read(f'{os.path.dirname(os.path.abspath(__file__))}/server.ini')
     server = Server(host=config['DEFAULT']['Host'],
