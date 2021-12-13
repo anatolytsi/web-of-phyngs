@@ -4,11 +4,9 @@ OpenFOAM python interface
 import os
 import time
 import subprocess
+import multiprocessing as mp
+import threading as thr
 from abc import ABC, abstractmethod
-from multiprocessing import Process, cpu_count
-from threading import Thread, Lock
-
-from PyFoam.Execution.BasicRunner import BasicRunner
 from numpy import arange
 
 from .boundaries.boundary_conditions import BoundaryCondition
@@ -16,14 +14,11 @@ from .common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern,
     force_remove_dir, remove_files_in_dir_with_pattern, copy_tree, get_latest_time, get_latest_time_parallel
 from .constant.material_properties import MaterialProperties
 from .probes.probes import ProbeParser, Probe
+from .pyfoam_runner import PyFoamCmd, PyFoamSolver
 from .system.blockmesh import BlockMeshDict
 from .system.controldict import ControlDict
 from .system.decomposepar import DecomposeParDict
 from .system.snappyhexmesh import SnappyHexMeshDict
-
-
-class RunFailed(Exception):
-    pass
 
 
 class OpenFoamInterface(ABC):
@@ -60,11 +55,9 @@ class OpenFoamInterface(ABC):
         self.boundaries = {}
         self._is_decomposed = False
         self._solver_type = solver_type
-        self._solver = None
         self._solver_thread = None
-        self._solver_process = None
-        self._solver_mutex = Lock()
-        self._probe_parser = ProbeParser(self.path)
+        self._solver_lock = thr.Lock()
+        self._probe_parser_thread = ProbeParser(self.path)
         self._time_probe = None
         self._running = False
 
@@ -82,7 +75,7 @@ class OpenFoamInterface(ABC):
         :param cores: number of cores
         """
         if self.parallel:
-            available_cores = cpu_count()
+            available_cores = mp.cpu_count()
             if available_cores >= cores > 0:
                 if cores == 1:
                     self.parallel = False
@@ -179,71 +172,6 @@ class OpenFoamInterface(ABC):
         path_to_copy = f'{self.path}/{dst_sub_dir}'
         copy_tree(stls_path, path_to_copy)
 
-    @staticmethod
-    def run_command(argv, silent=True,
-                    is_parallel: bool = False, cores: int = 1):
-        """
-        Runs a console command
-        :param argv: command arguments
-        :param silent: flag to output console data
-        :param is_parallel: flag for multiprocessing run
-        :param cores: cores to use for multiprocessing run
-        :return: None
-        """
-        if is_parallel:
-            argv = ['mpirun', '-np', str(cores)] + argv + ['-parallel']
-        # The only pyFoam dependency by now
-        runner = BasicRunner(argv=argv, silent=silent, logname=argv[0])
-        runner.start()
-        if not runner.runOK():
-            raise RunFailed(f'{argv[0]} run failed')
-
-    def _check_solver_run(self):
-        if not self._solver.runOK():
-            if self._solver.fatalError:
-                error = f'fatal error'
-            elif self._solver.fatalFPE:
-                error = f'fatal FPE'
-            elif self._solver.fatalStackdump:
-                error = f'fatal stack dump'
-            else:
-                error = 'unknown error'
-            raise RunFailed(f'{self._solver_type} run failed with {error}: {self._solver.data["errorText"]}')
-
-    def run_solver_parallel(self, silent=True):
-        """
-        Runs solver using multiprocessing tools
-        :param silent: flag to output console data
-        :return: None
-        """
-        # FIXME: this function is not exited properly as the Process is terminated
-        self._solver_mutex.acquire()
-        argv = ['mpirun', '-np', str(self.cores), self._solver_type, '-case', self.path, '-parallel']
-        self._solver = BasicRunner(argv=argv, silent=silent, logname=self._solver_type)
-        self._solver.start()
-        self._probe_parser.stop()
-        self._running = False
-        print('Process terminated')
-        self._solver_mutex.release()
-        self._check_solver_run()
-
-    def run_solver(self, silent=True):
-        """
-        Runs solver
-        :param silent: flag to output console data
-        :return: None
-        """
-        self._solver_mutex.acquire()
-        print('Entering thread solver')
-        argv = [self._solver_type, '-case', self.path]
-        self._solver = BasicRunner(argv=argv, silent=silent, logname=self._solver_type)
-        self._solver.start()
-        self._probe_parser.stop()
-        self._running = False
-        print('Quiting thread solver')
-        self._solver_mutex.release()
-        self._check_solver_run()
-
     def run_decompose(self, all_regions: bool = False, copy_zero: bool = False, latest_time: bool = False,
                       force: bool = False):
         """
@@ -269,7 +197,7 @@ class OpenFoamInterface(ABC):
             argv.insert(1, '-latestTime')
         if force:
             argv.insert(1, '-force')
-        self.run_command(argv)
+        PyFoamCmd(argv).start()
         self._is_decomposed = True
 
     def run_reconstruct(self, all_regions: bool = False, latest_time: bool = False, fields: list = None,
@@ -293,7 +221,7 @@ class OpenFoamInterface(ABC):
             argv.insert(1, '-latestTime')
         if fields:
             argv.insert(1, f'-fields \'({" ".join(fields)})\'')
-        self.run_command(argv)
+        PyFoamCmd(argv).start()
 
     def run_block_mesh(self):
         """
@@ -303,7 +231,7 @@ class OpenFoamInterface(ABC):
         self.blockmesh_dict.save()
         cmd = 'blockMesh'
         argv = [cmd, '-case', self.path]
-        self.run_command(argv)
+        PyFoamCmd(argv).start()
 
     def run_snappy_hex_mesh(self):
         """
@@ -313,7 +241,7 @@ class OpenFoamInterface(ABC):
         self.snappy_dict.save()
         cmd = 'snappyHexMesh'
         argv = [cmd, '-case', self.path, '-overwrite']
-        self.run_command(argv, cores=self.cores)
+        PyFoamCmd(argv).start()
 
     def run_split_mesh_regions(self, cell_zones: bool = False, cell_zones_only: bool = False):
         """
@@ -328,7 +256,7 @@ class OpenFoamInterface(ABC):
             argv.insert(1, '-cellZones')
         if cell_zones_only:
             argv.insert(1, '-cellZonesOnly')
-        self.run_command(argv, cores=self.cores)
+        PyFoamCmd(argv).start()
 
     def run_setup_cht(self):
         """
@@ -338,7 +266,7 @@ class OpenFoamInterface(ABC):
         self.material_props.save()
         cmd = 'foamSetupCHT'
         argv = [cmd, '-case', self.path]
-        self.run_command(argv, cores=self.cores)
+        PyFoamCmd(argv).start()
 
     def run_foam_dictionary(self, path: str, entry: str, set_value: str):
         """
@@ -368,7 +296,7 @@ class OpenFoamInterface(ABC):
                 region_dir = os.listdir(f'{self.path}/0/{region}')
                 if not self._time_probe:
                     self._time_probe = Probe(self.path, region_dir[0], region, [0, 0, 0])
-                    self._probe_parser.parse_probe(self._time_probe)
+                    self._probe_parser_thread.parse_probe(self._time_probe)
                 for field in region_dir:
                     cls_instance = BoundaryCondition(field, self.path, region=region)
                     if cls_instance:
@@ -405,14 +333,11 @@ class OpenFoamInterface(ABC):
         """
         self.control_dict.save()
         self.save_boundaries()
-        cleaner_thread = Thread(target=self.result_cleaner, daemon=True)
+        cleaner_thread = thr.Thread(target=self.result_cleaner, daemon=True)
         if self.parallel:
             self.run_decompose(all_regions=True, latest_time=True, force=True)
-            self._solver_process = Process(target=self.run_solver_parallel, args=(True,), daemon=True)
-            self._solver_process.start()
-        else:
-            self._solver_thread = Thread(target=self.run_solver, daemon=True)
-            self._solver_thread.start()
+        self._solver_thread = PyFoamSolver(self._solver_type, self.path, self._solver_lock, self.parallel, self.cores)
+        self._solver_thread.start()
         self._running = True
         cleaner_thread.start()
 
@@ -423,25 +348,27 @@ class OpenFoamInterface(ABC):
         """
         if not self._running:
             return
-        if self.parallel:
-            self._solver_process.terminate()
-            # FIXME: somehow get when the process is really terminated and only then proceed
-            time.sleep(1)  # Safe delay to make sure a full stop happened
-        else:
-            self._solver.stopWithoutWrite()
-        self._running = False
-        self._solver_mutex.acquire()
-        self._solver_mutex.release()
+        self._solver_thread.stop(int(self.control_dict.stop_at_write_now_signal))
+        try:
+            acquired = self._solver_lock.acquire(timeout=1)
+            self._solver_lock.release()
+            if not acquired:
+                raise RuntimeError
+        except RuntimeError:
+            self._solver_thread.kill()
+        finally:
+            self._solver_thread = None
+            self._running = False
 
     def result_cleaner(self):
         """Thread to clean the results periodically"""
         if not self.clean_limit:
             return
-        time_path = f'{self.path}/processor0' if self.parallel else self.path
+        time_getter = get_latest_time_parallel if self.parallel else get_latest_time
         deletion_time = 0
         margin = self.clean_limit / 2 // self.control_dict.write_interval * self.control_dict.write_interval
         while self._running:
-            latest_time = get_latest_time(time_path)
+            latest_time = time_getter(self.path)
             if latest_time != deletion_time and not latest_time % self.clean_limit:
                 time.sleep(0.05)
                 exceptions = '|'.join([str(int(val) if val.is_integer() else val)
@@ -464,10 +391,10 @@ class OpenFoamInterface(ABC):
         if self._running:
             return
         self.start_solving()
-        self._probe_parser.start()
+        self._probe_parser_thread.start()
         if self.blocking:
-            self._solver_mutex.acquire()
-            self._solver_mutex.release()
+            self._solver_lock.acquire()
+            self._solver_lock.release()
 
     def stop(self, stop_solver=True, **kwargs):
         """
@@ -476,6 +403,6 @@ class OpenFoamInterface(ABC):
         """
         if not self._running:
             return
-        self._probe_parser.stop()
+        self._probe_parser_thread.stop()
         if stop_solver:
             self.stop_solving()

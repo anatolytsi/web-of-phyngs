@@ -286,7 +286,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         obj.destroy()
         if type_name == 'sensor':
             del self.sensors[object_name]
-            self._probe_parser.remove_unused()
+            self._probe_parser_thread.remove_unused()
         else:
             del self.objects[object_name]
         self.initialized = False
