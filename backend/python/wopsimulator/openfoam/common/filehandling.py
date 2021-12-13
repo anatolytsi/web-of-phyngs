@@ -76,7 +76,7 @@ def remove_files_in_dir_with_pattern(directory: str, prefix: str = '', suffix: s
 
 
 def get_numerated_dirs(directory: str, prepend_str: str = '', exception: str = ''):
-    pattern = re.compile(f'^{prepend_str}\d*$')
+    pattern = re.compile(f'^{prepend_str}{NUMBER_PATTERN}$')
     dir_as_list = os.listdir(directory)
     return [item for item in filter(pattern.match, dir_as_list) if item != exception]
 
