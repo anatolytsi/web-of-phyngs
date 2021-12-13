@@ -29,6 +29,10 @@ startTime         %d;
 
 endTime           %d;
 
+runTimeModifiable %s;
+
+stopAt            %s;
+
 deltaT            %d;
 
 writeControl      %s;
@@ -46,8 +50,6 @@ writeCompression  %s;
 timeFormat        %s;
 
 timePrecision     %d;
-
-runTimeModifiable %s;
 
 adjustTimeStep    %s;
 
@@ -97,6 +99,8 @@ class ControlDict:
         self.start_from = 'latestTime'
         self.start_time = 0
         self.end_time = 1e6
+        self.run_time_modifiable = True
+        self.stop_at = 'endTime'
         self.delta_t = 1
         self.write_control = 'adjustableRunTime'
         self.write_interval = 1
@@ -106,7 +110,6 @@ class ControlDict:
         self.write_compression = 'off'
         self.time_format = 'general'
         self.time_precision = 6
-        self.run_time_modifiable = True
         self.adjust_time_step = 'yes'
         self.max_co = 1.0
         self.max_di = 10.0
@@ -133,8 +136,8 @@ class ControlDict:
                 if name[0] == '_':
                     continue
                 dict_name = self._camel(name)
-                value = re.search(SPECIFIC_VALUE_PATTERN % dict_name, lines_str, flags=re.MULTILINE)
-                if value := value.group(1):
+                found_value = re.search(SPECIFIC_VALUE_PATTERN % dict_name, lines_str, flags=re.MULTILINE)
+                if found_value and (value := found_value.group(1)):
                     if re.match(NUMBER_PATTERN, value):
                         self.__dict__[name] = float(value)
                     elif value == 'false' or value == 'true':
@@ -151,6 +154,8 @@ class ControlDict:
                         self.start_from,
                         self.start_time,
                         self.end_time,
+                        self._of_bool(self.run_time_modifiable),
+                        self.stop_at,
                         self.delta_t,
                         self.write_control,
                         self.write_interval,
@@ -160,7 +165,6 @@ class ControlDict:
                         self.write_compression,
                         self.time_format,
                         self.time_precision,
-                        self._of_bool(self.run_time_modifiable),
                         self.adjust_time_step,
                         self.max_co,
                         self.max_di,
