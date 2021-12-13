@@ -9,6 +9,8 @@ from .objects.wopthings import WopSensor
 CUR_FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 PY_BACKEND_DIR = os.path.realpath(f'{CUR_FILE_DIR}/../')
 
+WOP_CONFIG_FILE = 'wop.config.json'
+
 # Cases
 CONFIG_TYPE_KEY = 'type'
 CONFIG_PATH_KEY = 'path'
