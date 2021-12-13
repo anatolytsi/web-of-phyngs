@@ -86,7 +86,6 @@
       "description": "WoP simulation end time",
       "type": "integer",
       "minimum": 0
-
     }
   },
   "actions": {
