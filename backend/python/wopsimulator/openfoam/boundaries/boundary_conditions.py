@@ -77,7 +77,7 @@ class BoundaryConditionBase:
         :param region: region for multiregion case (e.g. CHT)
         """
         self._case_dir = case_dir
-        self._filepath = f'{case_dir}/%d/{(region + "/") if region else ""}{field}'
+        self._filepath = f'{case_dir}/%g/{(region + "/") if region else ""}{field}'
         self._field = field
         self._region = region
         self._time = 0
