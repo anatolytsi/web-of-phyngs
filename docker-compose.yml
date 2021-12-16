@@ -1,7 +1,7 @@
 version: '3.1'
 
 services:
-  backend_python:
+  backend-python:
     build:
       context: ./backend/python
     ports:
@@ -10,7 +10,7 @@ services:
     container_name: wop_backend_python
     networks:
       - wop-network
-  backend_nodejs:
+  backend-nodejs:
     build:
       context: ./backend/nodejs
     ports:
