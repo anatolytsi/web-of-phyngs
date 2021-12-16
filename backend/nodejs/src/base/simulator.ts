@@ -5,12 +5,12 @@
  * @author Anatolii Tsirkunenko
  * @since  28.11.2021
  */
-import axios, {AxiosResponse} from 'axios';
 import {AbstractThing} from './thing';
 import {AbstractCase} from './case';
 import {CaseParameters, CaseHrefs, SimulationErrors} from './interfaces';
-import {responseIsUnsuccessful, responseIsSuccessful} from "./helpers";
-import internal from "stream";
+import {responseIsUnsuccessful, responseIsSuccessful} from './helpers';
+import {reqGet, reqPost, reqPut, reqDelete} from './axios-requests';
+import {AxiosResponse} from 'axios';
 
 /**
  * Case type constructor function.
@@ -132,7 +132,7 @@ export class Simulator extends AbstractThing {
      * @async
      */
     protected async initCaseByName(name: string): Promise<string | void> {
-        let response: AxiosResponse = await axios.get(`${this.couplingUrl}/${name}`);
+        let response: AxiosResponse = await reqGet(`${this.couplingUrl}/${name}`);
         if (!(name in this.cases) && responseIsSuccessful(response.status)) {
             this.cases[name] = this.constructExposedCase(response.data.type, name);
             await this.cases[name].ready;
@@ -149,7 +149,7 @@ export class Simulator extends AbstractThing {
      * @async
      */
     protected async loadAvailableCases(): Promise<string | void> {
-        let response: AxiosResponse = await axios.get(`${this.couplingUrl}`);
+        let response: AxiosResponse = await reqGet(`${this.couplingUrl}`);
         if (responseIsUnsuccessful(response.status)) {
             return response.data;
         }
@@ -168,7 +168,7 @@ export class Simulator extends AbstractThing {
      * @async
      */
     protected async getPostProcServerParams(): Promise<string | void> {
-        let response: AxiosResponse = await axios.get(`${this.host}/postprocess`);
+        let response: AxiosResponse = await reqGet(`${this.host}/postprocess`);
         if (responseIsUnsuccessful(response.status)) {
             return response.data;
         }
@@ -192,7 +192,7 @@ export class Simulator extends AbstractThing {
         this.postProcServerParams.multiClients = postProcServerParams.multiClients || this.postProcServerParams.multiClients;
         // this.postProcServerParams = postProcServerParams;
         console.log(postProcServerParams)
-        let response: AxiosResponse = await axios.put(`${this.host}/postprocess`, postProcServerParams);
+        let response: AxiosResponse = await reqPut(`${this.host}/postprocess`, postProcServerParams);
         if (responseIsUnsuccessful(response.status)) {
             return response.data;
         }
@@ -205,7 +205,7 @@ export class Simulator extends AbstractThing {
      * @async
      */
     protected async startPostProcessingServer(): Promise<string | void> {
-        let response: AxiosResponse = await axios.post(`${this.host}/postprocess/start`);
+        let response: AxiosResponse = await reqPost(`${this.host}/postprocess/start`);
         if (responseIsUnsuccessful(response.status)) {
             return response.data;
         }
@@ -218,7 +218,7 @@ export class Simulator extends AbstractThing {
      * @async
      */
     protected async stopPostProcessingServer(): Promise<string | void> {
-        let response: AxiosResponse = await axios.post(`${this.host}/postprocess/stop`);
+        let response: AxiosResponse = await reqPost(`${this.host}/postprocess/stop`);
         if (responseIsUnsuccessful(response.status)) {
             return response.data;
         }
@@ -230,7 +230,7 @@ export class Simulator extends AbstractThing {
      * @async
      */
     public async getErrors(): Promise<SimulationErrors> {
-        let response: AxiosResponse = await axios.get(`${this.host}/errors`);
+        let response: AxiosResponse = await reqGet(`${this.host}/errors`);
         return response.data;
     }
 
@@ -242,7 +242,7 @@ export class Simulator extends AbstractThing {
      */
     public async createCase(params: CaseParameters): Promise<string> {
         let {name, ...data} = params;
-        let response: AxiosResponse = await axios.post(`${this.couplingUrl}/${name}`, data);
+        let response: AxiosResponse = await reqPost(`${this.couplingUrl}/${name}`, data);
         return response.data;
     }
 
@@ -259,7 +259,7 @@ export class Simulator extends AbstractThing {
             await this.cases[name].destroy();
             delete this.cases[name];
         }
-        let response: AxiosResponse = await axios.delete(`${this.couplingUrl}/${name}`);
+        let response: AxiosResponse = await reqDelete(`${this.couplingUrl}/${name}`);
         return response.data;
     }
 

@@ -5,11 +5,10 @@
  * @author Anatolii Tsirkunenko
  * @since  29.11.2021
  */
-import axios from 'axios';
 import {AbstractObject} from './object';
 import {ActuatorPropsCreated, ActuatorPropsTemplate, Size, Vector} from './interfaces';
 import {responseIsUnsuccessful} from "./helpers";
-import {AnyUri} from "wot-thing-description-types";
+import {reqPatch} from './axios-requests';
 
 /**
  * An abstract actuator.
@@ -52,7 +51,7 @@ export abstract class Actuator extends AbstractObject implements ActuatorPropsCr
      */
     public async setDimensions(dimensions: Size): Promise<void> {
         this._dimensions = dimensions;
-        let response = await axios.patch(`${this.couplingUrl}`, { dimensions });
+        let response = await reqPatch(`${this.couplingUrl}`, { dimensions });
         if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }
@@ -73,7 +72,7 @@ export abstract class Actuator extends AbstractObject implements ActuatorPropsCr
      */
     public async setRotation(rotation: Vector): Promise<void> {
         this._rotation = rotation;
-        let response = await axios.patch(`${this.couplingUrl}`, { rotation });
+        let response = await reqPatch(`${this.couplingUrl}`, { rotation });
         if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }
@@ -103,7 +102,7 @@ export abstract class Actuator extends AbstractObject implements ActuatorPropsCr
      */
     public async setTemplate(template: string): Promise<void> {
         this._template = template;
-        let response = await axios.patch(`${this.couplingUrl}`, { template });
+        let response = await reqPatch(`${this.couplingUrl}`, { template });
         if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }

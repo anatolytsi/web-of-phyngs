@@ -5,9 +5,9 @@
  * @author Anatolii Tsirkunenko
  * @since  01.11.2021
  */
-import axios from 'axios';
 import {AnyUri} from 'wot-thing-description-types';
 import {Vector} from './interfaces';
+import {reqGet, reqPost} from './axios-requests';
 
 /**
  * Actuator heating properties.
@@ -22,7 +22,7 @@ export class HeatingProperties {
      * @return {Promise<number>} Temperature of an actuator.
      */
     public async getTemperature(couplingUrl: AnyUri): Promise<number> {
-        let response = await axios.get(`${couplingUrl}/temperature`);
+        let response = await reqGet(`${couplingUrl}/temperature`);
         return response.data;
     }
 
@@ -33,7 +33,7 @@ export class HeatingProperties {
      * @return {Promise<any>} Server response.
      */
     public async setTemperature(couplingUrl: AnyUri, temperature: number): Promise<any> {
-        let response = await axios.post(`${couplingUrl}/temperature`, {value: temperature});
+        let response = await reqPost(`${couplingUrl}/temperature`, {value: temperature});
         return response.data
     }
 
@@ -75,7 +75,7 @@ export class VelocityProperties {
      * @return {Promise<Vector>} Fluid velocity of an actuator.
      */
     public async getVelocity(couplingUrl: AnyUri): Promise<Vector> {
-        let response = await axios.get(`${couplingUrl}/velocity`);
+        let response = await reqGet(`${couplingUrl}/velocity`);
         return response.data;
     }
 
@@ -86,7 +86,7 @@ export class VelocityProperties {
      * @return {Promise<any>} Server response.
      */
     public async setVelocity(couplingUrl: AnyUri, velocity: Vector): Promise<any> {
-        let response = await axios.post(`${couplingUrl}/velocity`, {value: velocity});
+        let response = await reqPost(`${couplingUrl}/velocity`, {value: velocity});
         return response.data
     }
 
@@ -128,7 +128,7 @@ export class OpenableProperties {
      * @return {Promise<number>} Temperature of an actuator.
      */
     public async getOpen(couplingUrl: AnyUri): Promise<boolean> {
-        let response = await axios.get(`${couplingUrl}/open`);
+        let response = await reqGet(`${couplingUrl}/open`);
         return response.data;
     }
 
@@ -139,7 +139,7 @@ export class OpenableProperties {
      * @return {Promise<any>} Server response.
      */
     public async setOpen(couplingUrl: AnyUri, open: boolean): Promise<any> {
-        let response = await axios.post(`${couplingUrl}/open`, {value: open});
+        let response = await reqPost(`${couplingUrl}/open`, {value: open});
         return response.data
     }
 

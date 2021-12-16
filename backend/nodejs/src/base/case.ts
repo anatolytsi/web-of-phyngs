@@ -5,11 +5,12 @@
  * @author Anatolii Tsirkunenko
  * @since  29.11.2021
  */
-import axios, {AxiosResponse} from 'axios';
 import {AbstractThing} from './thing';
 import {CaseParameters, ObjectHrefs, ObjectProps} from './interfaces';
 import {AbstractObject} from './object';
-import {responseIsSuccessful, responseIsUnsuccessful} from "./helpers";
+import {responseIsSuccessful, responseIsUnsuccessful} from './helpers';
+import {reqGet, reqPost, reqPatch, makeRequest} from './axios-requests';
+import {AxiosResponse} from 'axios';
 
 /** Case commands allowed in the simulator. */
 type CaseCommand = 'run' | 'stop' | 'setup' | 'clean' | 'postprocess' | 'time';
@@ -105,7 +106,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     public async setMeshQuality(meshQuality: number): Promise<void> {
         if (meshQuality > 0 && meshQuality <= 100) {
             this._meshQuality = meshQuality;
-            await axios.patch(this.couplingUrl, {mesh_quality: meshQuality});
+            await reqPatch(this.couplingUrl, {mesh_quality: meshQuality});
         } else {
             // TODO: error
             console.error(`Mesh quality should be in range 0..100, but ${meshQuality} was provided`)
@@ -128,7 +129,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     public async setCleanLimit(cleanLimit: number): Promise<void> {
         if (cleanLimit < 0) {
             this._cleanLimit = cleanLimit;
-            await axios.patch(this.couplingUrl, {clean_limit: cleanLimit});
+            await reqPatch(this.couplingUrl, {clean_limit: cleanLimit});
         } else {
             // TODO: error
             console.error('Cleaning limit cannot be negative!')
@@ -150,7 +151,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      */
     public async setParallel(parallel: boolean): Promise<void> {
         this._parallel = parallel;
-        await axios.patch(this.couplingUrl, {parallel});
+        await reqPatch(this.couplingUrl, {parallel});
     }
 
     /**
@@ -169,7 +170,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     public async setCores(cores: number): Promise<void> {
         if (cores < 0) {
             this._cores = cores;
-            await axios.patch(this.couplingUrl, {cores});
+            await reqPatch(this.couplingUrl, {cores});
         } else {
             console.log('Number of cores cannot be negative!')
         }
@@ -190,7 +191,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      */
     public async setRealtime(realtime: boolean): Promise<void> {
         this._realtime = realtime;
-        await axios.patch(this.couplingUrl, {realtime});
+        await reqPatch(this.couplingUrl, {realtime});
     }
 
     /**
@@ -208,7 +209,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      */
     public async setEndtime(endtime: number): Promise<void> {
         this._endtime = endtime;
-        await axios.patch(this.couplingUrl, {endtime});
+        await reqPatch(this.couplingUrl, {endtime});
     }
 
     /**
@@ -270,7 +271,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      * @async
      */
     public async updateParams(): Promise<void> {
-        let response = await axios.get(`${this.couplingUrl}`);
+        let response = await reqGet(`${this.couplingUrl}`);
         let caseParams = response.data;
         this._meshQuality = caseParams.mesh_quality;
         this._cleanLimit = caseParams.clean_limit;
@@ -285,7 +286,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      */
     public async addObject(props: ObjectProps): Promise<void> {
         let {name, ...data} = props;
-        let response = await axios.post(`${this.couplingUrl}/object/${name}`, data);
+        let response = await reqPost(`${this.couplingUrl}/object/${name}`, data);
         if (responseIsSuccessful(response.status)) {
             this.addObjectToDict(props);
         } else {
@@ -324,7 +325,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      * @protected
      */
     protected async getObjectsFromSimulator(): Promise<any> {
-        let response = await axios.get(`${this.couplingUrl}/object`);
+        let response = await reqGet(`${this.couplingUrl}/object`);
         return response.data;
     }
 
@@ -336,7 +337,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      * @protected
      */
     protected async executeCmd(command: CaseCommand, method: 'get' | 'post' = 'post'): Promise<any> {
-        let response: AxiosResponse = await axios.request({method, url: `${this.couplingUrl}/${command}`});
+        let response: AxiosResponse = await makeRequest({method, url: `${this.couplingUrl}/${command}`});
         if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }

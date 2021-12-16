@@ -5,10 +5,10 @@
  * @author Anatolii Tsirkunenko
  * @since  29.11.2021
  */
-import axios from 'axios';
 import {AbstractThing} from './thing';
 import {Coordinates, ObjectProps} from './interfaces';
 import {responseIsSuccessful} from "./helpers";
+import {reqGet, reqPatch, reqDelete} from './axios-requests';
 
 /**
  * An abstract object.
@@ -70,7 +70,7 @@ export abstract class AbstractObject extends AbstractThing {
      */
     public async setLocation(location: Coordinates): Promise<void> {
         this._location = location;
-        let response = await axios.patch(`${this.couplingUrl}`, { location });
+        let response = await reqPatch(`${this.couplingUrl}`, { location });
         if (response.status / 100 !== 2) {
             console.error(response.data);
         }
@@ -82,7 +82,7 @@ export abstract class AbstractObject extends AbstractThing {
      * @async
      */
     protected async getParamsFromSimulation(): Promise<any> {
-        let response = await axios.get(`${this.couplingUrl}`);
+        let response = await reqGet(`${this.couplingUrl}`);
         if (this._name in response.data) {
             return response.data[this._name];
         }
@@ -99,7 +99,7 @@ export abstract class AbstractObject extends AbstractThing {
     }
 
     public async destroy(): Promise<void> {
-        let response = await axios.delete(this.couplingUrl);
+        let response = await reqDelete(this.couplingUrl);
         if (responseIsSuccessful(response.status)) {
             await super.destroy();
         }

@@ -5,13 +5,13 @@
  * @author Anatolii Tsirkunenko
  * @since  01.12.2021
  */
-import axios from 'axios';
 import {use} from 'typescript-mix';
 import {HeatingProperties, OpenableProperties, VelocityProperties} from '../base/properties'
 import {Actuator} from '../base/actuator';
 import {ActuatorProps, ObjectProps, SensorProps} from '../base/interfaces';
 import {newSensor} from '../base/sensor';
 import {AbstractCase} from '../base/case';
+import {reqPatch} from '../base/axios-requests';
 
 /** Walls common TM. */
 let wallsTm = require('../../tms/behavior/cht/walls.model.json');
@@ -195,7 +195,7 @@ export class ChtCase extends AbstractCase {
      */
     public async setBackground(background: string): Promise<void> {
         this._background = background;
-        let response = await axios.patch(this.couplingUrl, {background});
+        let response = await reqPatch(this.couplingUrl, {background});
         if (response.status / 100 !== 2) {
             console.error(response.data);
         }
