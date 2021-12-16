@@ -1,0 +1,25 @@
+version: '3.1'
+
+services:
+  backend_python:
+    build:
+      context: ./backend/python
+    ports:
+      - 5000:5000
+    command: "python3.8 server.py"
+    container_name: wop_backend_python
+    network_mode: bridge
+    hostname: wop.python
+  backend_nodejs:
+    build:
+      context: ./backend/nodejs
+    ports:
+      - 8080:8080
+    command: "npm run start"
+    environment:
+      - PYTHON_SERVER=wop_backend_python
+    depends_on:
+      - backend_python
+    container_name: wop_backend_nodejs 
+    network_mode: bridge
+    hostname: wop.nodejs
