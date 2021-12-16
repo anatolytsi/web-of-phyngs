@@ -8,8 +8,8 @@ services:
       - 5000:5000
     command: "python3.8 server.py"
     container_name: wop_backend_python
-    network_mode: bridge
-    hostname: wop.python
+    networks:
+      - wop-network
   backend_nodejs:
     build:
       context: ./backend/nodejs
@@ -17,9 +17,14 @@ services:
       - 8080:8080
     command: "npm run start"
     environment:
-      - PYTHON_SERVER=wop_backend_python
+      - PYTHON_SERVER=http://wop_backend_python:5000
     depends_on:
       - backend_python
     container_name: wop_backend_nodejs 
-    network_mode: bridge
-    hostname: wop.nodejs
+    networks:
+      - wop-network
+networks:
+  wop-network:
+    driver: bridge
+    ipam:
+      driver: default
