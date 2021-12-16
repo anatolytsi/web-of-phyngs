@@ -16,11 +16,14 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  */
 async function tryReaching(config: AxiosRequestConfig, tries: number): Promise<AxiosResponse> {
     for (let i = 0; i < tries; i++) {
-        let response: AxiosResponse = await makeRequest(config, true);
-        if ('data' in response) {
-            return response;
+        try {
+            let response: AxiosResponse = await makeRequest(config, false);
+            if ('data' in response) {
+                return response;
+            }
+        } catch {
+            await delay(1000);
         }
-        await delay(1000);
     }
     throw Error(`Host ${config.url} was not reached after ${tries} retries`)
 }
