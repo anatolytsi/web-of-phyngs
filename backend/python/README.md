@@ -6,7 +6,7 @@ the `wop-config.json` as follows:
 ```json
 {
   "my_room": {
-    "type": "cht_room",
+    "type": "cht",
     "path": "./my_room"
   }
 }

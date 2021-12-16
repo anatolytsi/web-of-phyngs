@@ -21,11 +21,14 @@ radiation on;
 radiationModel  opaqueSolid;
 
 absorptionEmissionModel constant;
+//radiationModel  P1;
+//solverFreq 1;
+//absorptionEmissionModel constantAbsorptionEmission;
 
 constantCoeffs
 {
     absorptivity    absorptivity [0 -1 0 0 0 0 0] 0.0;  //opaque
-    emissivity      emissivity [0 -1 0 0 0 0 0] 0.1;
+    emissivity      emissivity [0 -1 0 0 0 0 0] 0.5;
     E               E [1 -1 -3 0 0 0 0] 0;
 }
 
