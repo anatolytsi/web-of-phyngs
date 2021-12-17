@@ -16,3 +16,6 @@ RUN echo -e "\n\n\n********** Installing NodeJS project dependencies **********\
 # Build NodeJS
 RUN echo -e "\n\n\n********** Building NodeJS project **********\n\n\n" && \
     npm run build
+
+# Run workaround
+RUN node workaround.js
