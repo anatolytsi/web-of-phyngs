@@ -8,7 +8,9 @@
 import {AbstractObject} from './object';
 import {ActuatorPropsCreated, ActuatorPropsTemplate, Size, Vector} from './interfaces';
 import {responseIsUnsuccessful} from "./helpers";
-import {reqPatch} from './axios-requests';
+import {reqPatch, reqPost} from './axios-requests';
+const FormData = require('form-data');
+const fs = require('fs');
 
 /**
  * An abstract actuator.
@@ -122,5 +124,20 @@ export abstract class Actuator extends AbstractObject implements ActuatorPropsCr
         this.thing.setPropertyWriteHandler('template', async (template) =>
             await this.setTemplate(template)
         );
+    }
+
+    protected addActionHandlers() {
+        this.thing.setActionHandler('uploadSTL', async (data, options) => {
+            let formData = new FormData();
+            let filename = data.match(/filename="(.*\.stl)"/)[1];
+            let filePath = `${__dirname}/${filename}`;
+            fs.writeFile(filePath, data.match(/(solid(.|\n)*endsolid\s.*)/gm)[0], () => {});
+            formData.append('file', fs.createReadStream(filePath));
+            await reqPost(`${this.couplingUrl}`, formData,
+                {
+                    headers: formData.getHeaders()
+                });
+            fs.unlinkSync(filePath)
+        });
     }
 }

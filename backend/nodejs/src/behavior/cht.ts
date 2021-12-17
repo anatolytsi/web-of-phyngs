@@ -48,6 +48,7 @@ class Heater extends Actuator {
     }
 
     protected addActionHandlers() {
+        super.addActionHandlers();
     }
 
     protected addEventHandlers() {
@@ -80,6 +81,7 @@ class Walls extends Actuator {
     }
 
     protected addActionHandlers() {
+        super.addActionHandlers();
     }
 
     protected addEventHandlers() {
@@ -115,6 +117,7 @@ class Door extends Actuator {
     }
 
     protected addActionHandlers() {
+        super.addActionHandlers();
         this.setOpenSetHandler(this.thing, this.couplingUrl);
         this.setCloseSetHandler(this.thing, this.couplingUrl);
     }
@@ -152,6 +155,7 @@ class Window extends Actuator {
     }
 
     protected addActionHandlers() {
+        super.addActionHandlers();
         this.setOpenSetHandler(this.thing, this.couplingUrl);
         this.setCloseSetHandler(this.thing, this.couplingUrl);
     }

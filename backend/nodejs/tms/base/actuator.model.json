@@ -52,5 +52,14 @@
       "readOnly": false,
       "writeOnly": false
     }
+  },
+  "actions": {
+    "uploadSTL": {
+      "properties": {
+        "file": {
+          "type": "string"
+        }
+      }
+    }
   }
 }
