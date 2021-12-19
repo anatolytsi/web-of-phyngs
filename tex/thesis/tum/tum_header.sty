@@ -1,0 +1,178 @@
+% latex package for the TUM CD header
+%
+% Authors: Emanuel Regnath (emanuel.regnath@tum.de)
+% 
+% © 2011-2015, LaTeX4EI
+
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{\PathToTumTemplate/tum/tum_header}[2017/03/30 Header according to TUM CI]
+
+
+
+%% TUM-CI: the top and right margin to the logo should be either 1 or 2 times the logo height
+
+
+%% Settings
+%% =================================================
+
+%% Info 
+%% --------------------------------------------
+%\RequirePackage{\PathToTumTemplate/tum/tum_info} % reduce dependencies
+
+
+% set default info (overrite this in your preamble)
+\providecommand{\theChairName}{Professorship of Embedded Systems and Internet of Things}
+\providecommand{\theDepartmentName}{Department of Electrical and Computer Engineering}
+\providecommand{\theUniversityName}{Technical University of Munich}
+
+
+
+%% Colors
+%% --------------------------------------------
+\RequirePackage{xcolor}
+\definecolor{col_tum_logo}{RGB/cmyk}{ 0, 101, 189/1.0, 0.43, 0, 0}
+
+
+
+%% Logo
+%% --------------------------------------------
+\RequirePackage{graphicx}
+\setlength{\fboxsep}{0px}
+% tikz implementation of the logo to avoid image dependencies?
+
+%% basic scale value:
+\newlength{\logoheight}
+\setlength\logoheight{10mm}  %% default is 10mm
+
+
+% set default paths
+\providecommand{\PathToTumLogo}{\PathToTumTemplate/tum/logo/TUM_Logo_RGB}
+\providecommand{\PathToDepartmentLogo}{\PathToTumTemplate/tum/ei/logo/EI_Logo_RGB}
+\providecommand{\PathToChairLogo}{\PathToTumTemplate/tum/ei/rcs/logo/RCS_Logo_CMYK}
+
+
+
+
+
+%% Implementation
+%% =================================================
+
+%% 1-line university information
+\providecommand{\printTumInfo}{%
+	\sffamily%
+	\fontsize{9}{11}\selectfont%
+	\noindent\parbox[t][\logoheight][c]{0.7\textwidth}{%
+		\color{col_tum_logo}%
+        \phantom{Chair}%
+        \vfill
+        \phantom{Department}%
+        \vfill%
+        \smash{\theUniversityName}%  		
+	}%
+}
+
+%% 2-line department information
+\providecommand{\printDepartmentInfo}{%
+  \sffamily%
+  \fontsize{9}{11}\selectfont%
+  \noindent\parbox[t][\logoheight][c]{0.7\textwidth}{%
+    \color{col_tum_logo}%
+        \phantom{Chair}%
+        \vfill
+        \theDepartmentName%
+        \vfill%
+        \smash{\theUniversityName}%     
+  }%
+}
+
+
+%% 3-line chair information
+\providecommand{\printChairInfo}{%
+  \sffamily%
+  \renewcommand{\baselinestretch}{1.0}
+  \fontsize{9}{11}\selectfont%
+  \noindent\parbox[t][\logoheight][c]{0.7\textwidth}{%
+    \color{col_tum_logo}%
+        \theChairName%
+        \vfill
+        \theDepartmentName%
+        \vfill%
+        \smash{\theUniversityName}%     
+  }%
+}
+
+
+%% print the TUM logo
+\providecommand{\printTumLogo}{%
+  \noindent\parbox[t][\logoheight][c]{1.9\logoheight}{%
+    \hfill\includegraphics[height=\logoheight]{\PathToTumLogo}%
+  }%
+}
+
+%% print the department logo with protection margin
+\providecommand{\printDepartmentLogo}{%
+  \noindent\parbox[t][\logoheight][c]{\logoheight}{%
+    \includegraphics[height=1.05\logoheight]{\PathToDepartmentLogo}%
+  }\hspace*{0.5\logoheight}%
+}
+
+
+
+
+
+
+\providecommand{\printTumHeader}{%
+\noindent\parbox[t][\logoheight][t]{\textwidth}{%
+  \printDepartmentLogo%
+  \printChairInfo
+  \hfill%
+  \printTumLogo%
+}%
+}
+
+% for debugging
+\providecommand{\printTumHeaderDebug}{%
+\noindent\parbox[t][\logoheight][t]{\textwidth}{%
+    \fbox{\printDepartmentLogo}%
+		\fbox{%
+    \printChairInfo}%
+		\hfill%
+		\fbox{\printTumLogo}%
+	}%
+}
+
+
+%% additional settings
+\setlength{\headsep}{\logoheight}
+\setlength{\headheight}{\logoheight}
+
+
+% \todo: make this a package option?
+%% FancyHDR
+% \providecommand{\setTUMfancyhdr}{
+%   \RequirePackage{fancyhdr}
+% 
+% 
+% }
+
+
+
+
+%% Plain LaTeX
+\makeatletter
+\def\ps@tumpage{%
+      \let\@oddfoot\@empty
+      \let\@evenfoot\@empty
+      \def\@evenhead{\printTumInfo}%
+      \def\@oddhead{\printTumLogo}%
+    }
+\makeatother
+
+
+
+
+
+
+
+
