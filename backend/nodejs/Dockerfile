@@ -15,8 +15,7 @@ RUN echo -e "\n\n\n********** Installing NodeJS project dependencies **********\
 
 # Run workaround
 COPY src/workaround.ts ./src
-RUN tsc src/workaround.ts --outDir "dist"
-RUN node dist/workaround.js
+RUN npm run applyWorkaround
 
 COPY tms ./
 COPY tsconfig ./

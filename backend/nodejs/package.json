@@ -30,6 +30,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "buildAndStart": "tsc && node index.js"
+    "buildAndStart": "tsc && node index.js",
+    "applyWorkaround": "tsc src/workaround.ts --outDir \"dist\" && node dist/workaround.js"
   }
 }
