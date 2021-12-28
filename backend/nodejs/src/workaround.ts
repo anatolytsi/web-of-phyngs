@@ -10,12 +10,12 @@ let newLines = ' // else if (core_1.ContentSerdes.get().getSupportedMediaTypes()
 
 let filePath = `${__dirname}/node_modules/@node-wot/binding-http/dist/http-server.js`;
 
-fs.readFile(filePath, (error, data) => {
+fs.readFile(filePath, (error: any, data: any) => {
     if (error) {
         return console.error(error);
     }
     let result = data.toString().replace(regex, newLines);
-    fs.writeFile(filePath, result, (error) => {
+    fs.writeFile(filePath, result, (error: any) => {
         if (error) {
             return console.error(error);
         }
