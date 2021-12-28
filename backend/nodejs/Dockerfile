@@ -14,11 +14,10 @@ RUN echo -e "\n\n\n********** Installing NodeJS project dependencies **********\
     npm install
 
 # Run workaround
-COPY src/workaround.ts ./src
+COPY src/workaround.ts ./src/
 RUN npm run applyWorkaround
 
-COPY tms ./
-COPY src ./
+COPY tms src ./
 
 # Build NodeJS
 RUN echo -e "\n\n\n********** Building NodeJS project **********\n\n\n" && \
