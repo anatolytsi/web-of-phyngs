@@ -7,7 +7,7 @@ RUN echo -e "\n\n\n********** Installing NodeJS dependencies **********\n\n\n" &
 # Copy data
 WORKDIR /app
 RUN chmod 777 /app
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json tsconfig.json ./
 
 # Install project dependencies
 RUN echo -e "\n\n\n********** Installing NodeJS project dependencies **********\n\n\n" && \
@@ -18,7 +18,6 @@ COPY src/workaround.ts ./src
 RUN npm run applyWorkaround
 
 COPY tms ./
-COPY tsconfig ./
 COPY src ./
 
 # Build NodeJS
