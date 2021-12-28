@@ -8,7 +8,7 @@ let newLines = ' // else if (core_1.ContentSerdes.get().getSupportedMediaTypes()
     '                            //     return [2];\n' +
     '                            // }';
 
-let filePath = `${__dirname}/node_modules/@node-wot/binding-http/dist/http-server.js`;
+let filePath = `${__dirname}/../node_modules/@node-wot/binding-http/dist/http-server.js`;
 
 fs.readFile(filePath, (error: any, data: any) => {
     if (error) {
