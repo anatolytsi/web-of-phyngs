@@ -243,6 +243,7 @@ export class Simulator extends AbstractThing {
     public async createCase(params: CaseParameters): Promise<string> {
         let {name, ...data} = params;
         let response: AxiosResponse = await reqPost(`${this.couplingUrl}/${name}`, data);
+        await this.initCaseByName(name);
         return response.data;
     }
 
