@@ -39,7 +39,8 @@ async function tryReaching(config: AxiosRequestConfig, tries: number): Promise<A
 export async function makeRequest(config: AxiosRequestConfig, retry: boolean = true): Promise<AxiosResponse> {
     try {
         return await axios.request(config);
-    } catch (e) {
+    } catch (e: any) {
+        if (e.code !== 'ECONNREFUSED') throw e;
         if (retry) {
             return await tryReaching(config, 5);
         }
