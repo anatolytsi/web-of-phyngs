@@ -4,6 +4,7 @@ from flask_restful import Resource, reqparse
 from .case import auto_load_case
 from .exceptions import catch_error
 from wopsimulator.loader import save_case
+from wopsimulator.exceptions import ObjectNotFound
 
 
 class ObjectList(Resource):
@@ -72,7 +73,7 @@ class Object(Resource):
             self.current_cases[case_name].modify_object(obj_name, params)
             save_case(case_name, self.current_cases[case_name])
             return '', 200
-        return f'Object/sensor {obj_name} does not exist in case {case_name}', 404
+        raise ObjectNotFound(f'Object/sensor {obj_name} does not exist in case {case_name}')
 
     @catch_error
     @auto_load_case
@@ -81,7 +82,7 @@ class Object(Resource):
             self.current_cases[case_name].remove_object(obj_name)
             save_case(case_name, self.current_cases[case_name])
             return '', 200
-        return f'Object/sensor {obj_name} does not exist in case {case_name}', 404
+        raise ObjectNotFound(f'Object/sensor {obj_name} does not exist in case {case_name}')
 
 
 class ObjectValue(Resource):
