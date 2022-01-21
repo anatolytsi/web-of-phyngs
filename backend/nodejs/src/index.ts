@@ -8,7 +8,7 @@ let CASE_PARAMS: CaseConstructorType = {
     'cht': {
         'constructor': (host: string, wot: WoT.WoT,
                         tm: WoT.ThingDescription, name: string) => new ChtCase(host, wot, tm, name),
-        'tm': require('../tms/behavior/cht/case.model.json')
+        'tm': require('../tms/behavior/cht/chtCase.model.json')
     }
 }
 

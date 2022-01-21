@@ -5,22 +5,22 @@
   "links" : [
     {
       "rel": "tm:extends",
-      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/actuator.model.json",
+      "href": "baseActuator.model.json",
       "type": "application/td+json"
     },
     {
       "rel": "tm:extends",
-      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/properties/heating.model.json",
+      "href": "baseHeating.model.json",
       "type": "application/td+json"
     },
     {
       "rel": "tm:extends",
-      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/properties/velocity.model.json",
+      "href": "baseVelocity.model.json",
       "type": "application/td+json"
     },
     {
       "rel": "tm:extends",
-      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/properties/openable.model.json",
+      "href": "baseOpenable.model.json",
       "type": "application/td+json"
     }
   ],

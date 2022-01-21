@@ -4,7 +4,7 @@
   "links": [
     {
       "rel": "tm:extends",
-      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/case.model.json",
+      "href": "baseCase.model.json",
       "type": "application/td+json"
     }
   ],

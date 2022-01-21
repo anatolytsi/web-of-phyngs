@@ -11,7 +11,7 @@ import {responseIsUnsuccessful} from "./helpers";
 import {reqGet} from './axios-requests';
 
 /** Sensors common TM. */
-const sensorTm: WoT.ThingDescription = require('../../tms/base/sensor.model.json');
+const sensorTm: WoT.ThingDescription = require('../../tms/base/baseSensor.model.json');
 
 /**
  * An abstract Sensor class.

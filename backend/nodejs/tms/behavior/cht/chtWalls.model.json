@@ -1,11 +1,16 @@
 {
   "@context": "https://www.w3.org/2019/wot/td/v1",
-  "title": "WoPSensor",
+  "title": "WoPCHTWalls",
   "description": "",
   "links": [
     {
       "rel": "tm:extends",
-      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/object.model.json",
+      "href": "baseActuator.model.json",
+      "type": "application/td+json"
+    },
+    {
+      "rel": "tm:extends",
+      "href": "baseHeating.model.json",
       "type": "application/td+json"
     }
   ],
@@ -13,13 +18,6 @@
   "securityDefinitions": {
     "nosec_sc": {
       "scheme": "nosec"
-    }
-  },
-  "properties": {
-    "value": {
-      "description": "WoP Sensor value",
-      "readOnly": true,
-      "writeOnly": false
     }
   }
 }

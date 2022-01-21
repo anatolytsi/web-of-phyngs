@@ -1,16 +1,16 @@
 {
   "@context": "https://www.w3.org/2019/wot/td/v1",
-  "title": "WoPCHTWalls",
+  "title": "WoPCHTHeater",
   "description": "",
   "links": [
     {
       "rel": "tm:extends",
-      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/actuator.model.json",
+      "href": "baseActuator.model.json",
       "type": "application/td+json"
     },
     {
       "rel": "tm:extends",
-      "href": "file:///home/anatolytsi/openfoam/python/wop/backend/nodejs/tms/base/properties/heating.model.json",
+      "href": "baseHeating.model.json",
       "type": "application/td+json"
     }
   ],

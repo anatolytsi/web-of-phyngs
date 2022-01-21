@@ -14,13 +14,13 @@ import {AbstractCase} from '../base/case';
 import {reqPatch} from '../base/axios-requests';
 
 /** Walls common TM. */
-let wallsTm = require('../../tms/behavior/cht/walls.model.json');
+let wallsTm = require('../../tms/behavior/cht/chtWalls.model.json');
 /** Heater common TM. */
-let heaterTm = require('../../tms/behavior/cht/heater.model.json');
+let heaterTm = require('../../tms/behavior/cht/chtHeater.model.json');
 /** Window common TM. */
-let windowTm = require('../../tms/behavior/cht/window.model.json');
+let windowTm = require('../../tms/behavior/cht/chtWindow.model.json');
 /** Door common TM. */
-let doorTm = require('../../tms/behavior/cht/door.model.json');
+let doorTm = require('../../tms/behavior/cht/chtDoor.model.json');
 
 /** Heater interface wrapper for
  * multiple class extension. */
