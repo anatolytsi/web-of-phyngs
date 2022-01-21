@@ -3,12 +3,14 @@ import {HttpServer} from '@node-wot/binding-http';
 
 import {CaseConstructorType, Simulator} from './base/simulator';
 import {ChtCase} from './behavior/cht';
+import {chtSdSchema} from './base/schemas';
 
 let CASE_PARAMS: CaseConstructorType = {
     'cht': {
         'constructor': (host: string, wot: WoT.WoT,
                         tm: WoT.ThingDescription, name: string) => new ChtCase(host, wot, tm, name),
-        'tm': require('../tms/behavior/cht/chtCase.model.json')
+        'tm': require('../tms/behavior/cht/chtCase.model.json'),
+        'sdValidator': chtSdSchema
     }
 }
 

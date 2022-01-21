@@ -7,10 +7,11 @@
  */
 import {AbstractThing} from './thing';
 import {AbstractCase} from './case';
-import {CaseParameters, CaseHrefs, SimulationErrors} from './interfaces';
+import {CaseHrefs, SimulationErrors, SystemDescription} from './interfaces';
 import {responseIsUnsuccessful, responseIsSuccessful} from './helpers';
 import {reqGet, reqPost, reqPut, reqDelete} from './axios-requests';
 import {AxiosResponse} from 'axios';
+import {sdSchema, validateSchema} from './schemas';
 
 /**
  * Case type constructor function.
@@ -27,6 +28,8 @@ interface CaseTypeConstructorParams {
     constructor: CaseTypeConstructor;
     /** Case type thing model. */
     tm: WoT.ThingDescription;
+    /** System Description validator. */
+    sdValidator: any;
 }
 
 /**
@@ -236,14 +239,14 @@ export class Simulator extends AbstractThing {
 
     /**
      * Creates case with given parameters on the simulator backend.
-     * @param {CaseParameters} params Case parameters.
+     * @param {SystemDescription} sd System Description of a case.
      * @return {Promise<string>} Simulator backend response promise.
      * @async
      */
-    public async createCase(params: CaseParameters): Promise<string> {
-        let {name, ...data} = params;
-        let response: AxiosResponse = await reqPost(`${this.couplingUrl}/${name}`, data);
-        await this.initCaseByName(name);
+    public async createCase(sd: SystemDescription): Promise<string> {
+        this.validateSd(sd);
+        let response: AxiosResponse = await reqPost(`${this.couplingUrl}/${sd.title}`, sd.sysProperties);
+        await this.initCaseByName(sd.title);
         return response.data;
     }
 
@@ -264,6 +267,15 @@ export class Simulator extends AbstractThing {
         return response.data;
     }
 
+    /**
+     * Validates given System Description.
+     * @param {SystemDescription} sd System Description of a case.
+     */
+    protected validateSd(sd: SystemDescription): void {
+        validateSchema(sd, sdSchema);
+        validateSchema(sd, this.caseTypesConstructors[sd.sysProperties.type].sdValidator);
+    }
+
     protected addPropertyHandlers(): void {
         this.thing.setPropertyReadHandler('cases', async () => {
             return this.casesHrefs;
@@ -274,17 +286,17 @@ export class Simulator extends AbstractThing {
         this.thing.setPropertyReadHandler('postProcessingServer', async () => {
             return this.postProcServerParams;
         });
-        this.thing.setPropertyWriteHandler('postProcessingServer', async (postProcServerParams) => {
-            return await this.updatePostProcServerParams(postProcServerParams);
-        });
+        this.thing.setPropertyWriteHandler('postProcessingServer',
+            async (postProcServerParams: PostProcServerParam) => {
+                return await this.updatePostProcServerParams(postProcServerParams);
+            });
     }
 
     protected addActionHandlers(): void {
-        this.thing.setActionHandler('createCase', async (params) => {
-            await this.createCase(params);
-            return await this.initCaseByName(params.name);
+        this.thing.setActionHandler('createCase', async (sd: SystemDescription) => {
+            return await this.createCase(sd);
         });
-        this.thing.setActionHandler('deleteCase', async (name) => {
+        this.thing.setActionHandler('deleteCase', async (name: string) => {
             return await this.deleteCase(name);
         });
         this.thing.setActionHandler('startPostProcessingServer', async () => {

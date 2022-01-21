@@ -8,10 +8,11 @@
 import {use} from 'typescript-mix';
 import {HeatingProperties, OpenableProperties, VelocityProperties} from '../base/properties'
 import {Actuator} from '../base/actuator';
-import {ActuatorProps, ObjectProps, SensorProps} from '../base/interfaces';
+import {ActuatorProps, ObjectProps, PhysicalDescription, SensorProps} from '../base/interfaces';
 import {newSensor} from '../base/sensor';
 import {AbstractCase} from '../base/case';
 import {reqPatch} from '../base/axios-requests';
+import {chtPdSchema, validateSchema} from '../base/schemas';
 
 /** Walls common TM. */
 let wallsTm = require('../../tms/behavior/cht/chtWalls.model.json');
@@ -215,6 +216,15 @@ export class ChtCase extends AbstractCase {
                 this.addObjectToDict(object);
             }
         }
+    }
+
+    /**
+     * Validates Physical Description for CHT object creation.
+     * @param {PhysicalDescription} pd Physical Description of an object.
+     * @protected
+     */
+    protected validatePd(pd: PhysicalDescription): void {
+        validateSchema(pd, chtPdSchema);
     }
 
     /**

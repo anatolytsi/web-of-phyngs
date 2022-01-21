@@ -6,7 +6,7 @@
  * @since  29.11.2021
  */
 import {AbstractThing} from './thing';
-import {CaseParameters, ObjectHrefs, ObjectProps} from './interfaces';
+import {CaseParameters, ObjectHrefs, ObjectProps, PhysicalDescription} from './interfaces';
 import {AbstractObject} from './object';
 import {responseIsSuccessful, responseIsUnsuccessful} from './helpers';
 import {reqGet, reqPost, reqPatch, makeRequest} from './axios-requests';
@@ -58,6 +58,15 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      * @protected
      */
     protected abstract addObjectToDict(props: ObjectProps): void;
+
+    /**
+     * Abstract method to validate Physical Description
+     * for object creation. It must be case type specific
+     * to account for various types of objects.
+     * @param {PhysicalDescription} pd Physical Description of an object.
+     * @protected
+     */
+    protected abstract validatePd(pd: PhysicalDescription): void;
 
     /**
      * Abstract method to update case objects
@@ -281,14 +290,17 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
 
     /**
      * Adds object with properties to simulation and instantiates a corresponding class.
-     * @param {ObjectProps} props Object properties.
+     * @param {PhysicalDescription} pd Object properties.
      * @async
      */
-    public async addObject(props: ObjectProps): Promise<void> {
-        let {name, ...data} = props;
-        let response = await reqPost(`${this.couplingUrl}/object/${name}`, data);
+    public async addObject(pd: PhysicalDescription): Promise<void> {
+        this.validatePd(pd);
+        let response = await reqPost(
+            `${this.couplingUrl}/object/${pd.title}`,
+            pd.phyProperties
+        );
         if (responseIsSuccessful(response.status)) {
-            this.addObjectToDict(props);
+            this.addObjectToDictPd(pd);
         } else {
             throw Error(response.data);
         }
@@ -316,6 +328,15 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
             }
         }
         return objects;
+    }
+
+    /**
+     * Adds a new object to a dictionary of objects via its PD.
+     * @param {PhysicalDescription} pd Physical Description of an object.
+     * @protected
+     */
+    protected addObjectToDictPd(pd: PhysicalDescription) {
+        this.addObjectToDict({...pd.phyProperties, name: pd.title});
     }
 
     /**
