@@ -17,6 +17,8 @@
     "@node-wot/core": "^0.7.8",
     "axios": "^0.24.0",
     "glob": "^7.2.0",
+    "jsonschema": "^1.4.0",
+    "merge-json-schemas": "^1.0.0",
     "ts-node": "^10.4.0",
     "tsconfig-paths": "^3.11.0",
     "typescript-mix": "^3.1.3",
@@ -26,7 +28,7 @@
     "@types/node": "^16.11.9",
     "form-data": "^4.0.0",
     "typescript": "^4.5.2",
-    "wot-thing-description-types": "^1.1.0-11-November-2021"
+    "wot-thing-description-types": "^1.1.0-19-January-2022"
   },
   "scripts": {
     "build": "tsc",
