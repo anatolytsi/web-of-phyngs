@@ -7,7 +7,7 @@
  */
 import {AbstractThing} from './thing';
 import {Coordinates, ObjectProps} from './interfaces';
-import {responseIsSuccessful} from "./helpers";
+import {responseIsUnsuccessful} from "./helpers";
 import {reqGet, reqPatch, reqDelete} from './axios-requests';
 
 /**
@@ -71,8 +71,8 @@ export abstract class AbstractObject extends AbstractThing {
     public async setLocation(location: Coordinates): Promise<void> {
         this._location = location;
         let response = await reqPatch(`${this.couplingUrl}`, { location });
-        if (response.status / 100 !== 2) {
-            console.error(response.data);
+        if (responseIsUnsuccessful(response.status)) {
+            throw Error(response.data);
         }
     }
 
@@ -100,9 +100,10 @@ export abstract class AbstractObject extends AbstractThing {
 
     public async destroy(): Promise<void> {
         let response = await reqDelete(this.couplingUrl);
-        if (responseIsSuccessful(response.status)) {
-            await super.destroy();
+        if (responseIsUnsuccessful(response.status)) {
+            throw Error(response.data);
         }
+        await super.destroy();
     }
 
     protected addPropertyHandlers(): void {

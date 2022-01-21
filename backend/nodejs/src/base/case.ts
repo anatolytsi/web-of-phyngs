@@ -290,7 +290,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         if (responseIsSuccessful(response.status)) {
             this.addObjectToDict(props);
         } else {
-            console.error(response.data);
+            throw Error(response.data);
         }
     }
 
@@ -339,7 +339,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     protected async executeCmd(command: CaseCommand, method: 'get' | 'post' = 'post'): Promise<any> {
         let response: AxiosResponse = await makeRequest({method, url: `${this.couplingUrl}/${command}`});
         if (responseIsUnsuccessful(response.status)) {
-            console.error(response.data);
+            throw Error(response.data);
         }
         return response.data;
 }
