@@ -5,7 +5,7 @@ from wopsimulator.loader import load_case, create_case, get_cases_names, save_ca
 
 from wopsimulator.variables import CONFIG_TYPE_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY, \
     CONFIG_PARALLEL_KEY, CONFIG_CORES_KEY, CONFIG_REALTIME_KEY, CONFIG_BACKGROUND_KEY, CONFIG_DEFAULTS, \
-    CONFIG_END_TIME_KEY, CONFIG_MATERIAL_KEY
+    CONFIG_END_TIME_KEY
 
 
 def auto_load_case(func):
