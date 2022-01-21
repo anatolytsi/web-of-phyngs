@@ -1,0 +1,27 @@
+{
+  "properties": {
+    "phyProperties": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "walls",
+            "window",
+            "door",
+            "heater",
+            "furniture"
+          ]
+        },
+        "material": {
+          "type": "string",
+          "enum": [
+            "copper",
+            "aluminium"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
