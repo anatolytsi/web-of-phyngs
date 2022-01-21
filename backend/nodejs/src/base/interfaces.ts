@@ -150,3 +150,11 @@ export interface SimulationErrors {
     /** Full error traces array. */
     traces: string[]
 }
+
+export interface SystemDescription extends WoT.ThingDescription {
+    sysProperties: CaseParameters;
+}
+
+export interface PhysicalDescription extends WoT.ThingDescription {
+    phyProperties: ObjectProps;
+}
