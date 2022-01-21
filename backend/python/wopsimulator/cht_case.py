@@ -216,7 +216,7 @@ class ChtCase(OpenFoamCase):
             self.initialized = False
             return
         else:
-            raise WrongObjectType(f'Wrong object type! Possible types are {CHT_ROOM_OBJ_TYPES}')
+            raise WrongObjectType(f'Wrong object type {obj_type}! Possible types are {CHT_ROOM_OBJ_TYPES}')
         self.initialized = False
         self.objects.update({wop_object.name: wop_object})
 
