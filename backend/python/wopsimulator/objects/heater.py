@@ -70,7 +70,7 @@ class WopHeater(WopObject):
     @material.setter
     def material(self, material):
         if material not in SOLID_MATERIALS:
-            raise ValueError(f'Background material cannot be {material}, '
+            raise ValueError(f'Phyng material cannot be {material}, '
                              f'possible values are {", ".join(SOLID_MATERIALS)}')
         self.snappy.material = material
 
