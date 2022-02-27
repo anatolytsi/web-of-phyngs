@@ -1,6 +1,7 @@
 """Boundary conditions script with corresponding field classes"""
 import re
 import os
+import logging
 from dataclasses import dataclass
 from typing import Union, List, Callable
 
@@ -35,6 +36,8 @@ boundaryField
 
 // ************************************************************************* //
 """
+
+logger = logging.getLogger('openfoam')
 
 
 @dataclass
@@ -83,9 +86,12 @@ class BoundaryConditionBase:
         self._time = 0
         # Parse file if exists or create a new one
         if os.path.exists(self._filepath % 0):
+            logger.debug(f'Found {field} boundary{" in " + region + " region" if region else ""}')
             self._file_parse()
         else:
+            logger.debug(f'Creating {field} boundary{" in " + region + " region" if region else ""}')
             self._file_create(field_class, dimensions)
+        logger.debug(f'{field} boundary{" in " + region + " region" if region else ""} was initialized')
 
     @staticmethod
     def _get_internal_field(lines_str: str):
@@ -509,21 +515,3 @@ class BoundaryCondition:
             field_inst.__init__(case_dir, region)
             return field_inst
         return None
-
-
-def main():
-    # internal_field = InternalField(0)
-    t_boundary_cond = BoundaryConditionT('test.case/', region='fluid')
-    t_boundary_cond.update_time(1)
-    t_boundary_cond['walls'].value = 3
-    # t_boundary_cond['walls'].save()
-    # t_boundary_cond['test'] = Boundary('noSlip')
-    # t_boundary_cond.add_boundary('test', 'noSlip')
-    t_boundary_cond.save()
-    t_boundary_cond.update_time(17)
-    t_boundary_cond.fluid_to_heater.refValue = 300
-    t_boundary_cond.fluid_to_heater.save()
-
-
-if __name__ == '__main__':
-    main()

@@ -1,5 +1,5 @@
 import traceback
-from os import kill
+import logging
 from signal import SIGINT
 from threading import Thread, Lock
 
@@ -17,6 +17,9 @@ PyFoam.Error.error = default_error_catcher
 
 from PyFoam.Execution.BasicRunner import BasicRunner
 from PyFoam.Execution.ParallelExecution import LAMMachine
+
+
+logger = logging.getLogger('openfoam')
 
 
 class RunFailed(Exception):
@@ -57,7 +60,9 @@ def _check_runner_errors(command, solver):
             error = f'fatal stack dump'
         else:
             error = 'unknown error'
-        raise RunFailed(f'{command} run failed with {error}: {solver.data["errorText"]}')
+        error_message = f'{command} run failed with {error}: {solver.data["errorText"]}'
+        logger.error(error_message)
+        raise RunFailed(error_message)
 
 
 class BasicRunnerWrapper(BasicRunner):
