@@ -122,6 +122,8 @@ class PyFoamSolver(Thread):
 
     def stop(self, signal):
         """Stops solving"""
+        if not self._solver:
+            return
         pid = self._solver.run.run.pid
         process = psutil.Process(pid)
         if self._parallel:
