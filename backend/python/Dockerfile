@@ -35,8 +35,11 @@ RUN echo -e "\n\n\n********** Installing Python v3.8 **********\n\n\n" && \
 # Copy data
 WORKDIR /app
 RUN chmod 777 /app
-COPY . ./
 
 # Install project dependencies
+COPY ./requirements.txt .
 RUN echo -e "\n\n\n********** Installing Python project dependencies **********\n\n\n" && \
     pip3.8 install --user -r requirements.txt
+
+# Copy project
+COPY . ./
