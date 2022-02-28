@@ -8,27 +8,26 @@ import gdown
 
 from ..geometry.manipulator import Model
 from ..openfoam.common.filehandling import force_remove_dir
-from ..openfoam.probes.probes import Probe
 from ..openfoam.system.snappyhexmesh import SnappyHexMeshDict, SnappyRegion, SnappyCellZoneMesh
 
 
-class WopObject(ABC):
+class Phyng(ABC):
     """
-    Web of Phyngs Object base class
+    Phyng base class
     Refers to an object with a geometric model and boundary conditions
     """
-    type_name = 'object'
+    type_name = 'phyng'
 
     def __init__(self, name: str, case_dir: str, model_type: str, bg_region: str, url='', custom=False,
                  dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
                  facing_zero=True, template=None, of_interface=None, **kwargs):
         """
-        Web of Phyngs object initialization function
-        :param name: name of an object
+        Phyng initialization function
+        :param name: name of an phyng
         :param case_dir: case directory
         :param bg_region: background region name
-        :param url: object URL
-        :param custom: object was created from URL
+        :param url: phyng URL
+        :param custom: phyng was created from URL
         :param dimensions: dimensions [x, y, z]
         :param location: location coordinates [x, y, z]
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
@@ -74,7 +73,7 @@ class WopObject(ABC):
         url = f'https://drive.google.com/uc?id={match.group(1)}'
         gdown.download(url, self.path, quiet=True)
         if not os.path.exists(self.path):
-            raise FileNotFoundError(f'Custom STL was not loaded for object {self.name}')
+            raise FileNotFoundError(f'Custom STL was not loaded for phyng {self.name}')
         with open(self.path, 'r') as f:
             stl = f.read()
             stl_match = re.match(r'^solid [^\s]*\s[\S\s]+endsolid [^\s]*$', stl)
@@ -90,7 +89,7 @@ class WopObject(ABC):
         self.path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/{template}' \
                     f'{"" if template[-4:] == ".stl" else ".stl"}'
         if not os.path.exists(self.path):
-            raise FileNotFoundError(f'Template {template} STL does not exist for object {self.name}')
+            raise FileNotFoundError(f'Template {template} STL does not exist for phyng {self.name}')
 
     def _get_custom_stl(self):
         """
@@ -98,7 +97,7 @@ class WopObject(ABC):
         """
         self.path = f'{self._case_dir}/geometry/{self.name}.stl'
         if not os.path.exists(self.path):
-            raise FileNotFoundError(f'Custom STL was not loaded for object {self.name}')
+            raise FileNotFoundError(f'Custom STL was not loaded for phyng {self.name}')
 
     @abstractmethod
     def _add_initial_boundaries(self):
@@ -134,10 +133,10 @@ class WopObject(ABC):
 
     def bind_snappy(self, snappy_dict: SnappyHexMeshDict, snappy_type: str, region_type='wall', refinement_level=0):
         """
-        Binds a snappyHexMeshDict and WoP Object type for it
+        Binds a snappyHexMeshDict and Phyng type for it
         Must be called before the case is setup
         :param snappy_dict: snappyHexMeshDict class instance
-        :param snappy_type: type of object representation in snappyHexMeshDict
+        :param snappy_type: type of phyng representation in snappyHexMeshDict
         :param region_type: initial region type
         :param refinement_level: mesh refinement level
         """
@@ -161,7 +160,7 @@ class WopObject(ABC):
 
     def destroy(self):
         """
-        Destroys a Phyng object by removing all
+        Destroys a phyng by removing all
         connected data, e.g., files, from simulation
         """
         if os.path.exists(path := f'{self._case_dir}/constant/triSurface/{self.name}.stl'):
@@ -200,59 +199,6 @@ class WopObject(ABC):
         setattr(self, key, value)
         if case_was_stopped:
             self._of_interface.run()
-
-    def __iter__(self):
-        """Allow to iterate over attribute names of a class"""
-        for each in [b for b in dir(self) if '_' not in b[0]]:
-            yield each
-
-    def __delitem__(self, key):
-        """Allow to delete individual attributes of a class"""
-        del self.__dict__[key]
-
-
-class WopSensor:
-    """Web of Phyngs Sensor base class"""
-    type_name = 'sensor'
-
-    def __init__(self, name, case_dir, field, region, location):
-        """
-        Web of Phyngs sensor initialization function
-        :param name: name of the sensor
-        :param case_dir: case dictionary
-        :param field: sensor field to monitor (e.g., T)
-        :param region: region to sense
-        :param location: sensor location
-        """
-        self.name = name
-        self.location = location
-        self.field = field
-        self._case_dir = case_dir
-        self._probe = Probe(case_dir, field, region, location)
-
-    def dump_settings(self):
-        return {self.name: {
-            'location': self.location,
-            'field': self.field
-        }}
-
-    @property
-    def value(self):
-        """Sensor value getter"""
-        return self._probe.value
-
-    def destroy(self):
-        """Destroys a Phyng Sensor by deleting a probe"""
-        self._probe.remove()
-        del self._probe
-
-    def __getitem__(self, item):
-        """Allow to access attributes of a class as in dictionary"""
-        return getattr(self, item)
-
-    def __setitem__(self, key, value):
-        """Allow to set attributes of a class as in dictionary"""
-        setattr(self, key, value)
 
     def __iter__(self):
         """Allow to iterate over attribute names of a class"""

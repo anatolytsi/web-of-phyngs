@@ -1,33 +1,33 @@
 /**
- * Object module.
+ * Phyng module.
  *
- * @file   Contains an AbstractObject class that is used by simulated Phyngs in this application.
+ * @file   Contains an AbstractPhyng class that is used by simulated Phyngs in this application.
  * @author Anatolii Tsirkunenko
  * @since  29.11.2021
  */
 import {AbstractThing} from './thing';
-import {Coordinates, ObjectProps} from './interfaces';
-import {responseIsUnsuccessful} from "./helpers";
+import {Coordinates, PhyngProps} from './interfaces';
+import {responseIsUnsuccessful} from './helpers';
 import {reqGet, reqPatch, reqDelete} from './axios-requests';
 
 /**
- * An abstract object.
+ * An abstract Phyng.
  *
  * Abstract class used by simulated Phyngs things in this application.
- * @class AbstractObject
+ * @class AbstractPhyng
  * @abstract
  */
-export abstract class AbstractObject extends AbstractThing {
-    /** Name of the case an object is assigned to. */
+export abstract class AbstractPhyng extends AbstractThing {
+    /** Name of the case an phyng is assigned to. */
     protected caseName: string;
-    /** Object location. */
+    /** Phyng location. */
     protected _location: Coordinates;
-    /** Object name. */
+    /** Phyng name. */
     public _name: string;
-    /** Object type, e.g., "sensor", "heater", etc. */
+    /** Phyng type, e.g., "sensor", "heater", etc. */
     protected _type: string;
 
-    protected constructor(host: string, wot: WoT.WoT, tm: any, caseName: string, props: ObjectProps) {
+    protected constructor(host: string, wot: WoT.WoT, tm: any, caseName: string, props: PhyngProps) {
         // Base URL cannot be yet set in node-wot,
         // thus a case name is added to a things model title
         tm.title = `${caseName}-${props.name}`
@@ -36,35 +36,35 @@ export abstract class AbstractObject extends AbstractThing {
         this._type = props.type;
         this._location = 'location' in props && props.location ? props.location : [0, 0, 0];
         this.caseName = caseName;
-        this.couplingUrl = `${this.host}/case/${this.caseName}/object/${this._name}`;
+        this.couplingUrl = `${this.host}/case/${this.caseName}/phyng/${this._name}`;
     }
 
     /**
-     * Gets Phyng object name
-     * @return {string} name of a Phyng object
+     * Gets Phyng name
+     * @return {string} name of a Phyng
      */
     public get name(): string {
         return this._name;
     }
 
     /**
-     * Gets Phyng object type
-     * @return {string} type of a Phyng object
+     * Gets Phyng type
+     * @return {string} type of a Phyng
      */
     public get type(): string {
         return this._type;
     }
 
     /**
-     * Gets Phyng object location
-     * @return {Coordinates} location of a Phyng object
+     * Gets Phyng location
+     * @return {Coordinates} location of a Phyng
      */
     public get location(): Coordinates {
         return this._location;
     }
 
     /**
-     * Sets object location.
+     * Sets Phyng location.
      * @param {Coordinates} location: location to set.
      * @async
      */
@@ -77,8 +77,8 @@ export abstract class AbstractObject extends AbstractThing {
     }
 
     /**
-     * Gets object parameters from a simulation server.
-     * @return {Promise<any>} Object parameters from simulator.
+     * Gets Phyng parameters from a simulation server.
+     * @return {Promise<any>} Phyng parameters from simulator.
      * @async
      */
     protected async getParamsFromSimulation(): Promise<any> {
@@ -90,12 +90,12 @@ export abstract class AbstractObject extends AbstractThing {
     }
 
     /**
-     * Updates object parameters from a simulation server.
+     * Updates Phyng parameters from a simulation server.
      * @async
      */
     public async updateParams(): Promise<void> {
-        let objectParams = await this.getParamsFromSimulation();
-        this._location = objectParams.location;
+        let phyngParams = await this.getParamsFromSimulation();
+        this._location = phyngParams.location;
     }
 
     public async destroy(): Promise<void> {

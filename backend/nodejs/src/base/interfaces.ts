@@ -36,13 +36,13 @@ export type Vector = FixedLengthArray<number, 3>;
 export type Size = FixedLengthArray<number, 3>;
 
 /**
- * Object properties base interface, used as a
+ * Phyng properties base interface, used as a
  * base for actuator base and sensor.
  */
-interface ObjectPropsBase {
+interface PhyngPropsBase {
     name: string
     type: string
-    /** Object location. */
+    /** Phyng location. */
     location?: Coordinates
 }
 
@@ -50,7 +50,7 @@ interface ObjectPropsBase {
  * Actuator base properties, used as a base for
  * actuators created by geometry and template.
  */
-export interface ActuatorPropsBase extends ObjectPropsBase {
+export interface ActuatorPropsBase extends PhyngPropsBase {
     /** Custom actuator STL URL */
     url?: AnyUri
     /** Actuator geometry rotation. */
@@ -84,7 +84,7 @@ export type ActuatorProps = ActuatorPropsCreated | ActuatorPropsTemplate;
 /**
  * Sensor properties.
  */
-export interface SensorProps extends ObjectPropsBase {
+export interface SensorProps extends PhyngPropsBase {
     /** Sensor field to monitor (e.g., "T"). */
     field: string
 }
@@ -93,7 +93,7 @@ export interface SensorProps extends ObjectPropsBase {
  * Type to combine actuator and sensor
  * properties into a single type.
  */
-export type ObjectProps = ActuatorProps | SensorProps;
+export type PhyngProps = ActuatorProps | SensorProps;
 
 /**
  * Basic case Web of Phyngs parameters.
@@ -134,10 +134,10 @@ export interface CaseHrefs extends NamedHrefs {
 }
 
 /**
- * Object Hyperlink REFerences (HREFs).
+ * Phyng Hyperlink REFerences (HREFs).
  */
-export interface ObjectHrefs extends NamedHrefs {
-    /** Object type */
+export interface PhyngHrefs extends NamedHrefs {
+    /** Phyng type */
     type: string
 }
 
@@ -156,5 +156,5 @@ export interface SystemDescription extends WoT.ThingDescription {
 }
 
 export interface PhysicalDescription extends WoT.ThingDescription {
-    phyProperties: ObjectProps;
+    phyProperties: PhyngProps;
 }

@@ -6,8 +6,8 @@
  * @since  29.11.2021
  */
 import {AbstractThing} from './thing';
-import {CaseParameters, ObjectHrefs, ObjectProps, PhysicalDescription} from './interfaces';
-import {AbstractObject} from './object';
+import {CaseParameters, PhyngHrefs, PhyngProps, PhysicalDescription} from './interfaces';
+import {AbstractPhyng} from './phyng';
 import {responseIsSuccessful, responseIsUnsuccessful} from './helpers';
 import {reqGet, reqPost, reqPatch, makeRequest} from './axios-requests';
 import {AxiosResponse} from 'axios';
@@ -34,8 +34,8 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     protected _name: string;
     /** Case type. */
     protected _type: string = '';
-    /** Case objects. */
-    protected objects: { [name: string]: AbstractObject };
+    /** Case phyngs. */
+    protected phyngs: { [name: string]: AbstractPhyng };
     /** Case mesh quality. */
     protected _meshQuality: number = 50;
     /** Case result cleaning limit (0 - no cleaning). */
@@ -51,36 +51,36 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
 
     /**
      * Abstract method to add a new object
-     * to a dictionary of objects. It must be
+     * to a dictionary of phyngs. It must be
      * case type specific to account for various
-     * types of objects.
-     * @param {ObjectProps} props Object properties.
+     * types of phyngs.
+     * @param {PhyngProps} props Phyng properties.
      * @protected
      */
-    protected abstract addObjectToDict(props: ObjectProps): void;
+    protected abstract addPhyngToDict(props: PhyngProps): void;
 
     /**
      * Abstract method to validate Physical Description
-     * for object creation. It must be case type specific
-     * to account for various types of objects.
-     * @param {PhysicalDescription} pd Physical Description of an object.
+     * for Phyng creation. It must be case type specific
+     * to account for various types of phyngs.
+     * @param {PhysicalDescription} pd Physical Description of a phyng.
      * @protected
      */
     protected abstract validatePd(pd: PhysicalDescription): void;
 
     /**
-     * Abstract method to update case objects
+     * Abstract method to update case phyngs
      * from a simulation server.
      */
-    public abstract updateObjects(): void;
+    public abstract updatePhyngs(): void;
 
     constructor(host: string, wot: WoT.WoT, tm: any, name: string) {
         super(host, wot, tm);
         this._name = name;
         this.couplingUrl = `${this.host}/case/${this.name}`;
-        this.objects = {};
+        this.phyngs = {};
         this.updateParams();
-        this.updateObjects();
+        this.updatePhyngs();
     }
 
     /**
@@ -289,64 +289,64 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     }
 
     /**
-     * Adds object with properties to simulation and instantiates a corresponding class.
-     * @param {PhysicalDescription} pd Object properties.
+     * Adds Phyng with properties to simulation and instantiates a corresponding class.
+     * @param {PhysicalDescription} pd Phyng properties.
      * @async
      */
-    public async addObject(pd: PhysicalDescription): Promise<void> {
+    public async addPhyng(pd: PhysicalDescription): Promise<void> {
         this.validatePd(pd);
         let response = await reqPost(
-            `${this.couplingUrl}/object/${pd.title}`,
+            `${this.couplingUrl}/phyng/${pd.title}`,
             pd.phyProperties
         );
         if (responseIsSuccessful(response.status)) {
-            this.addObjectToDictPd(pd);
+            this.addPhyngToDictPd(pd);
         } else {
             throw Error(response.data);
         }
     }
 
     /**
-     * Removes an object with a given name from a simulator.
-     * @param {string} name Name of an object.
+     * Removes a Phyng with a given name from a simulator.
+     * @param {string} name Name of a Phyng.
      */
-    public async removeObject(name: string): Promise<void> {
-        if (!(name in this.objects)) return;
-        await this.objects[name].destroy();
-        delete this.objects[name];
+    public async removePhyng(name: string): Promise<void> {
+        if (!(name in this.phyngs)) return;
+        await this.phyngs[name].destroy();
+        delete this.phyngs[name];
     }
 
     /**
-     * Gets case objects with their HREFs.
-     * @return {ObjectHrefs[]} Objects with names, types and HREFs
+     * Gets case phyngs with their HREFs.
+     * @return {PhyngHrefs[]} Phyngs with names, types and HREFs
      */
-    public getObjects(): ObjectHrefs[] {
-        let objects: ObjectHrefs[] = [];
-        if (this.objects) {
-            for (const name in this.objects) {
-                objects.push({name, type: this.objects[name].type, hrefs: this.objects[name].getHrefs()});
+    public getPhyngs(): PhyngHrefs[] {
+        let phyngs: PhyngHrefs[] = [];
+        if (this.phyngs) {
+            for (const name in this.phyngs) {
+                phyngs.push({name, type: this.phyngs[name].type, hrefs: this.phyngs[name].getHrefs()});
             }
         }
-        return objects;
+        return phyngs;
     }
 
     /**
-     * Adds a new object to a dictionary of objects via its PD.
-     * @param {PhysicalDescription} pd Physical Description of an object.
+     * Adds a new Phyng to a dictionary of phyngs via its PD.
+     * @param {PhysicalDescription} pd Physical Description of a Phyng.
      * @protected
      */
-    protected addObjectToDictPd(pd: PhysicalDescription) {
-        this.addObjectToDict({...pd.phyProperties, name: pd.title});
+    protected addPhyngToDictPd(pd: PhysicalDescription) {
+        this.addPhyngToDict({...pd.phyProperties, name: pd.title});
     }
 
     /**
-     * Gets objects from a simulation.
-     * @return {Promise<any>} Simulation objects.
+     * Gets phyngs from a simulation.
+     * @return {Promise<any>} Simulation phyngs.
      * @async
      * @protected
      */
-    protected async getObjectsFromSimulator(): Promise<any> {
-        let response = await reqGet(`${this.couplingUrl}/object`);
+    protected async getPhyngsFromSimulator(): Promise<any> {
+        let response = await reqGet(`${this.couplingUrl}/phyng`);
         return response.data;
     }
 
@@ -370,7 +370,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         this.thing.setPropertyReadHandler('cleanLimit', async () => this.cleanLimit);
         this.thing.setPropertyReadHandler('parallel', async () => this.parallel);
         this.thing.setPropertyReadHandler('cores', async () => this.cores);
-        this.thing.setPropertyReadHandler('objects', async () => this.getObjects());
+        this.thing.setPropertyReadHandler('phyngs', async () => this.getPhyngs());
         this.thing.setPropertyReadHandler('time', async () => this.getTime());
         this.thing.setPropertyReadHandler('realtime', async () => this.realtime);
         this.thing.setPropertyReadHandler('endtime', async () => this.endtime);
@@ -411,11 +411,11 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         this.thing.setActionHandler('postprocess', async () => {
             await this.postprocess();
         });
-        this.thing.setActionHandler('addObject', async (props) => {
-            await this.addObject(props);
+        this.thing.setActionHandler('addPhyng', async (props) => {
+            await this.addPhyng(props);
         });
-        this.thing.setActionHandler('removeObject', async (name) => {
-            await this.removeObject(name);
+        this.thing.setActionHandler('removePhyng', async (name) => {
+            await this.removePhyng(name);
         });
     }
 

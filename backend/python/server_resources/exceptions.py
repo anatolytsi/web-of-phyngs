@@ -6,7 +6,7 @@ from datetime import datetime
 from flask_restful import Resource
 
 import wopsimulator.openfoam.pyfoam_runner
-from wopsimulator.exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists, WrongObjectType, ObjectNotFound
+from wopsimulator.exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists, WrongPhyngType, PhyngNotFound
 
 ERROR_FILE = 'errors.json'
 ERROR_FILEPATH = os.path.abspath(f'{os.path.dirname(os.path.abspath(__file__))}/../{ERROR_FILE}')
@@ -70,9 +70,9 @@ def catch_error(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except (CaseTypeError, CaseAlreadyExists, WrongObjectType,) as e:
+        except (CaseTypeError, CaseAlreadyExists, WrongPhyngType,) as e:
             error, status = e, 400
-        except (CaseNotFound, ObjectNotFound) as e:
+        except (CaseNotFound, PhyngNotFound) as e:
             error, status = e, 404
         except Exception as e:
             error, status = e, 500

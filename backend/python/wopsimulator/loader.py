@@ -10,7 +10,7 @@ from .case_base import OpenFoamCase
 from .cht_case import ChtCase
 from .exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists
 from .openfoam.common.filehandling import force_remove_dir, copy_tree
-from .variables import PY_BACKEND_DIR, CONFIG_PATH_KEY, CONFIG_TYPE_KEY, CUR_FILE_DIR, CONFIG_DEFAULTS, WOP_CONFIG_FILE
+from .variables import PY_BACKEND_DIR, CONFIG_PATH_K, CONFIG_TYPE_K, CUR_FILE_DIR, CONFIG_DEFAULTS, WOP_CONFIG_FILE
 
 CASE_TYPES = {
     ChtCase.case_type: ChtCase,
@@ -38,10 +38,10 @@ def load_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/{WOP_CONFIG_
         config = json.load(f)
     case_name = case_name if '.case' in case_name else f'{case_name}.case'
     if case_name in config.keys():
-        if not (CONFIG_PATH_KEY in config[case_name] and os.path.exists(path := config[case_name][CONFIG_PATH_KEY])):
+        if not (CONFIG_PATH_K in config[case_name] and os.path.exists(path := config[case_name][CONFIG_PATH_K])):
             raise CaseNotFound(f'Path for case "{case_name}" is not defined')
-        if CONFIG_TYPE_KEY in config[case_name] and \
-                (case_type_name := config[case_name][CONFIG_TYPE_KEY]) in CASE_TYPES.keys():
+        if CONFIG_TYPE_K in config[case_name] and \
+                (case_type_name := config[case_name][CONFIG_TYPE_K]) in CASE_TYPES.keys():
             case_cls: CASE_CLS_TYPES = CASE_TYPES[case_type_name]
         else:
             raise CaseTypeError(f'Case type is wrong or not specified! Expected one of: {", ".join(CASE_TYPES)}')
@@ -62,10 +62,10 @@ def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEN
     :param replace_old: flag to replace the old project. Active -> files will be overwritten. Otherwise -> error
     :return: WoP Simulator class instance
     """
-    if case_param[CONFIG_TYPE_KEY] not in CASE_TYPES.keys():
+    if case_param[CONFIG_TYPE_K] not in CASE_TYPES.keys():
         raise CaseTypeError(f'Case type is wrong or not specified! '
-                            f'Got "{case_param[CONFIG_TYPE_KEY]}", expected one of: {", ".join(CASE_TYPES)}')
-    case_cls: CASE_CLS_TYPES = CASE_TYPES[case_param[CONFIG_TYPE_KEY]]
+                            f'Got "{case_param[CONFIG_TYPE_K]}", expected one of: {", ".join(CASE_TYPES)}')
+    case_cls: CASE_CLS_TYPES = CASE_TYPES[case_param[CONFIG_TYPE_K]]
 
     # Load/Create config
     Path(config_path).touch(exist_ok=True)
@@ -84,14 +84,14 @@ def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEN
             force_remove_dir(case_path)
         else:
             raise CaseAlreadyExists(f'Project with name "{case_name}" already exists!')
-    copy_tree(f'{CUR_FILE_DIR}/openfoam/cases/{case_param[CONFIG_TYPE_KEY]}', case_path)
+    copy_tree(f'{CUR_FILE_DIR}/openfoam/cases/{case_param[CONFIG_TYPE_K]}', case_path)
 
     # TODO: JSON schema validation
 
     case_config = CONFIG_DEFAULTS.copy()
     for key, value in case_param.items():
         case_config[key] = value
-    case_config[CONFIG_PATH_KEY] = case_path
+    case_config[CONFIG_PATH_K] = case_path
     config[case_name] = case_config
 
     with open(config_path, 'w') as f:
@@ -134,7 +134,7 @@ def remove_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/{WOP_CONFI
         config = json.load(f)
 
     case_name = case_name if '.case' in case_name else f'{case_name}.case'
-    if remove_case_dir and case_name in config and os.path.exists(case_path := config[case_name][CONFIG_PATH_KEY]):
+    if remove_case_dir and case_name in config and os.path.exists(case_path := config[case_name][CONFIG_PATH_K]):
         force_remove_dir(case_path)
     else:
         raise CaseNotFound(f'Case "{case_name}" is not defined in the config "{config_path}"')

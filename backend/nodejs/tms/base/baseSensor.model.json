@@ -5,7 +5,7 @@
   "links": [
     {
       "rel": "tm:extends",
-      "href": "baseObject.model.json",
+      "href": "basePhyng.model.json",
       "type": "application/td+json"
     }
   ],
@@ -17,7 +17,7 @@
   },
   "properties": {
     "value": {
-      "description": "WoP Sensor value",
+      "description": "Phyng value",
       "readOnly": true,
       "writeOnly": false
     }

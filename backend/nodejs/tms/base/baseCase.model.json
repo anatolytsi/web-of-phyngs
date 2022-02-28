@@ -33,26 +33,26 @@
       "description": "WoP simulation was initialized",
       "type": "boolean"
     },
-    "objects": {
-      "description": "WoP simulation objects (actuators and sensors)",
+    "phyngs": {
+      "description": "WoP simulation Phyngs",
       "type": "array",
       "items": {
-        "description": "WoP simulation object name, type and HREFs",
+        "description": "Phyng name, type and HREFs",
         "type": "object",
         "properties": {
           "name": {
-            "description": "WoP object name",
+            "description": "Phyng name",
             "type": "string"
           },
           "type": {
-            "description": "WoP object type",
+            "description": "Phyng type",
             "type": "string"
           },
           "hrefs": {
-            "description": "WoP object HREFs",
+            "description": "Phyng HREFs",
             "type": "array",
             "items": {
-              "description": "WoP object HREF",
+              "description": "Phyng HREF",
               "type": "string"
             }
           }
@@ -104,12 +104,12 @@
     "postprocess": {
       "description": "Post-process WoP simulation case"
     },
-    "addObject": {
-      "description": "Add object to WoP simulation case",
+    "addPhyng": {
+      "description": "Add a Phyng to WoP simulation case",
       "properties": {}
     },
-    "removeObject": {
-      "description": "Remove object from WoP simulation case",
+    "removePhyng": {
+      "description": "Remove a Phyng from WoP simulation case",
       "type": "string"
     }
   }

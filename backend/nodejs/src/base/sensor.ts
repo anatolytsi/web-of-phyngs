@@ -1,11 +1,11 @@
 /**
- * Sensor object module.
+ * Sensor Phyng module.
  *
  * @file   Contains a Sensor abstract class and other sensor types based on it.
  * @author Anatolii Tsirkunenko
  * @since  29.11.2021
  */
-import {AbstractObject} from './object';
+import {AbstractPhyng} from './phyng';
 import {SensorProps} from './interfaces';
 import {responseIsUnsuccessful} from "./helpers";
 import {reqGet} from './axios-requests';
@@ -14,13 +14,13 @@ import {reqGet} from './axios-requests';
 const sensorTm: WoT.ThingDescription = require('../../tms/base/baseSensor.model.json');
 
 /**
- * An abstract Sensor class.
+ * An abstract Sensor Phyng class.
  *
  * Abstract class used by sensor node-things in this application.
  * @class Sensor
  * @abstract
  */
-export abstract class Sensor extends AbstractObject implements SensorProps {
+export abstract class Sensor extends AbstractPhyng implements SensorProps {
     /** Sensor field to monitor, e.g., "T". */
     protected _field: string;
 
@@ -30,7 +30,7 @@ export abstract class Sensor extends AbstractObject implements SensorProps {
     }
 
     /**
-     * Gets Phyng sensor field.
+     * Gets sensor Phyng field.
      * @return {string} field of a sensor Phyng.
      */
     public get field() {
@@ -38,8 +38,8 @@ export abstract class Sensor extends AbstractObject implements SensorProps {
     }
 
     /**
-     * Gets value of a Phyng sensor.
-     * @return {Promise<any>} Value of a Phyng sensor.
+     * Gets value of a sensor Phyng.
+     * @return {Promise<any>} Value of a sensor Phyng.
      * @async
      * @protected
      */

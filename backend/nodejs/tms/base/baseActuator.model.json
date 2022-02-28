@@ -5,7 +5,7 @@
   "links": [
     {
       "rel": "tm:extends",
-      "href": "baseObject.model.json",
+      "href": "basePhyng.model.json",
       "type": "application/td+json"
     }
   ],
@@ -17,7 +17,7 @@
   },
   "properties": {
     "dimensions": {
-      "description": "WoP Object dimensions",
+      "description": "Phyng dimensions",
       "type": "array",
       "items": {
         "units": "m",
@@ -29,7 +29,7 @@
       "writeOnly": false
     },
     "rotation": {
-      "description": "WoP Object rotation",
+      "description": "Phyng rotation",
       "type": "array",
       "items": {
         "units": "deg",
@@ -41,13 +41,13 @@
       "writeOnly": false
     },
     "custom": {
-      "description": "WoP Object created from custom STL",
+      "description": "Phyng created from custom STL",
       "type": "boolean",
       "readOnly": true,
       "writeOnly": false
     },
     "template": {
-      "description": "WoP Object template",
+      "description": "Phyng custom template",
       "type": "string",
       "readOnly": false,
       "writeOnly": false

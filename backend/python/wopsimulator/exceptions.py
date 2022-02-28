@@ -13,16 +13,16 @@ class CaseAlreadyExists(Exception):
     pass
 
 
-class WrongObjectType(Exception):
-    """Wrong object type error"""
+class WrongPhyngType(Exception):
+    """Wrong phyng type error"""
     pass
 
 
-class ObjectNotFound(Exception):
-    """Required object was not found"""
+class PhyngNotFound(Exception):
+    """Required phyng was not found"""
     pass
 
 
-class ObjectSetValueFailed(Exception):
-    """Object value setting failed"""
+class PhyngSetValueFailed(Exception):
+    """Phyng value setting failed"""
     pass

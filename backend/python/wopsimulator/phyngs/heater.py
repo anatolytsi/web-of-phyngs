@@ -1,15 +1,15 @@
-from ..exceptions import ObjectSetValueFailed
+from ..exceptions import PhyngSetValueFailed
 from ..openfoam.system.snappyhexmesh import SnappyHexMeshDict
 from ..openfoam.common.filehandling import get_latest_time
 from ..openfoam.constant.material_properties import SOLID_MATERIALS
 from .behavior.cht import set_boundary_to_heater
-from .wopthings import WopObject
+from .base import Phyng
 
 
-class WopHeater(WopObject):
+class HeaterPhyng(Phyng):
     """
-    Web of Phyngs Heater class
-    Combines everything what a heater has (geometry, properties, etc)
+    Web of Phyngs Heater phyng class
+    Combines everything what a heater phyng has (geometry, properties, etc)
     """
     type_name = 'heater'
 
@@ -17,33 +17,33 @@ class WopHeater(WopObject):
                  dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0), material='copper',
                  template=None, of_interface=None):
         """
-        Web of Phyngs heater initialization function
-        :param name: name of the heater
+        Web of Phyngs heater phyng initialization function
+        :param name: name of the heater phyng
         :param case_dir: case directory
         :param bg_region: background region name
         :param dimensions: dimensions [x, y, z]
         :param location: location coordinates [x, y, z]
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
-        :param material: heater material
+        :param material: heater phyng material
         :param template: template name
         :param of_interface: OpenFoam interface
         """
         self._temperature = 293.15
         model_type = 'stl' if template else 'box'
         template = f'heaters/{template}' if template else template
-        super(WopHeater, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
-                                        rotation, template=template, of_interface=of_interface)
+        super(HeaterPhyng, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
+                                          rotation, template=template, of_interface=of_interface)
         self._region = name
         self._fields = ['T']
         self._material = material
 
     def _add_initial_boundaries(self):
-        """Adds initial boundaries of a heater"""
+        """Adds initial boundaries of a heater phyng"""
         set_boundary_to_heater(self.name, self._bg_region, self._boundary_conditions, self.temperature)
         self._boundary_conditions[self.name]['T'].internalField.value = self._temperature
 
     def bind_snappy(self, snappy_dict: SnappyHexMeshDict, snappy_type: str, region_type='wall', refinement_level=0):
-        super(WopHeater, self).bind_snappy(snappy_dict, snappy_type, region_type, refinement_level)
+        super(HeaterPhyng, self).bind_snappy(snappy_dict, snappy_type, region_type, refinement_level)
         self.material = self._material
 
     def bind_region_boundaries(self, region_boundaries: dict):
@@ -58,7 +58,7 @@ class WopHeater(WopObject):
             self._add_initial_boundaries()
 
     def dump_settings(self) -> dict:
-        settings = super(WopHeater, self).dump_settings()
+        settings = super(HeaterPhyng, self).dump_settings()
         settings[self.name].update({'temperature': self._temperature})
         settings[self.name].update({'material': self.material})
         return settings
@@ -82,7 +82,7 @@ class WopHeater(WopObject):
     @temperature.setter
     def temperature(self, temperature):
         """
-        Sets heater temperature by modifying the latest results
+        Sets heater phyng temperature by modifying the latest results
         :param temperature: temperature in K
         """
         self._temperature = float(temperature)
@@ -100,12 +100,12 @@ class WopHeater(WopObject):
                 set_boundary_to_heater(self.name, self._bg_region, self._boundary_conditions, self._temperature,
                                        latest_result)
         except Exception as e:
-            raise ObjectSetValueFailed(e)
+            raise PhyngSetValueFailed(e)
 
 
 def main():
     case_dir = 'test.case'
-    heater = WopHeater('heater', case_dir, 'fluid', [1, 2, 3])
+    heater = HeaterPhyng('heater', case_dir, 'fluid', [1, 2, 3])
     heater.model.show()
 
 

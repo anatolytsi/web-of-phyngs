@@ -1,11 +1,11 @@
 /**
- * Actuator object module.
+ * Actuator Phyng module.
  *
  * @file   Contains an Actuator class that is used by actuator node-things in this application.
  * @author Anatolii Tsirkunenko
  * @since  29.11.2021
  */
-import {AbstractObject} from './object';
+import {AbstractPhyng} from './phyng';
 import {ActuatorPropsCreated, ActuatorPropsTemplate, Size, Vector} from './interfaces';
 import {responseIsUnsuccessful} from "./helpers";
 import {reqPatch, reqPost} from './axios-requests';
@@ -13,13 +13,13 @@ const FormData = require('form-data');
 const fs = require('fs');
 
 /**
- * An abstract actuator.
+ * An abstract actuator Phyng.
  *
  * Abstract class used by actuator node-things in this application.
  * @class Actuator
  * @abstract
  */
-export abstract class Actuator extends AbstractObject implements ActuatorPropsCreated, ActuatorPropsTemplate {
+export abstract class Actuator extends AbstractPhyng implements ActuatorPropsCreated, ActuatorPropsTemplate {
     /** Actuator dimensions. */
     protected _dimensions: Size;
     /** Actuator rotation. */

@@ -1,13 +1,13 @@
-from ..exceptions import ObjectSetValueFailed
+from ..exceptions import PhyngSetValueFailed
 from ..openfoam.common.filehandling import get_latest_time
 from .behavior.cht import set_boundary_to_wall, set_boundary_to_inlet, update_boundaries
-from .wopthings import WopObject
+from .base import Phyng
 
 
-class WopWindow(WopObject):
+class WindowPhyng(Phyng):
     """
-    Web of Phyngs Window class
-    Combines everything what a window has (geometry, properties, etc)
+    Web of Phyngs Window phyng class
+    Combines everything what a window phyng has (geometry, properties, etc)
     """
     type_name = 'window'
 
@@ -15,12 +15,12 @@ class WopWindow(WopObject):
                  dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
                  template=None, of_interface=None, **kwargs):
         """
-        Web of Phyngs window initialization function
-        :param name: name of the window
+        Web of Phyngs window phyng initialization function
+        :param name: name of the window phyng
         :param case_dir: case directory
         :param bg_region: background region name
-        :param url: window URL
-        :param custom: window was created from URL
+        :param url: window phyng URL
+        :param custom: window phyng was created from URL
         :param dimensions: dimensions [x, y, z]
         :param location: location coordinates [x, y, z]
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
@@ -32,29 +32,29 @@ class WopWindow(WopObject):
         self._temperature = 293.15
         model_type = 'stl' if template else 'surface'
         template = f'windows/{template}' if template else template
-        super(WopWindow, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
-                                        rotation, template=template, of_interface=of_interface)
+        super(WindowPhyng, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
+                                          rotation, template=template, of_interface=of_interface)
         self._fields = 'all'
 
     def _add_initial_boundaries(self):
-        """Adds initial boundaries of a window"""
+        """Adds initial boundaries of a window phyng"""
         set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature)
 
     def dump_settings(self) -> dict:
-        settings = super(WopWindow, self).dump_settings()
+        settings = super(WindowPhyng, self).dump_settings()
         settings[self.name].update({'temperature': self._temperature, 'velocity': self._velocity})
         return settings
 
     @property
     def open(self):
-        """Window open status getter"""
+        """Window phyng open status getter"""
         return self._open
 
     @open.setter
     def open(self, is_open):
         """
-        Sets window type by modifying the latest results
-        :param is_open: windows status
+        Sets window phyng type by modifying the latest results
+        :param is_open: window phyngs status
         :return:
         """
         self._open = is_open
@@ -70,7 +70,7 @@ class WopWindow(WopObject):
                                      bg_name=self._bg_region, of_interface=self._of_interface)
                 self._velocity = [0, 0, 0]
         except Exception as e:
-            raise ObjectSetValueFailed(e)
+            raise PhyngSetValueFailed(e)
 
     @property
     def velocity(self):
@@ -88,17 +88,17 @@ class WopWindow(WopObject):
                 self._boundary_conditions['U'][self.name].value = self._velocity
                 self._boundary_conditions['U'][self.name].save()
         except Exception as e:
-            raise ObjectSetValueFailed(e)
+            raise PhyngSetValueFailed(e)
 
     @property
     def temperature(self):
-        """Window temperature getter"""
+        """Window phyng temperature getter"""
         return self._temperature
 
     @temperature.setter
     def temperature(self, temperature):
         """
-        Sets window temperature by modifying the latest results
+        Sets window phyng temperature by modifying the latest results
         :param temperature: temperature in K
         """
         self._temperature = float(temperature)
@@ -109,12 +109,12 @@ class WopWindow(WopObject):
             self._boundary_conditions['T'].update_time(latest_result)
             self._boundary_conditions['T'][self.name].value = self._temperature
         except Exception as e:
-            raise ObjectSetValueFailed(e)
+            raise PhyngSetValueFailed(e)
 
 
 def main():
     case_dir = 'test.case'
-    door = WopWindow('outlet', case_dir, 'fluid', [2, 0, 2])
+    door = WindowPhyng('outlet', case_dir, 'fluid', [2, 0, 2])
     door.model.show()
 
 

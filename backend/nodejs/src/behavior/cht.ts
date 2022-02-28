@@ -1,14 +1,14 @@
 /**
  * Conjugate Heat Transfer (CHT) behavior module.
  *
- * @file   Contains objects associated with CHT case and the case itself.
+ * @file   Contains phyngs associated with CHT case and the case itself.
  * @author Anatolii Tsirkunenko
  * @since  01.12.2021
  */
 import {use} from 'typescript-mix';
 import {HeatingProperties, OpenableProperties, VelocityProperties} from '../base/properties'
 import {Actuator} from '../base/actuator';
-import {ActuatorProps, ObjectProps, PhysicalDescription, SensorProps} from '../base/interfaces';
+import {ActuatorProps, PhyngProps, PhysicalDescription, SensorProps} from '../base/interfaces';
 import {newSensor} from '../base/sensor';
 import {AbstractCase} from '../base/case';
 import {reqPatch} from '../base/axios-requests';
@@ -167,7 +167,7 @@ class Window extends Actuator {
 
 /**
  * CHT object constructors for various
- * types of objects used in CHT case
+ * types of phyngs used in CHT case
  */
 const chtObjectConstructors: { [type: string]: Function } = {
     heater: (host: string, wot: WoT.WoT, caseName: string, props: ActuatorProps) => new Heater(host, wot, caseName, props),
@@ -207,13 +207,13 @@ export class ChtCase extends AbstractCase {
     }
 
     /**
-     * Updates CHT case objects from a simulation server.
+     * Updates CHT case phyngs from a simulation server.
      */
-    public async updateObjects() {
-        let objects = await this.getObjectsFromSimulator();
+    public async updatePhyngs() {
+        let objects = await this.getPhyngsFromSimulator();
         if (objects) {
             for (const object of objects) {
-                this.addObjectToDict(object);
+                this.addPhyngToDict(object);
             }
         }
     }
@@ -228,13 +228,13 @@ export class ChtCase extends AbstractCase {
     }
 
     /**
-     * Adds a new object to a dictionary of objects.
-     * @param {ObjectProps} props Object properties.
+     * Adds a new object to a dictionary of phyngs.
+     * @param {PhyngProps} props Object properties.
      * @protected
      */
-    protected addObjectToDict(props: ObjectProps) {
+    protected addPhyngToDict(props: PhyngProps) {
         let objectConstructor = chtObjectConstructors[props.type];
-        this.objects[props.name] = objectConstructor(this.host, this.wot, this.name, props);
+        this.phyngs[props.name] = objectConstructor(this.host, this.wot, this.name, props);
     }
 
     protected addPropertyHandlers() {

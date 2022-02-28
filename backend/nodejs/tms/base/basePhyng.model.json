@@ -10,13 +10,13 @@
   },
   "properties": {
     "type": {
-      "description": "WoP Object type",
+      "description": "Phyng type",
       "type": "string",
       "readOnly": true,
       "writeOnly": false
     },
     "location": {
-      "description": "WoP Object location",
+      "description": "Phyng location",
       "type": "array",
       "items": {
         "units": "m",

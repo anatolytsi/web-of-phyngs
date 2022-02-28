@@ -1,13 +1,13 @@
-from ..exceptions import ObjectSetValueFailed
+from ..exceptions import PhyngSetValueFailed
 from ..openfoam.common.filehandling import get_latest_time
 from .behavior.cht import set_boundary_to_wall
-from .wopthings import WopObject
+from .base import Phyng
 
 
-class WopWalls(WopObject):
+class WallsPhyng(Phyng):
     """
-    Web of Phyngs Walls class
-    Combines everything what walls have (wall geometry, properties, etc)
+    Web of Phyngs Walls phyng class
+    Combines everything what walls phyng have (wall geometry, properties, etc)
     """
     type_name = 'walls'
 
@@ -15,8 +15,8 @@ class WopWalls(WopObject):
                  dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
                  template=None, of_interface=None, **kwargs):
         """
-        Web of Phyngs walls initialization function
-        :param name: name of the walls
+        Web of Phyngs walls phyng initialization function
+        :param name: name of the walls phyng
         :param case_dir: case directory
         :param bg_region: background region name
         :param url: room URL
@@ -30,8 +30,8 @@ class WopWalls(WopObject):
         self._temperature = 293.15
         model_type = 'stl' if template else 'box'
         template = f'walls/{template}' if template else template
-        super(WopWalls, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
-                                       rotation, template=template, of_interface=of_interface)
+        super(WallsPhyng, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
+                                         rotation, template=template, of_interface=of_interface)
         self._fields = ['T']
 
     def _add_initial_boundaries(self):
@@ -39,7 +39,7 @@ class WopWalls(WopObject):
         set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature)
 
     def dump_settings(self) -> dict:
-        settings = super(WopWalls, self).dump_settings()
+        settings = super(WallsPhyng, self).dump_settings()
         settings[self.name].update({'temperature': self._temperature})
         settings[self.name].update({'name': self.name})
         return list(settings.values())[0]
@@ -63,12 +63,12 @@ class WopWalls(WopObject):
             self._boundary_conditions['T'].update_time(latest_result)
             self._boundary_conditions['T'].internalField.value = temperature
         except Exception as e:
-            raise ObjectSetValueFailed(e)
+            raise PhyngSetValueFailed(e)
 
 
 def main():
     case_dir = 'test.case'
-    heater = WopWalls('heater', case_dir, 'fluid', [1, 2, 3])
+    heater = WallsPhyng('heater', case_dir, 'fluid', [1, 2, 3])
     heater.model.show()
 
 
