@@ -95,20 +95,20 @@ class PhyngValue(Resource):
 
     @catch_error
     @auto_load_case
-    def get(self, case_name, phyng_name, obj_value):
+    def get(self, case_name, phyng_name, phyng_value):
         obj = self.current_cases[case_name].get_phyng(phyng_name)
-        if obj_value in obj:
-            return obj[obj_value]
+        if phyng_value in obj:
+            return obj[phyng_value]
         # TODO: move this error
-        raise KeyError(f'Property "{obj_value}" for phyng "{phyng_name} does not exist')
+        raise KeyError(f'Property "{phyng_value}" for phyng "{phyng_name} does not exist')
 
     @catch_error
     @auto_load_case
-    def post(self, case_name, phyng_name, obj_value):
+    def post(self, case_name, phyng_name, phyng_value):
         value = self.reqparse.parse_args(strict=True)['value']
-        obj = self.current_cases[case_name].get_phyng(phyng_name)
-        if obj_value in obj:
-            obj[obj_value] = value
+        phyng = self.current_cases[case_name].get_phyng(phyng_name)
+        if phyng_value in phyng:
+            phyng[phyng_value] = value
             return '', 200
         # TODO: move this error
-        raise KeyError(f'Property "{obj_value}" for phyng "{phyng_name} does not exist')
+        raise KeyError(f'Property "{phyng_value}" for phyng "{phyng_name} does not exist')
