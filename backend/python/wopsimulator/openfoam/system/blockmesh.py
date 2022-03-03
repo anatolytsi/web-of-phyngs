@@ -206,20 +206,11 @@ class BlockMeshDict:
         self._calculate_mesh_quality()
 
     def _calculate_quality_coefficients(self):
-        self._avg_block_size = (self._min_block_size + self._max_block_size) / 2
-        percents = [0, 50, 100]
-        values = [self._max_block_size, self._avg_block_size, self._min_block_size]
-        sum_of_mult = sum([x * y for x, y in zip(percents, values)])
-        percents_sq = [math.pow(perc, 2) for perc in percents]
-        percents_sq_sum = math.pow(sum(percents), 2)
-        percents_sum_sq = sum(percents_sq)
-        sum_percents = sum(percents)
-        sum_values = sum(values)
-        n = len(percents)
-        # Linear regression coefficients
-        self._quality_a = (sum_percents * sum_values - n * sum_of_mult) / (percents_sq_sum - n * percents_sum_sq)
-        self._quality_b = (sum_percents * sum_of_mult - percents_sum_sq * sum_values) / \
-                          (percents_sq_sum - n * percents_sum_sq)
+        y1, y2 = self._max_block_size, self._min_block_size
+        x1, x2 = 0, 100
+        scale = x2 - x1
+        self._quality_a = (y1 - y2) / -scale
+        self._quality_b = (x1 * y2 - x2 * y1) / -scale
 
     def _calculate_mesh_quality(self):
         if 0 > self._mesh_quality or self._mesh_quality > 100:
