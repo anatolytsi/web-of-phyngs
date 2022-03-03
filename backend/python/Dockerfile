@@ -45,3 +45,5 @@ RUN echo -e "\n\n\n********** Installing Python project dependencies **********\
 COPY . ./
 
 RUN python3.8 workaround.py
+
+RUN cp /etc/skel/.bash* ~
