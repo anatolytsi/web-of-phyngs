@@ -86,10 +86,11 @@ class Phyng(ABC):
         Gets STL from a template
         :param template: STL template name
         """
-        self.path = f'{os.path.dirname(os.path.abspath(__file__))}/geometry/{template}' \
-                    f'{"" if template[-4:] == ".stl" else ".stl"}'
-        if not os.path.exists(self.path):
-            raise FileNotFoundError(f'Template {template} STL does not exist for phyng {self.name}')
+        path = f'{os.path.dirname(os.path.abspath(__file__))}/../geometry/templates/{template}' \
+               f'{"" if template[-4:] == ".stl" else ".stl"}'
+        if not os.path.exists(path):
+            raise FileNotFoundError(f'Template {template} STL does not exist for phyng {self.name} ({path})')
+        self.path = os.path.abspath(path)
 
     def _get_custom_stl(self):
         """
