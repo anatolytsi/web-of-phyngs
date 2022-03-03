@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import List
 
@@ -16,6 +17,10 @@ from .variables import (CHT_PHYNG_TYPES, CONFIG_BACKGROUND_K, CONFIG_WALLS_K, CO
                         CONFIG_PHYNG_FIELD_K, CONFIG_PHYNG_LOC_K, CONFIG_PHYNG_TEMPLATE_K, CONFIG_PHYNG_CUSTOM_K,
                         CONFIG_PHYNG_TEMPER_K, CONFIG_PHYNG_VEL_K, CONFIG_PHYNG_MAT_K, CONFIG_PHYNG_NAME_K,
                         CONFIG_PHYNG_URL_K)
+
+
+logger = logging.getLogger('wop')
+logger.setLevel(logging.DEBUG)
 
 
 class ChtCase(OpenFoamCase):
@@ -128,6 +133,7 @@ class ChtCase(OpenFoamCase):
         Loads CHT case phyngs parameters from case_param dict
         :param case_param: loaded case parameters
         """
+        logger.debug(f'Loading initial CHT case Phyngs')
         # self.background = case_param[CONFIG_BACKGROUND_K]
         if CONFIG_WALLS_K in case_param and case_param[CONFIG_WALLS_K]:
             walls = case_param[CONFIG_WALLS_K]
@@ -155,6 +161,7 @@ class ChtCase(OpenFoamCase):
 
     def setup(self):
         """Setups CHT case"""
+        logger.debug(f'Setting up CHT case')
         self.prepare_geometry()
         self.partition_mesh(self.background_name)
         self.prepare_partitioned_mesh()

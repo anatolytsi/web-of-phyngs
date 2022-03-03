@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import time
 from fcntl import fcntl, F_GETFL, F_SETFL
@@ -5,6 +6,10 @@ from os import O_NONBLOCK
 from threading import Thread, Lock
 
 import psutil
+
+
+logger = logging.getLogger('paraview')
+logger.setLevel(logging.DEBUG)
 
 
 class PvServer(Thread):
@@ -152,13 +157,13 @@ class PvServer(Thread):
         while True:
             with self._lock:
                 if line := self._process.stdout.readline():
-                    print(f'PV Server: {line.rstrip().decode()}')
+                    logger.info(line.rstrip().decode())
                 if line := self._process.stderr.readline():
-                    print(f'PV Server: {line.rstrip().decode()}')
+                    logger.error(line.rstrip().decode())
                 if not self.running:
                     break
             time.sleep(0.1)
-        print('PV Server exited')
+        logger.info('PV Server exited')
         self.running = False
 
     def start(self) -> None:

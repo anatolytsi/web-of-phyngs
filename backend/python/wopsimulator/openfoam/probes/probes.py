@@ -395,12 +395,10 @@ class ProbeParser(Thread):
         self.running = True
         self.remove_unused()
         self._mutex.acquire()
-        print('Starting probe parser thread')
         while self.running:
             for region in Probe.get_regions(self._case_dir):
                 self._parse_region(region)
             time.sleep(self.parsing_period)
-        print('Quiting probe parser thread')
         self._mutex.release()
 
     def start(self) -> None:

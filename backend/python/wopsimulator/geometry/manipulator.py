@@ -1,3 +1,4 @@
+import logging
 import os
 import math
 import re
@@ -11,6 +12,9 @@ from stl.stl import ASCII
 from .primitives import Num, Point, Line, Loop, Surface
 
 GMSH_INITIALIZED = False
+
+logger = logging.getLogger('wop')
+logger.setLevel(logging.DEBUG)
 
 
 class TriSurface:
@@ -354,6 +358,7 @@ class Model:
         """
         # TODO: split this ifs into separate method for code readability
         if self.model_type == self._surface_type:
+            logger.info(f'Creating {self.name} surface')
             if all(self.dimensions):
                 raise ValueError(f'Model type {self._surface_type} must be 2D. Check your dimensions')
             elif len([dim for dim in self.dimensions if dim]) <= 1:
@@ -388,6 +393,7 @@ class Model:
                 self.center = c
                 return s
         elif self.model_type == self._box_type:
+            logger.info(f'Creating {self.name} box')
             if not all(self.dimensions):
                 raise ValueError(f'Model type {self._box_type} must be 3D. Check your dimensions')
             else:
@@ -398,7 +404,9 @@ class Model:
                 b.rotate(self.rotation, self.center)
                 return b
         elif self.model_type == self._stl_type:
+            logger.info(f'Importing {self.name} STL')
             inst = STL(stl_path)
+            inst.translate(self.location)
             self.location = inst.get_location()
             self.dimensions = inst.calculate_dimensions()
             self.center = [self.location[0] + self.dimensions[0] / 2,
@@ -411,6 +419,7 @@ class Model:
         Rotates geometry
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
         """
+        logger.info(f'Rotating {self.name} geometry')
         self.rotation = [x1 + x2 for (x1, x2) in zip(self.rotation, rotation)]
         self.geometry.rotate(rotation, self.center)
 
@@ -419,6 +428,7 @@ class Model:
         Translates geometry by certain coordinates
         :param coords: coordinates [x, y, z]
         """
+        logger.info(f'Moving {self.name} geometry')
         self.location = [x1 + x2 for (x1, x2) in zip(self.location, coords)]
         self.geometry.translate(coords)
 

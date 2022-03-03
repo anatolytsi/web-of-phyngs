@@ -1,3 +1,4 @@
+import logging
 import random
 import datetime
 from abc import ABC, abstractmethod
@@ -16,6 +17,10 @@ from .variables import CONFIG_TYPE_K, CONFIG_PATH_K, CONFIG_BLOCKING_K, CONFIG_P
     CONFIG_STARTED_TIMESTAMP_K, CONFIG_REALTIME_K, CONFIG_END_TIME_K, CONFIG_PHYNG_CUSTOM_K
 from .openfoam.interface import OpenFoamInterface
 from .openfoam.system.snappyhexmesh import SnappyRegion, SnappyPartitionedMesh, SnappyCellZoneMesh
+
+
+logger = logging.getLogger('wop')
+logger.setLevel(logging.DEBUG)
 
 
 class OpenFoamCase(OpenFoamInterface, ABC):
@@ -51,6 +56,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Setups the loaded initialized case
         :param case_param: loaded case parameters
         """
+        logger.info('Setting up initialized case')
         try:
             self.run_reconstruct(all_regions=True, latest_time=True)
         except Exception:
@@ -65,6 +71,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Setups the loaded uninitialized case
         :param case_param: loaded case parameters
         """
+        logger.info('Setting up uninitialized case')
         self.clean_case()
         self.remove_geometry()
 
@@ -73,6 +80,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Gets minimums and maximums of all axis
         :return: list of min and max, e.g., [(x_min, x_max), ...]
         """
+        logger.debug('Getting mesh dimensions')
         all_x, all_y, all_z = set(), set(), set()
         for phyng in self.phyngs.values():
             phyng_x, phyng_y, phyng_z = phyng.model.geometry.get_used_coords()
@@ -81,6 +89,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             all_z = all_z | phyng_z
         min_coords = [min(all_x), min(all_y), min(all_z)]
         max_coords = [max(all_x), max(all_y), max(all_z)]
+        logger.debug(f'Minimum coords: {min_coords}, Maximum coordinates {max_coords}')
         return list(zip(min_coords, max_coords))
 
     def _find_location_in_mesh(self, minmax_coords) -> [int, int, int]:
@@ -90,10 +99,12 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :param minmax_coords: dimensions of the mesh
         :return: x, y, z coordinates
         """
+        logger.debug(f'Finding location in mesh: {minmax_coords}')
         # Find the forbidden coordinates, i.e., all cell zones' coordinates
         forbidden_coords = [{'min': phyng.model.location,
                              'max': [c1 + c2 for c1, c2 in zip(phyng.model.location, phyng.model.dimensions)]}
                             for phyng in self.phyngs.values() if type(phyng.snappy) == SnappyCellZoneMesh]
+        logger.debug(f'Excluded coordinates: {forbidden_coords}')
         point_found = False
         coords_allowed = [False for _ in range(len(forbidden_coords))]
         # If there are no forbidden coordinates
@@ -111,6 +122,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
                                            coords['min'][1] < y < coords['max'][1] and
                                            coords['min'][2] < z < coords['max'][2])
             point_found = all(coords_allowed)
+        logger.debug(f'Found point [{x}, {y}, {z}]')
         return x, y, z
 
     def dump_case(self):
@@ -180,6 +192,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :param phyng_name: name of an phyng/sensor
         :return: phyng/sensor instance
         """
+        logger.debug(f'Getting Phyng {phyng_name}')
         if phyng_name in self.phyngs:
             return self.phyngs[phyng_name]
         elif phyng_name in self.sensors:
@@ -310,7 +323,9 @@ class OpenFoamCase(OpenFoamInterface, ABC):
 
     def prepare_geometry(self):
         """Prepares each phyngs geometry"""
+        logger.debug('Preparing Phyngs geometries')
         for phyng in self.phyngs.values():
+            logger.debug(f'Preparing {phyng.name} Phyng')
             phyng.prepare()
 
     def partition_mesh(self, partition_name: str):
@@ -318,6 +333,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Partitions mesh by producing a partitioned mesh out of partition regions
         :param partition_name: partitioned mesh name
         """
+        logger.debug(f'Partitioning mesh {partition_name}')
         regions = [phyng.snappy for phyng in self.phyngs.values() if type(phyng.snappy) == SnappyRegion]
         region_paths = [f'{self.path}/constant/triSurface/{region.name}.stl' for region in regions]
         combine_stls(f'{self.path}/constant/triSurface/{partition_name}.stl', region_paths)
@@ -329,12 +345,15 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Prepares partitioned mesh, i.e., adds it to snappyHexMeshDict and
         adds background mesh to blockMeshDict
         """
+        logger.debug('Preparing partioned mesh')
         # Get all partitions
         partitions = [phyng.snappy for phyng in self.phyngs.values() if type(phyng.snappy) == SnappyCellZoneMesh]
         partitions.insert(0, self._partitioned_mesh)
         for partition in partitions:
+            logger.debug(f'Coupling partitions {partition.name} material')
             self.material_props.add_object(partition.name, partition.material_type, partition.material)
         # Add partitions to snappyHexMeshDict, get dimensions and find a location in mesh
+        logger.debug(f'Adding partitions to snappyHexMeshDict')
         self.snappy_dict.add_meshes(partitions)
         minmax_coords = self._get_mesh_dimensions()
         self.snappy_dict.location_in_mesh = self._find_location_in_mesh(minmax_coords)
@@ -472,6 +491,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             setattr(self, key, value)
         if key == CONFIG_END_TIME_K:
             self.control_dict.save()
+        logger.info(f'Set "{key}" to {value}')
 
     def __iter__(self):
         """Allow to iterate over attribute names of a class"""
