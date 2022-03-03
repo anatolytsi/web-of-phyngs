@@ -12,6 +12,10 @@ RUN echo -e "\n\n\n********** Installing OpenFOAM dependencies **********\n\n\n"
 		software-properties-common ;\
 		rm -rf /var/lib/apt/lists/*
 
+# Create user foam
+RUN useradd --user-group --create-home --shell /bin/bash foam ;\
+        echo "foam ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
 # Install OpenFOAM 7 (with ParaView)
 # including configuring for use
 # plus an extra environment variable to make OpenMPI play nice
@@ -21,8 +25,8 @@ RUN echo -e "\n\n\n********** Installing OpenFOAM v7 **********\n\n\n" && \
 	apt-get update ;\
 	apt-get install -y openfoam7 gmsh;\
 	rm -rf /var/lib/apt/lists/* ;\
-	echo "source /opt/openfoam7/etc/bashrc" >> ~/.bashrc ;\
-	echo "export OMPI_MCA_btl_vader_single_copy_mechanism=none" >> ~/.bashrc
+	echo "source /opt/openfoam7/etc/bashrc" >> ~foam/.bashrc ;\
+	echo "export OMPI_MCA_btl_vader_single_copy_mechanism=none" >> ~foam/.bashrc
 
 # Install python 3.8
 RUN echo -e "\n\n\n********** Installing Python v3.8 **********\n\n\n" && \
@@ -36,6 +40,9 @@ RUN echo -e "\n\n\n********** Installing Python v3.8 **********\n\n\n" && \
 WORKDIR /app
 RUN chmod 777 /app
 
+# Select user
+USER foam
+
 # Install project dependencies
 COPY ./requirements.txt .
 RUN echo -e "\n\n\n********** Installing Python project dependencies **********\n\n\n" && \
@@ -46,4 +53,3 @@ COPY . ./
 
 RUN python3.8 workaround.py
 
-RUN cp /etc/skel/.bash* ~
