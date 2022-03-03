@@ -162,7 +162,10 @@ class PvServer(Thread):
                     if 'Exiting' in text:
                         self.running = False
                 if line := self._process.stderr.readline():
-                    logger.error(line.rstrip().decode())
+                    text = line.rstrip().decode()
+                    logger.error(text)
+                    if 'Broken pipe' in text:
+                        self.running = False
                 if not self.running:
                     break
             time.sleep(0.1)
