@@ -80,12 +80,12 @@ class BoundaryConditionBase:
         :param region: region for multiregion case (e.g. CHT)
         """
         self._case_dir = case_dir
-        self._filepath = f'{case_dir}/%g/{(region + "/") if region else ""}{field}'
+        self._filepath = f'{case_dir}/%s/{(region + "/") if region else ""}{field}'
         self._field = field
         self._region = region
         self._time = 0
         # Parse file if exists or create a new one
-        if os.path.exists(self._filepath % 0):
+        if os.path.exists(self._filepath % '0'):
             logger.debug(f'Found {field} boundary{" in " + region + " region" if region else ""}')
             self._file_parse()
         else:

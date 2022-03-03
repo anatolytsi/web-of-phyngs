@@ -3,7 +3,7 @@ from typing import List
 from ...openfoam.boundaries.boundary_types import Boundary
 
 
-def update_boundaries(boundary: dict, time: int):
+def update_boundaries(boundary: dict, time: str):
     """
     Updates selected boundaries with latest time
     :param boundary: boundary region dict
@@ -131,7 +131,7 @@ def set_boundary_to_outlet(boundary_name: str, boundary: dict, velocity: List[fl
 
 
 def set_boundary_to_heater(boundary_name: str, background_region_name: str, boundaries: dict, temperature: float,
-                           time: int = 0):
+                           time: str = '0'):
     """
     Sets boundary to heater type
     :param boundary_name: name of the boundary (e.g., inlet)

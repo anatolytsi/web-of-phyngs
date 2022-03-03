@@ -409,7 +409,7 @@ class OpenFoamInterface(ABC):
         deletion_time = 0
         margin = self.clean_limit / 2 // self.control_dict.write_interval * self.control_dict.write_interval
         while self._running:
-            latest_time = time_getter(self.path)
+            latest_time = float(time_getter(self.path))
             if latest_time != deletion_time and not latest_time % self.clean_limit:
                 time.sleep(0.05)
                 exceptions = '|'.join([str(int(val) if val.is_integer() else val)

@@ -309,7 +309,7 @@ class ProbeParser(Thread):
             try:
                 latest_result = get_latest_time(path_to_probes_data)
             except FileNotFoundError:
-                latest_result = 0
+                latest_result = '0'
             path_to_probes_field = f'{path_to_probes_data}/{latest_result}/{field}'
             if os.path.exists(path_to_probes_field):
                 field_probes = [[num, probe] for num, probe in region_probes if probe.field == field]
