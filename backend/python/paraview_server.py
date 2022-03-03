@@ -21,7 +21,7 @@ class PvServer(Thread):
         return cls._instance
 
     def __init__(self,
-                 hostname: str = 'localhost',
+                 hostname: str = '0.0.0.0',
                  server_port: int = 11111,
                  multi_clients: bool = True,
                  client_host: str = 'opt',
