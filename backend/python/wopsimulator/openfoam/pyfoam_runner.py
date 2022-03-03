@@ -28,8 +28,9 @@ class RunFailed(Exception):
 
 def error_callback(error: BaseException):
     """OpenFoam commands error callback"""
-    tb = error.__traceback__
-    traceback.print_exception(type(error), error, tb)
+    pass
+    # tb = error.__traceback__
+    # traceback.print_exception(type(error), error, tb)
 
 
 def run_error_catcher(func):
@@ -45,6 +46,7 @@ def run_error_catcher(func):
         except (RunFailed, Exception) as e:
             error = e
         error_callback(error)
+        raise error
 
     return wrapper
 
