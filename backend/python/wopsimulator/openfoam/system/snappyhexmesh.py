@@ -174,7 +174,7 @@ class SnappyCellZoneMesh:
     """Class representation of a cell zone mesh in snappyHexMeshDict"""
 
     def __init__(self, name: str, stl_name: str, refinement_level: int = 0, face_zone: str = None,
-                 cell_zone: str = None, cell_zone_inside: str = 'insidePoint', inside_point: List[float] = None,
+                 cell_zone: str = None, cell_zone_inside: str = 'inside', inside_point: List[float] = None,
                  material_type: str = 'solid', material: str = 'copper'):
         """
         Snappy cell zone base initialization function
@@ -223,8 +223,7 @@ class SnappyCellZoneMesh:
                     level          (2 2);
                     faceZone       heater;
                     cellZone       heater;
-                    cellZoneInside insidePoint;
-                    insidePoint    (1.5 0.21 0.2);
+                    cellZoneInside inside;
                 }'
         """
         return f'{self.name}\n' \
@@ -233,30 +232,29 @@ class SnappyCellZoneMesh:
                f'{" " * 4}faceZone       {self.face_zone};\n' \
                f'{" " * 4}cellZone       {self.cell_zone};\n' \
                f'{" " * 4}cellZoneInside {self.cell_zone_inside};\n' \
-               f'{" " * 4}insidePoint    ({" ".join([str(val) for val in self.inside_point])});\n' \
                f'}}'
 
 
 class SnappyHexMeshDict:
     """SnappyHexMesh dictionary file representation as a class"""
-    castellated_mesh = True
-    snap = True
-    add_layers = False
-    meshes = {}
-    n_cells_between_levels = 1
-    refinement_regions = ''
-    location_in_mesh = []
-    relative_sizes = True
-    min_thickness = 1
-    final_layer_thickness = 1
-    expansion_ratio = 1
-    layers = {}
 
     def __init__(self, case_dir):
         """
         SnappyHexMeshDict class initialization function
         :param case_dir: case directory
         """
+        self.castellated_mesh = True
+        self.snap = True
+        self.add_layers = False
+        self.meshes = {}
+        self.n_cells_between_levels = 1
+        self.refinement_regions = ''
+        self.location_in_mesh = []
+        self.relative_sizes = True
+        self.min_thickness = 1
+        self.final_layer_thickness = 1
+        self.expansion_ratio = 1
+        self.layers = {}
         self._case_dir = case_dir
         self._of_bool = lambda x: 'true' if x else 'false'  # function to convert bool to OpenFOAM boolean string
 

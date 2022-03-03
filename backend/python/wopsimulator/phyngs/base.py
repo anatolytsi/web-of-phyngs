@@ -143,8 +143,7 @@ class Phyng(ABC):
         """
         self._snappy_dict = snappy_dict
         if snappy_type == 'cell_zone':
-            self.snappy = SnappyCellZoneMesh(self.name, f'{self.name}.stl', refinement_level,
-                                             inside_point=self.model.center)
+            self.snappy = SnappyCellZoneMesh(self.name, f'{self.name}.stl', refinement_level)
         elif snappy_type == 'region':
             self.snappy = SnappyRegion(self.name, region_type, refinement_level)
 
