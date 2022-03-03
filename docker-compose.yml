@@ -6,6 +6,7 @@ services:
       context: ./backend/python
     ports:
       - 5000:5000
+      - 11111:11111
     command: "python3.8 server.py"
     container_name: wop_backend_python
     networks:
