@@ -98,13 +98,13 @@ class Block:
     """
     Block class with vertices [v0, v1, ...]
     """
-    _instances = []
-    _vertices = []
-    _numbers = []
-    _current_number = -1
-    _inst_number = 0
+    _instances = {}
+    _vertices = {}
+    _numbers = {}
+    _current_number = {}
+    _inst_number = {}
 
-    def __new__(cls, vertices: List[Vertex] = None, cells_in_direction: List[int] = (10, 10, 10),
+    def __new__(cls, case_dir: str, vertices: List[Vertex] = None, cells_in_direction: List[int] = (10, 10, 10),
                 cell_expansion_ratios: List[int] = (1, 1, 1), name=None):
         """
         Block class creator
@@ -115,19 +115,25 @@ class Block:
         """
         if vertices is None or None in vertices:
             raise AttributeError('Wrong arguments were provided to class Block')
-        if vertices in cls._vertices:
-            idx = cls._vertices.index(vertices)
-            cls._inst_number = idx
-            return cls._instances[idx]
+        if case_dir not in cls._instances:
+            cls._instances[case_dir] = []
+            cls._vertices[case_dir] = []
+            cls._numbers[case_dir] = []
+            cls._current_number[case_dir] = -1
+            cls._inst_number[case_dir] = 0
+        if vertices in cls._vertices[case_dir]:
+            idx = cls._vertices[case_dir].index(vertices)
+            cls._inst_number[case_dir] = idx
+            return cls._instances[case_dir][idx]
         instance = super(Block, cls).__new__(cls)
-        cls._instances.append(instance)
-        cls._vertices.append(vertices)
-        cls._current_number += 1
-        cls._numbers.append(cls._current_number)
-        cls._inst_number = cls._current_number
+        cls._instances[case_dir].append(instance)
+        cls._vertices[case_dir].append(vertices)
+        cls._current_number[case_dir] += 1
+        cls._numbers[case_dir].append(cls._current_number)
+        cls._inst_number[case_dir] = cls._current_number
         return instance
 
-    def __init__(self, vertices: List[Vertex] = None, cells_in_direction: List[int] = (10, 10, 10),
+    def __init__(self, case_dir: str, vertices: List[Vertex] = None, cells_in_direction: List[int] = (10, 10, 10),
                  cell_expansion_ratios: List[int] = (1, 1, 1), name=None):
         """
         Block class initialization function. Order of vertices defines direction
@@ -216,7 +222,6 @@ class BlockMeshDict:
                           (percents_sq_sum - n * percents_sum_sq)
 
     def _calculate_mesh_quality(self):
-        self._calculate_quality_coefficients()
         if 0 > self._mesh_quality or self._mesh_quality > 100:
             raise ValueError(f'Mesh quality is defined in percentage '
                              f'(0%-100%), but {self._mesh_quality} was provided')
@@ -267,7 +272,7 @@ class BlockMeshDict:
         v6 = Vertex(max_coords[0], max_coords[1], max_coords[2])
         v7 = Vertex(min_coords[0], max_coords[1], max_coords[2])
         vertices = [v0, v1, v2, v3, v4, v5, v6, v7]
-        block = Block(vertices, cells_in_direction, cell_expansion_ratios, name)
+        block = Block(self._case_dir, vertices, cells_in_direction, cell_expansion_ratios, name)
         if block not in self.blocks:
             self.vertices.extend(vertices)
             self.blocks.append(block)
