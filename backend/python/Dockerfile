@@ -43,3 +43,5 @@ RUN echo -e "\n\n\n********** Installing Python project dependencies **********\
 
 # Copy project
 COPY . ./
+
+RUN python3.8 workaround.py
