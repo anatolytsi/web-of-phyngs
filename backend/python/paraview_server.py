@@ -136,7 +136,7 @@ class PvServer(Thread):
         return variables
 
     def run(self) -> None:
-        argv = ['pvserver', ]
+        argv = ['/opt/paraviewopenfoam56/bin/pvserver', ]
         variables = self.dump()
         for var_name, var_val in variables.items():
             if not var_val or var_val == 'opt':
