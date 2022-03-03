@@ -40,9 +40,16 @@ class Server:
         self.app.run(self.host, self.port, self.debug)
 
 
+def atexit_handler():
+    try:
+        os.killpg(os.getpid(), signal.SIGINT)
+    except ProcessLookupError:
+        pass
+
+
 def main():
     # Kill all spawned processes before exiting
-    atexit.register(lambda: os.killpg(os.getpid(), signal.SIGINT))
+    atexit.register(atexit_handler)
     config = configparser.ConfigParser()
     config.read(f'{os.path.dirname(os.path.abspath(__file__))}/server.ini')
     server = Server(host=config['DEFAULT']['Host'],
