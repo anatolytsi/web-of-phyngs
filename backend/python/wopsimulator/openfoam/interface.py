@@ -36,7 +36,7 @@ class OpenFoamInterface(ABC):
     OpenFOAM Interface class. Serves as a wrapper of OpenFOAM commands
     """
 
-    def __init__(self, solver_type, path='.', blocking=True, parallel=False, cores=1, mesh_quality=50,
+    def __init__(self, solver_type, path='.', blocking=False, parallel=False, cores=1, mesh_quality=50,
                  clean_limit=0, end_time=10000, **kwargs):
         """
         OpenFOAM Interface initialization function
