@@ -157,7 +157,10 @@ class PvServer(Thread):
         while True:
             with self._lock:
                 if line := self._process.stdout.readline():
-                    logger.info(line.rstrip().decode())
+                    text = line.rstrip().decode()
+                    logger.info(text)
+                    if 'Exiting' in text:
+                        self.running = False
                 if line := self._process.stderr.readline():
                     logger.error(line.rstrip().decode())
                 if not self.running:
