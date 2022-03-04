@@ -155,7 +155,8 @@ def get_cases_names(config_path: str = f'{CASES_STORAGE}/{WOP_CONFIG_FILE}'):
             config = json.load(f)
         return list(config.keys())
     except FileNotFoundError:
-        open(config_path, 'a').close()
+        with open(config_path, 'w') as f:
+            f.write('{}\n')
     return []
 
 
