@@ -150,10 +150,13 @@ def get_cases_names(config_path: str = f'{CASES_STORAGE}/{WOP_CONFIG_FILE}'):
     :param config_path: path to a wop.config.json. A __main__ script directory is taken by default
     :return: None
     """
-    with open(config_path, 'r') as f:
-        config = json.load(f)
-
-    return list(config.keys())
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        return list(config.keys())
+    except FileNotFoundError:
+        open(config_path, 'a').close()
+    return []
 
 
 def main():
