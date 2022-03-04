@@ -42,6 +42,7 @@ RUN chmod 777 /app
 
 # Gran root to foam user, select him
 RUN usermod -G root foam
+RUN chown -R foam:foam /wop/cases
 USER foam
 
 # Install project dependencies
