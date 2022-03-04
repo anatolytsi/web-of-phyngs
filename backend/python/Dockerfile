@@ -57,3 +57,6 @@ RUN echo -e "\n\n\n********** Installing Python project dependencies **********\
 COPY . ./
 
 RUN python3.8 workaround.py
+
+# Select root
+USER root
