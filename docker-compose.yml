@@ -8,6 +8,8 @@ services:
       - 5000:5000
     command: "python3.8 server.py"
     container_name: wop_backend_python
+    volumes:
+      - cases_volume:/wop/cases
     networks:
       - wop-network
   backend-nodejs:
@@ -24,9 +26,17 @@ services:
     networks:
       - wop-network
   backend-paraview:
-    image: kitware/paraview
+    build:
+      context: ./backend/paraview
     ports:
       - 11111:11111
+    container_name: wop_backend_paraview
+    volumes:
+      - cases_volume:/wop/cases
+
+volumes:
+  cases_volume:
+
 networks:
   wop-network:
     driver: bridge
