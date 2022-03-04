@@ -7,7 +7,7 @@ from .phyngs.window import WindowPhyng
 from .phyngs.sensor import SensorPhyng
 
 CUR_FILE_DIR = os.path.dirname(os.path.realpath(__file__))
-CASES_STORAGE = os.path.realpath(f'{CUR_FILE_DIR}/../')
+CASES_STORAGE = os.getenv('CASES_STORAGE', os.path.realpath(f'{CUR_FILE_DIR}/../'))
 
 WOP_CONFIG_FILE = 'wop.config.json'
 

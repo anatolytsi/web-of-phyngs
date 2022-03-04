@@ -7,6 +7,8 @@ services:
     ports:
       - 5000:5000
     command: "python3.8 server.py"
+    environment:
+      - CASES_STORAGE=/wop/cases
     container_name: wop_backend_python
     volumes:
       - cases_volume:/wop/cases
