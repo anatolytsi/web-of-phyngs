@@ -1,3 +1,5 @@
+import pwd
+import grp
 import os
 import shutil
 import re
@@ -20,9 +22,11 @@ def force_merge_flat_dir(src_dir, dst_dir):
 
 def force_copy_file(s_file, d_file):
     if os.path.isfile(s_file):
+        uid = pwd.getpwnam('root').pw_uid
+        gid = grp.getgrnam('root').gr_gid
         st = os.stat(s_file)
         shutil.copy2(s_file, d_file)
-        os.chown(d_file, st.st_uid, st.st_gid)
+        os.chown(d_file, uid, gid)
 
 
 def is_flat_dir(s_dir):
