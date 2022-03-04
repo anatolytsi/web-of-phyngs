@@ -49,13 +49,13 @@ class Vertex:
     """
     Vertex class with coordinates [x, y, z]
     """
-    _instances = []
-    _locations = []
-    _numbers = []
-    _current_number = -1
-    _inst_number = 0
+    _instances = {}
+    _locations = {}
+    _numbers = {}
+    _current_number = {}
+    _inst_number = {}
 
-    def __new__(cls, x: float = None, y: float = None, z: float = None, coords: List[float] = None):
+    def __new__(cls, case_dir: str, x: float = None, y: float = None, z: float = None, coords: List[float] = None):
         """
         Vertex class creator
         :param x: x coordinate, number
@@ -66,19 +66,25 @@ class Vertex:
         coords = coords if coords is not None else [x, y, z]
         if coords is None or None in coords:
             raise AttributeError('Wrong arguments were provided to class Vertex')
-        if coords in cls._locations:
-            idx = cls._locations.index(coords)
-            cls._inst_number = idx
-            return cls._instances[idx]
+        if case_dir not in cls._instances:
+            cls._instances[case_dir] = []
+            cls._locations[case_dir] = []
+            cls._numbers[case_dir] = []
+            cls._current_number[case_dir] = -1
+            cls._inst_number[case_dir] = 0
+        if coords in cls._locations[case_dir]:
+            idx = cls._locations[case_dir].index(coords)
+            cls._inst_number[case_dir] = idx
+            return cls._instances[case_dir][idx]
         instance = super(Vertex, cls).__new__(cls)
-        cls._instances.append(instance)
-        cls._locations.append(coords)
-        cls._current_number += 1
-        cls._numbers.append(cls._current_number)
-        cls._inst_number = cls._current_number
+        cls._instances[case_dir].append(instance)
+        cls._locations[case_dir].append(coords)
+        cls._current_number[case_dir] += 1
+        cls._numbers[case_dir].append(cls._current_number[case_dir])
+        cls._inst_number[case_dir] = cls._current_number[case_dir]
         return instance
 
-    def __init__(self, x: float = None, y: float = None, z: float = None, coords: List[float] = None):
+    def __init__(self, case_dir: str, x: float = None, y: float = None, z: float = None, coords: List[float] = None):
         """
         Vertex class initialization function, either x, y and z coordinates or array of coordinates must be provided
         :param x: x coordinate, number
@@ -86,9 +92,10 @@ class Vertex:
         :param z: z coordinate, number
         :param coords: coordinates array [x, y, z]
         """
-        self.coords = self._locations[self._inst_number]
+        self._case_dir = case_dir
+        self.coords = self._locations[case_dir][self._inst_number[case_dir]]
         self.x, self.y, self.z = self.coords
-        self.num = self._inst_number
+        self.num = self._inst_number[case_dir]
 
     def __str__(self):
         return f'( {" ".join([str(coord) for coord in self.coords])} )\n'
