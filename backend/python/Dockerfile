@@ -40,6 +40,12 @@ RUN echo -e "\n\n\n********** Installing Python v3.8 **********\n\n\n" && \
 WORKDIR /app
 RUN chmod 777 /app
 
+# Copy entrypoint
+COPY ./entrypoint.sh .
+RUN sed -i "s/\r$//g" ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+ENTRYPOINT ["./entrypoint.sh"]
+
 # Gran root to foam user, select him
 RUN usermod -G root foam
 RUN mkdir -p /wop/cases
