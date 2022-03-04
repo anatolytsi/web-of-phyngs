@@ -83,7 +83,7 @@ class BoundaryConditionBase:
         self._filepath = f'{case_dir}/%s/{(region + "/") if region else ""}{field}'
         self._field = field
         self._region = region
-        self._time = 0
+        self._time = '0'
         # Parse file if exists or create a new one
         if os.path.exists(self._filepath % '0'):
             logger.debug(f'Found {field} boundary{" in " + region + " region" if region else ""}')

@@ -19,7 +19,7 @@ def update_boundaries(boundary: dict, time: str):
     boundary['U'].update_time(time)
 
 
-def set_boundary_to_wall(boundary_name: str, boundary: dict, temperature: float, time: int = 0, bg_name: str = None,
+def set_boundary_to_wall(boundary_name: str, boundary: dict, temperature: float, time: str = '0', bg_name: str = None,
                          of_interface=None):
     """
     Sets boundary to wall type
@@ -54,8 +54,8 @@ def set_boundary_to_wall(boundary_name: str, boundary: dict, temperature: float,
                                          f'entry0.{boundary_name}.type', 'wall')
 
 
-def set_boundary_to_inlet(boundary_name: str, boundary: dict, velocity: List[float], temperature: float, time: int = 0,
-                          bg_name: str = None, of_interface=None):
+def set_boundary_to_inlet(boundary_name: str, boundary: dict, velocity: List[float], temperature: float,
+                          time: str = '0', bg_name: str = None, of_interface=None):
     """
     Sets boundary to inlet type
     :param boundary_name: name of the boundary (e.g., inlet)
@@ -93,8 +93,8 @@ def set_boundary_to_inlet(boundary_name: str, boundary: dict, velocity: List[flo
                                          f'entry0.{boundary_name}.type', 'patch')
 
 
-def set_boundary_to_outlet(boundary_name: str, boundary: dict, velocity: List[float], temperature: float, time: int = 0,
-                           bg_name: str = None, of_interface=None):
+def set_boundary_to_outlet(boundary_name: str, boundary: dict, velocity: List[float], temperature: float,
+                           time: str = '0', bg_name: str = None, of_interface=None):
     """
     Sets boundary to outlet type
     :param boundary_name: name of the boundary (e.g., inlet)
@@ -172,5 +172,5 @@ def set_boundary_to_heater(boundary_name: str, background_region_name: str, boun
     bg_u[bg_boundary_name] = Boundary('noSlip')
 
     t.internalField.value = temperature
-    if time != 0:
+    if time != '0':
         t[heater_boundary_name].value = temperature
