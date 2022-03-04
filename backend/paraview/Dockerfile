@@ -1,13 +1,12 @@
 FROM lhofmann/paraview-superbuild:5.6.0-osmesa
 USER root
 
-COPY ./start.sh /server_files/start.sh
-RUN sed -i 's/\r$//g' /server_files/start.sh
-RUN chmod +x /server_files/start.sh
+COPY ./start.sh /start.sh
+RUN sed -i "s/\r$//g" /start.sh
+RUN chmod +x /start.sh
+CMD ["/bin/bash", "/start.sh"]
 
 # Set work directory
 WORKDIR /wop/cases
-
-CMD ['/server_files/start.sh']
 
 USER paraview
