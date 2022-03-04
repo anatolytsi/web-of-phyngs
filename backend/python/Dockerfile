@@ -42,6 +42,7 @@ RUN chmod 777 /app
 
 # Gran root to foam user, select him
 RUN usermod -G root foam
+RUN mkdir -p /wop/cases
 RUN chown -R foam:foam /wop/cases
 USER foam
 
