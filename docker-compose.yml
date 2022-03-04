@@ -6,7 +6,6 @@ services:
       context: ./backend/python
     ports:
       - 6000:5000
-    command: "python3.8 server.py"
     environment:
       - CASES_STORAGE=/wop/cases
     container_name: wop_backend_python
