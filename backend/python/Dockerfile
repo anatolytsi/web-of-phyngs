@@ -50,3 +50,5 @@ COPY . ./
 
 RUN python3.8 workaround.py
 
+RUN chmod +x ./entrypoint.sh
+ENTRYPOINT ["/bin/sh", "./entrypoint.sh"]
