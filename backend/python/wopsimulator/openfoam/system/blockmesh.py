@@ -262,14 +262,14 @@ class BlockMeshDict:
         """
         if min_coords is None and max_coords is None:
             raise ValueError(f'Max and min coords must be defined')
-        v0 = Vertex(min_coords[0], min_coords[1], min_coords[2])
-        v1 = Vertex(max_coords[0], min_coords[1], min_coords[2])
-        v2 = Vertex(max_coords[0], max_coords[1], min_coords[2])
-        v3 = Vertex(min_coords[0], max_coords[1], min_coords[2])
-        v4 = Vertex(min_coords[0], min_coords[1], max_coords[2])
-        v5 = Vertex(max_coords[0], min_coords[1], max_coords[2])
-        v6 = Vertex(max_coords[0], max_coords[1], max_coords[2])
-        v7 = Vertex(min_coords[0], max_coords[1], max_coords[2])
+        v0 = Vertex(self._case_dir, min_coords[0], min_coords[1], min_coords[2])
+        v1 = Vertex(self._case_dir, max_coords[0], min_coords[1], min_coords[2])
+        v2 = Vertex(self._case_dir, max_coords[0], max_coords[1], min_coords[2])
+        v3 = Vertex(self._case_dir, min_coords[0], max_coords[1], min_coords[2])
+        v4 = Vertex(self._case_dir, min_coords[0], min_coords[1], max_coords[2])
+        v5 = Vertex(self._case_dir, max_coords[0], min_coords[1], max_coords[2])
+        v6 = Vertex(self._case_dir, max_coords[0], max_coords[1], max_coords[2])
+        v7 = Vertex(self._case_dir, min_coords[0], max_coords[1], max_coords[2])
         vertices = [v0, v1, v2, v3, v4, v5, v6, v7]
         block = Block(self._case_dir, vertices, cells_in_direction, cell_expansion_ratios, name)
         if block not in self.blocks:
