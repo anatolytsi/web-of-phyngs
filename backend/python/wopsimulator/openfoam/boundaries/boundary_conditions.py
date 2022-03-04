@@ -390,7 +390,7 @@ class BoundaryConditionBase:
                     return
                 self._file_remove_boundary(key)
             else:
-                if self._time != 0:
+                if self._time != '0':
                     raise Exception('New boundaries can only be added on time 0 (initial)')
             self.__dict__[key] = value
             self[key].attach_callback(self.save_boundary)

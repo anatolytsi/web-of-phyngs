@@ -91,7 +91,7 @@ class HeaterPhyng(Phyng):
         latest_result = get_latest_time(self._case_dir)
         try:
             self._boundary_conditions[self.name]['T'].update_time(latest_result)
-            if latest_result != 0:
+            if latest_result != '0':
                 heater_boundary_name = f'{self.name}_to_{self._bg_region}'
                 t = self._boundary_conditions[self.name]['T']
                 t.internalField.value = temperature
