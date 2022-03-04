@@ -40,9 +40,6 @@ RUN echo -e "\n\n\n********** Installing Python v3.8 **********\n\n\n" && \
 WORKDIR /app
 RUN chmod 777 /app
 
-# Select user
-USER foam
-
 # Install project dependencies
 COPY ./requirements.txt .
 RUN echo -e "\n\n\n********** Installing Python project dependencies **********\n\n\n" && \
