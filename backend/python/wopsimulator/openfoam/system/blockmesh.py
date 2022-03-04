@@ -149,8 +149,9 @@ class Block:
         :param cell_expansion_ratios: cell expansion ratios in directions [x, y, z]
         :param name: name of a block
         """
+        self._case_dir = case_dir
         self.vertices = vertices
-        self.num = self._inst_number
+        self.num = self._inst_number[case_dir]
         self.cells_in_direction = cells_in_direction
         self.cell_expansion_ratios = cell_expansion_ratios
         self.name = name
