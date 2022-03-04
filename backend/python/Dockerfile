@@ -36,6 +36,11 @@ RUN echo -e "\n\n\n********** Installing Python v3.8 **********\n\n\n" && \
     python3.8 get-pip.py && \
     rm -rf /var/lib/apt/lists/*
 
+# Copy entrypoint
+COPY ./entrypoint.sh .
+RUN chmod +x ./entrypoint.sh
+ENTRYPOINT ["/bin/sh", "./entrypoint.sh"]
+
 # Copy data
 WORKDIR /app
 RUN chmod 777 /app
@@ -49,6 +54,3 @@ RUN echo -e "\n\n\n********** Installing Python project dependencies **********\
 COPY . ./
 
 RUN python3.8 workaround.py
-
-RUN chmod +x ./entrypoint.sh
-ENTRYPOINT ["/bin/sh", "./entrypoint.sh"]
