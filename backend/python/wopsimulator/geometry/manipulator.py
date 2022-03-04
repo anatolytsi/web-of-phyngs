@@ -87,6 +87,10 @@ class TriSurface:
                 point.translate(coords)
                 translated_point.append(point)
 
+    def remove(self):
+        for face in self.faces:
+            face.remove()
+
 
 class Box(TriSurface):
     """
@@ -182,6 +186,10 @@ class Box(TriSurface):
             faces_z = faces_z | face_z
         return faces_x, faces_y, faces_z
 
+    def remove(self):
+        for face_name in self.faces.keys():
+            self.faces[face_name].remove()
+
 
 class STL:
     """
@@ -244,6 +252,9 @@ class STL:
         """
         points = numpy.around(numpy.unique(self.mesh.vectors.reshape([int(self.mesh.vectors.size / 3), 3]), axis=0), 2)
         return set(points[:, 0].tolist()), set(points[:, 1].tolist()), set(points[:, 2].tolist())
+
+    def remove(self):
+        del self.mesh
 
 
 class Model:
@@ -456,6 +467,9 @@ class Model:
             gmsh.write(file_path)
             self._finilize()
         rename_solid_stl(file_path, self.name)
+
+    def remove(self):
+        self.geometry.remove()
 
 
 def rename_solid_stl(stl_path: str, name: str):

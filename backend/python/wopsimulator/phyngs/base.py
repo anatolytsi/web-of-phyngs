@@ -181,6 +181,9 @@ class Phyng(ABC):
                 if reg := f'{self._bg_region}_to_{self.name}' in bc:
                     del bc[reg]
 
+    def remove(self):
+        self.model.remove()
+
     def __getitem__(self, item):
         """Allow to access attributes of a class as in dictionary"""
         return getattr(self, item)

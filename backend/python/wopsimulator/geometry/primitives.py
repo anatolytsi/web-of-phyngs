@@ -211,6 +211,16 @@ class Point:
         self.coords.z += coords[2]
         self.__class__._locations[self.__class__._locations[self._identifier].index(old_coords)] = coords
 
+    def remove(self):
+        try:
+            del self.__class__._instances[self._identifier]
+            del self.__class__._locations[self._identifier]
+            del self.__class__._numbers[self._identifier]
+            del self.__class__._current_number[self._identifier]
+            del self.__class__._inst_number[self._identifier]
+        except Exception as e:
+            pass
+
 
 class Line:
     """
@@ -324,6 +334,18 @@ class Line:
         for point in self.points:
             point.translate(coords)
 
+    def remove(self):
+        try:
+            del self.__class__._instances[self._identifier]
+            self.points[0].remove()
+            del self.__class__._point_pairs[self._identifier]
+            del self.__class__._numbers[self._identifier]
+            del self.__class__._current_number[self._identifier]
+            del self.__class__._inst_number[self._identifier]
+            del self.__class__._inverse[self._identifier]
+        except Exception as e:
+            pass
+
 
 class Loop:
     """
@@ -410,6 +432,17 @@ class Loop:
         """
         for line in self.lines:
             line.translate(coords)
+
+    def remove(self):
+        try:
+            del self.__class__._instances[self._identifier]
+            self.lines[0].remove()
+            del self.__class__._lines[self._identifier]
+            del self.__class__._numbers[self._identifier]
+            del self.__class__._current_number[self._identifier]
+            del self.__class__._inst_number[self._identifier]
+        except Exception as e:
+            pass
 
 
 class Surface:
@@ -521,3 +554,14 @@ class Surface:
         """
         for loop in self.loops:
             loop.translate(coords)
+
+    def remove(self):
+        try:
+            del self.__class__._instances[self._identifier]
+            self.loops[0].remove()
+            del self.__class__._loops[self._identifier]
+            del self.__class__._numbers[self._identifier]
+            del self.__class__._current_number[self._identifier]
+            del self.__class__._inst_number[self._identifier]
+        except Exception as e:
+            pass

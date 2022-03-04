@@ -100,6 +100,12 @@ class Vertex:
     def __str__(self):
         return f'( {" ".join([str(coord) for coord in self.coords])} )\n'
 
+    def remove(self):
+        del self.__class__._instances[self._case_dir]
+        del self.__class__._numbers[self._case_dir]
+        del self.__class__._current_number[self._case_dir]
+        del self.__class__._inst_number[self._case_dir]
+
 
 class Block:
     """
@@ -182,6 +188,13 @@ class Block:
             elif vertex.z > z_max:
                 z_max = vertex.z
         return x_max - x_min, y_max - y_min, z_max - z_min
+
+    def remove(self):
+        del self.__class__._instances[self._case_dir]
+        del self.__class__._vertices[self._case_dir]
+        del self.__class__._numbers[self._case_dir]
+        del self.__class__._current_number[self._case_dir]
+        del self.__class__._inst_number[self._case_dir]
 
 
 class Edge:
@@ -290,6 +303,15 @@ class BlockMeshDict:
         file_output = BLOCKMESH_DICT_FILE_TEMPLATE % (self.scale, vertices_str, blocks_str, edges_str, boundaries_str)
         with open(f'{self._case_dir}/system/blockMeshDict', 'w') as f:
             f.writelines(file_output)
+
+    def remove(self):
+        try:
+            self.blocks[0].remove()
+            self.blocks = None
+            self.vertices[0].remove()
+            self.vertices = None
+        except Exception:
+            pass
 
 
 def main():

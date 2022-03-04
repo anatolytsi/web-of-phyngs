@@ -36,6 +36,9 @@ class SensorPhyng:
         self._probe.remove()
         del self._probe
 
+    def remove(self):
+        self.destroy()
+
     def __getitem__(self, item):
         """Allow to access attributes of a class as in dictionary"""
         return getattr(self, item)

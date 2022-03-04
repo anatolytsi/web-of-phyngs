@@ -454,3 +454,8 @@ class OpenFoamInterface(ABC):
         if stop_solver:
             logger.info('Stopping the case solver')
             self.stop_solving()
+
+    def remove(self):
+        self.blockmesh_dict.remove()
+        self._probe_parser_thread.stop()
+        self._probe_parser_thread = None

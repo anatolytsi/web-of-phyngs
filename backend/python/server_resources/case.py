@@ -72,6 +72,7 @@ class Case(Resource):
     @catch_error
     def delete(self, case_name):
         if case_name in self.current_cases:
+            self.current_cases[case_name].remove()
             del self.current_cases[case_name]
         remove_case(case_name, remove_case_dir=True)
 

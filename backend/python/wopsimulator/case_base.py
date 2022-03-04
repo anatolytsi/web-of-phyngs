@@ -306,7 +306,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         """
         phyng = self.get_phyng(phyng_name)
         type_name = phyng.type_name
-        phyng.destroy()
+        phyng.remove()
         if type_name == 'sensor':
             del self.sensors[phyng_name]
             self._probe_parser_thread.remove_unused()
@@ -501,3 +501,11 @@ class OpenFoamCase(OpenFoamInterface, ABC):
     def __delitem__(self, key):
         """Allow to delete individual attributes of a class"""
         del self.__dict__[key]
+
+    def remove(self):
+        for phyng_name in self.phyngs.keys():
+            self.phyngs[phyng_name].remove()
+        self.phyngs = None
+        self._runtime_monitor.stop()
+        self._runtime_monitor = None
+        super(OpenFoamCase, self).remove()
