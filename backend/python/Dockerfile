@@ -36,16 +36,12 @@ RUN echo -e "\n\n\n********** Installing Python v3.8 **********\n\n\n" && \
     python3.8 get-pip.py && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy entrypoint
-COPY ./entrypoint.sh .
-RUN chmod +x ./entrypoint.sh
-ENTRYPOINT ["/bin/sh", "./entrypoint.sh"]
-
 # Copy data
 WORKDIR /app
 RUN chmod 777 /app
 
-# Select root
+# Gran root to foam user, select him
+RUN usermod -G root foam
 USER foam
 
 # Install project dependencies
@@ -57,6 +53,3 @@ RUN echo -e "\n\n\n********** Installing Python project dependencies **********\
 COPY . ./
 
 RUN python3.8 workaround.py
-
-# Select root
-USER root
