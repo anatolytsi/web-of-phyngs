@@ -64,10 +64,10 @@ class Case(Resource):
             if value is not None:
                 self.current_cases[case_name][key] = value
         save_case(case_name, self.current_cases[case_name])
-        # # Reload the case with new changes applied
-        # if not self.current_cases[case_name].initialized:
-        #     del self.current_cases[case_name]
-        #     self.current_cases[case_name] = load_case(case_name)
+        # Reload the case with new changes applied
+        if not self.current_cases[case_name].initialized:
+            del self.current_cases[case_name]
+            self.current_cases[case_name] = load_case(case_name)
 
     @catch_error
     def delete(self, case_name):
