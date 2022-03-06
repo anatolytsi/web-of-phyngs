@@ -62,7 +62,8 @@ def _check_runner_errors(command, solver):
             error = f'fatal stack dump'
         else:
             error = 'unknown error'
-        error_message = f'{command} run failed with {error}: {solver.data["errorText"]}'
+        error_message = f'{command} run failed with {error}' \
+                        f'{(":" + solver.data["errorText"]) if "errorText" in solver.data else ""}'
         logger.error(error_message)
         raise RunFailed(error_message)
 
