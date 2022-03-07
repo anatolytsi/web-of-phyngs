@@ -226,13 +226,16 @@ class SnappyCellZoneMesh:
                     cellZoneInside inside;
                 }'
         """
-        return f'{self.name}\n' \
+        data = f'{self.name}\n' \
                f'{{\n' \
                f'{" " * 4}level          ({self.refinement_level} {self.refinement_level});\n' \
                f'{" " * 4}faceZone       {self.face_zone};\n' \
                f'{" " * 4}cellZone       {self.cell_zone};\n' \
-               f'{" " * 4}cellZoneInside {self.cell_zone_inside};\n' \
-               f'}}'
+               f'{" " * 4}cellZoneInside {self.cell_zone_inside};\n'
+        if self.cell_zone_inside == 'insidePoint':
+            data += f'{" " * 4}insidePoint    ({" ".join([str(val) for val in self.inside_point])});\n'
+        data += r'}'
+        return data
 
 
 class SnappyHexMeshDict:

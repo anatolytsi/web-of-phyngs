@@ -53,6 +53,7 @@ class Phyng(ABC):
             self.path = ''
         self.stl_name = stl_name
         self.model = Model(name, model_type, dimensions, location, rotation, facing_zero, self.path, self._case_dir)
+        self.model_type = model_type
 
     def _get_stl(self, stl_name: str, templates_dir: str):
         success = self._get_custom_stl(stl_name)
@@ -122,7 +123,12 @@ class Phyng(ABC):
         """
         self._snappy_dict = snappy_dict
         if snappy_type == 'cell_zone':
-            self.snappy = SnappyCellZoneMesh(self.name, f'{self.name}.stl', refinement_level)
+            if self.model_type == 'stl':
+                self.snappy = SnappyCellZoneMesh(self.name, f'{self.name}.stl', refinement_level)
+            else:
+                self.snappy = SnappyCellZoneMesh(self.name, f'{self.name}.stl', refinement_level,
+                                                 cell_zone_inside='insidePoint',
+                                                 inside_point=self.model.center)
         elif snappy_type == 'region':
             self.snappy = SnappyRegion(self.name, region_type, refinement_level)
 
