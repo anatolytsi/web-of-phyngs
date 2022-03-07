@@ -90,4 +90,6 @@ class Command(Resource):
                 os.makedirs(geometry_path, exist_ok=True)
                 file.save(f'{geometry_path}/{file.filename}')
                 return '', 200
-        return 'Command not found', 404
+        else:
+            return 'Command not found', 404
+        return '', 200
