@@ -31,10 +31,7 @@
             "type": "number"
           }
         },
-        "url": {
-          "type": "string"
-        },
-        "template": {
+        "stlName": {
           "type": "string"
         },
         "field": {
