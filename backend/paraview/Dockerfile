@@ -4,7 +4,7 @@ USER root
 COPY ./start.sh /start.sh
 RUN sed -i "s/\r$//g" /start.sh
 RUN chmod +x /start.sh
-CMD ["/bin/bash", "/start.sh"]
+CMD ["/bin/bash"]
 
 # Set work directory
 WORKDIR /wop/cases
