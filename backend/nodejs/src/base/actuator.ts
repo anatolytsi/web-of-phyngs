@@ -8,9 +8,7 @@
 import {AbstractPhyng} from './phyng';
 import {ActuatorPropsCreated, ActuatorPropsStl, Size, Vector} from './interfaces';
 import {responseIsUnsuccessful} from "./helpers";
-import {reqPatch, reqPost} from './axios-requests';
-const FormData = require('form-data');
-const fs = require('fs');
+import {reqPatch} from './axios-requests';
 
 /**
  * An abstract actuator Phyng.
@@ -112,5 +110,11 @@ export abstract class Actuator extends AbstractPhyng implements ActuatorPropsCre
         this.thing.setPropertyWriteHandler('stlName', async (stlName) =>
             await this.setStlName(stlName)
         );
+    }
+
+    protected addActionHandlers(): void {
+    }
+
+    protected addEventHandlers(): void {
     }
 }

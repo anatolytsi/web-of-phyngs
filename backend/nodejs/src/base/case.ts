@@ -11,9 +11,9 @@ import {AbstractPhyng} from './phyng';
 import {responseIsSuccessful, responseIsUnsuccessful} from './helpers';
 import {reqGet, reqPost, reqPatch, makeRequest} from './axios-requests';
 import {AxiosResponse} from 'axios';
-import FormData from "form-data";
-import fs from "fs";
-import {InteractionOutput} from "wot-typescript-definitions";
+
+const FormData = require('form-data');
+const fs = require('fs');
 
 /** Case commands allowed in the simulator. */
 type CaseCommand = 'run' | 'stop' | 'setup' | 'clean' | 'postprocess' | 'time';
