@@ -152,7 +152,7 @@ export class Simulator extends AbstractThing {
      * @async
      */
     protected async loadAvailableCases(): Promise<string | void> {
-        let response: AxiosResponse = await reqGet(`${this.couplingUrl}`);
+        let response: AxiosResponse = await reqGet(`${this.couplingUrl}/`);
         if (responseIsUnsuccessful(response.status)) {
             return response.data;
         }

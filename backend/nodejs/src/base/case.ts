@@ -283,7 +283,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      * @async
      */
     public async updateParams(): Promise<void> {
-        let response = await reqGet(`${this.couplingUrl}`);
+        let response = await reqGet(`${this.couplingUrl}/`);
         let caseParams = response.data;
         this._meshQuality = caseParams.mesh_quality;
         this._cleanLimit = caseParams.clean_limit;

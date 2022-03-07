@@ -48,7 +48,7 @@ export abstract class Actuator extends AbstractPhyng implements ActuatorPropsCre
      */
     public async setDimensions(dimensions: Size): Promise<void> {
         this._dimensions = dimensions;
-        let response = await reqPatch(`${this.couplingUrl}`, { dimensions });
+        let response = await reqPatch(`${this.couplingUrl}/`, { dimensions });
         if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }
@@ -69,7 +69,7 @@ export abstract class Actuator extends AbstractPhyng implements ActuatorPropsCre
      */
     public async setRotation(rotation: Vector): Promise<void> {
         this._rotation = rotation;
-        let response = await reqPatch(`${this.couplingUrl}`, { rotation });
+        let response = await reqPatch(`${this.couplingUrl}/`, { rotation });
         if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }
@@ -90,7 +90,7 @@ export abstract class Actuator extends AbstractPhyng implements ActuatorPropsCre
      */
     public async setStlName(stlName: string): Promise<void> {
         this._stlName = stlName;
-        let response = await reqPatch(`${this.couplingUrl}`, { stl_name: stlName });
+        let response = await reqPatch(`${this.couplingUrl}/`, { stl_name: stlName });
         if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }
