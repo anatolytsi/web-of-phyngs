@@ -11,12 +11,12 @@ from .phyngs.walls import WallsPhyng
 from .phyngs.window import WindowPhyng
 from .phyngs.heater import HeaterPhyng
 from .phyngs.sensor import SensorPhyng
+from .phyngs.ac import AcPhyng
 from .phyngs.base import Phyng
 from .variables import (CHT_PHYNG_TYPES, CONFIG_BACKGROUND_K, CONFIG_WALLS_K, CONFIG_HEATERS_K, CONFIG_WINDOWS_K,
-                        CONFIG_DOORS_K, CONFIG_SENSORS_K, CONFIG_PHYNG_DIMS_K, CONFIG_PHYNG_ROT_K,
-                        CONFIG_PHYNG_FIELD_K, CONFIG_PHYNG_LOC_K, CONFIG_PHYNG_STL_K, CONFIG_PHYNG_TEMPER_K,
-                        CONFIG_PHYNG_VEL_K, CONFIG_PHYNG_MAT_K, CONFIG_PHYNG_NAME_K, CASE_DIR_K,
-                        CONFIG_PHYNG_REGION_K, CONFIG_PHYNG_TYPE_K, OF_INTERFACE_K, BG_REGION_K)
+                        CONFIG_DOORS_K, CONFIG_SENSORS_K, CONFIG_PHYNG_TEMPER_K, CONFIG_PHYNG_VEL_K, CONFIG_PHYNG_MAT_K,
+                        CONFIG_PHYNG_NAME_K, CASE_DIR_K, CONFIG_PHYNG_REGION_K, CONFIG_PHYNG_TYPE_K, OF_INTERFACE_K,
+                        BG_REGION_K, CONFIG_ACS_K)
 
 
 logger = logging.getLogger('wop')
@@ -36,6 +36,7 @@ class ChtCase(OpenFoamCase):
         self.heaters = {}
         self.windows = {}
         self.doors = {}
+        self.acs = {}
         self.furniture = {}
         self.walls = None
         self.background_name = 'fluid'
@@ -150,6 +151,10 @@ class ChtCase(OpenFoamCase):
             for name, sensor in case_param[CONFIG_SENSORS_K].items():
                 params = {**sensor, CONFIG_PHYNG_NAME_K: name, CONFIG_PHYNG_TYPE_K: SensorPhyng.type_name}
                 self.add_phyng(**params)
+        if CONFIG_ACS_K in case_param and case_param[CONFIG_ACS_K]:
+            for name, ac in case_param[CONFIG_ACS_K].items():
+                params = {**ac, CONFIG_PHYNG_NAME_K: name, CONFIG_PHYNG_TYPE_K: AcPhyng.type_name}
+                self.add_phyng(**params)
 
     def setup(self):
         """Setups CHT case"""
@@ -212,6 +217,10 @@ class ChtCase(OpenFoamCase):
                 phyng.model.geometry.cut_surface(window.model.geometry)
             for door in self.windows.values():
                 phyng.model.geometry.cut_surface(door.model.geometry)
+        elif type == AcPhyng.type_name:
+            phyng = AcPhyng(**params)
+            phyng.bind_snappy(self.snappy_dict, 'region', 'wall')
+            self.acs.update({phyng.name: phyng})
         elif type == SensorPhyng.type_name:
             sensor = SensorPhyng(**params)
             self.sensors.update({sensor.name: sensor})

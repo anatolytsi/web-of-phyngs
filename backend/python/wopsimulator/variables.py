@@ -5,6 +5,7 @@ from .phyngs.heater import HeaterPhyng
 from .phyngs.walls import WallsPhyng
 from .phyngs.window import WindowPhyng
 from .phyngs.sensor import SensorPhyng
+from .phyngs.ac import AcPhyng
 
 CUR_FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 CASES_STORAGE = os.getenv('CASES_STORAGE', os.path.realpath(f'{CUR_FILE_DIR}/../'))
@@ -73,6 +74,7 @@ CHT_PHYNG_TYPES = [
     WallsPhyng.type_name,
     DoorPhyng.type_name,
     SensorPhyng.type_name,
+    AcPhyng.type_name,
     # TODO:
     'furniture',
 ]
@@ -86,3 +88,4 @@ CONFIG_HEATERS_K = 'heaters'
 CONFIG_WINDOWS_K = 'windows'
 CONFIG_DOORS_K = 'doors'
 CONFIG_SENSORS_K = 'sensors'
+CONFIG_ACS_K = 'acs'

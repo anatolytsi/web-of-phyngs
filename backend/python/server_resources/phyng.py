@@ -41,6 +41,16 @@ class Phyng(Resource):
         self.reqparse.add_argument(CONFIG_PHYNG_STL_K, type=str, help='Phyng geometry STL name (uploaded or template)')
         self.reqparse.add_argument(CONFIG_PHYNG_MAT_K, type=str, help='Phyng material')
         self.reqparse.add_argument(CONFIG_PHYNG_FIELD_K, type=str, help='Sensor field')
+        self.reqparse.add_argument(f'{CONFIG_PHYNG_DIMS_K}_in', type=list, help='Phyng dimensions', location='json')
+        self.reqparse.add_argument(f'{CONFIG_PHYNG_LOC_K}_in', type=list, help='Phyng location', location='json')
+        self.reqparse.add_argument(f'{CONFIG_PHYNG_ROT_K}_in', type=list, help='Phyng rotation', location='json')
+        self.reqparse.add_argument(f'{CONFIG_PHYNG_STL_K}_in', type=str,
+                                   help='Phyng geometry STL name (uploaded or template)')
+        self.reqparse.add_argument(f'{CONFIG_PHYNG_DIMS_K}_out', type=list, help='Phyng dimensions', location='json')
+        self.reqparse.add_argument(f'{CONFIG_PHYNG_LOC_K}_out', type=list, help='Phyng location', location='json')
+        self.reqparse.add_argument(f'{CONFIG_PHYNG_ROT_K}_out', type=list, help='Phyng rotation', location='json')
+        self.reqparse.add_argument(f'{CONFIG_PHYNG_STL_K}_out', type=str,
+                                   help='Phyng geometry STL name (uploaded or template)')
         super(Phyng, self).__init__()
 
     @catch_error
