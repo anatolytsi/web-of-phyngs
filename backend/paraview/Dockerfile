@@ -1,4 +1,4 @@
-FROM lhofmann/paraview-superbuild:5.6.0-osmesa
+FROM lhofmann/paraview-superbuild:5.10.0-osmesa
 USER root
 
 COPY ./start.sh /start.sh
