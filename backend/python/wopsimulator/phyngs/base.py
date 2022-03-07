@@ -48,7 +48,7 @@ class Phyng(ABC):
         self.snappy = None
         if stl_name:
             model_type = 'stl'
-            self._get_stl(f'{stl_name}{"" if stl_name[-4:] == ".stl" else ".stl"}', templates_dir)
+            self.path = self._get_stl(f'{stl_name}{"" if stl_name[-4:] == ".stl" else ".stl"}', templates_dir)
         else:
             self.path = ''
         self.stl_name = stl_name
@@ -56,30 +56,33 @@ class Phyng(ABC):
         self.model_type = model_type
 
     def _get_stl(self, stl_name: str, templates_dir: str):
-        success = self._get_custom_stl(stl_name)
-        if not success:
-            success = self._get_template_stl(stl_name, templates_dir)
-        if not success:
+        path = self._get_custom_stl(stl_name)
+        if not path:
+            path = self._get_template_stl(stl_name, templates_dir)
+        if not path:
             raise Exception(f'Geometry "{stl_name}" was neither uploaded nor is present in templates')
+        return path
 
-    def _get_template_stl(self, stl_name, templates_dir):
+    @staticmethod
+    def _get_template_stl(stl_name, templates_dir):
         """
         Gets STL from a template
         :param stl_name: STL file template geometry name
         """
         path = f'{os.path.dirname(os.path.abspath(__file__))}/../geometry/templates/{templates_dir}/{stl_name}'
         if not os.path.exists(path):
-            return False
-        self.path = os.path.abspath(path)
-        return True
+            return ''
+        return os.path.abspath(path)
 
     def _get_custom_stl(self, stl_name):
         """
         Gets a custom (uploaded) STL
         :param stl_name: uploaded STL file geometry name
         """
-        self.path = f'{self._case_dir}/geometry/{stl_name}'
-        return os.path.exists(self.path)
+        path = f'{self._case_dir}/geometry/{stl_name}'
+        if not os.path.exists(path):
+            return ''
+        return path
 
     @abstractmethod
     def _add_initial_boundaries(self):
