@@ -245,7 +245,11 @@ export class Simulator extends AbstractThing {
      */
     public async createCase(sd: SystemDescription): Promise<string> {
         this.validateSd(sd);
-        let response: AxiosResponse = await reqPost(`${this.couplingUrl}/${sd.title}`, sd.sysProperties);
+        let data: any = {...sd.sysProperties}
+        if (sd.sysProperties.meshQuality) data['mesh_quality'] = sd.sysProperties.meshQuality;
+        if (sd.sysProperties.cleanLimit) data['clean_limit'] = sd.sysProperties.cleanLimit;
+        if (sd.sysProperties.endTime) data['end_time'] = sd.sysProperties.endTime;
+        let response: AxiosResponse = await reqPost(`${this.couplingUrl}/${sd.title}`, data);
         await this.initCaseByName(sd.title);
         return response.data;
     }

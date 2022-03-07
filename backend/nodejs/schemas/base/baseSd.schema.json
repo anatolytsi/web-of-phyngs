@@ -28,7 +28,7 @@
         "realtime": {
           "type": "boolean"
         },
-        "endtime": {
+        "endTime": {
           "type": "number",
           "minimum": 0
         }

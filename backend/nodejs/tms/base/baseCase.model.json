@@ -82,7 +82,7 @@
       "description": "WoP simulation realtime run enabled",
       "type": "boolean"
     },
-    "endtime": {
+    "endTime": {
       "description": "WoP simulation end time",
       "type": "integer",
       "minimum": 0

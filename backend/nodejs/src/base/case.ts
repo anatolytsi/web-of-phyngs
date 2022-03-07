@@ -19,9 +19,9 @@ const fs = require('fs');
 type CaseCommand = 'run' | 'stop' | 'setup' | 'clean' | 'postprocess' | 'time';
 
 interface CaseTime {
-    "real": string,
-    "simulation": string,
-    "difference": number
+    real: string,
+    simulation: string,
+    difference: number
 }
 
 /**
@@ -50,7 +50,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     /** Is case running in realtime. */
     protected _realtime: boolean = true;
     /** Case simulation end time. */
-    protected _endtime: number = 1000;
+    protected _endTime: number = 1000;
 
     /**
      * Abstract method to add a new object
@@ -210,18 +210,18 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      * Gets simulation endtime.
      * @return {number} simulation endtime.
      */
-    public get endtime(): number {
-        return this._endtime;
+    public get endTime(): number {
+        return this._endTime;
     }
 
     /**
      * Sets simulation end time.
-     * @param {number} endtime: simulation endtime.
+     * @param {number} endTime: simulation end-time.
      * @async
      */
-    public async setEndtime(endtime: number): Promise<void> {
-        this._endtime = endtime;
-        await reqPatch(this.couplingUrl, {endtime});
+    public async setEndTime(endTime: number): Promise<void> {
+        this._endTime = endTime;
+        await reqPatch(this.couplingUrl, {endtime: endTime});
     }
 
     /**
@@ -298,9 +298,12 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      */
     public async addPhyng(pd: PhysicalDescription): Promise<void> {
         this.validatePd(pd);
+        let data: any = {...pd.phyProperties}
+        // @ts-ignore
+        if (pd.phyProperties.stlName) data['stl_name'] = pd.phyProperties.stlName;
         let response = await reqPost(
             `${this.couplingUrl}/phyng/${pd.title}`,
-            pd.phyProperties
+            data
         );
         if (responseIsSuccessful(response.status)) {
             this.addPhyngToDictPd(pd);
@@ -395,7 +398,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         this.thing.setPropertyReadHandler('phyngs', async () => this.getPhyngs());
         this.thing.setPropertyReadHandler('time', async () => this.getTime());
         this.thing.setPropertyReadHandler('realtime', async () => this.realtime);
-        this.thing.setPropertyReadHandler('endtime', async () => this.endtime);
+        this.thing.setPropertyReadHandler('endTime', async () => this.endTime);
 
         this.thing.setPropertyWriteHandler('meshQuality', async (meshQuality) => {
             await this.setMeshQuality(meshQuality);
@@ -412,8 +415,8 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         this.thing.setPropertyWriteHandler('realtime', async (realtime) => {
             await this.setRealtime(realtime);
         });
-        this.thing.setPropertyWriteHandler('endtime', async (endtime) => {
-            await this.setEndtime(endtime);
+        this.thing.setPropertyWriteHandler('endTime', async (endTime) => {
+            await this.setEndTime(endTime);
         });
     }
 
