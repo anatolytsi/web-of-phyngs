@@ -70,7 +70,7 @@ export abstract class AbstractPhyng extends AbstractThing {
      */
     public async setLocation(location: Coordinates): Promise<void> {
         this._location = location;
-        let response = await reqPatch(`${this.couplingUrl}/`, { location });
+        let response = await reqPatch(`${this.couplingUrl}`, { location });
         if (responseIsUnsuccessful(response.status)) {
             throw Error(response.data);
         }
@@ -82,7 +82,7 @@ export abstract class AbstractPhyng extends AbstractThing {
      * @async
      */
     protected async getParamsFromSimulation(): Promise<any> {
-        let response = await reqGet(`${this.couplingUrl}/`);
+        let response = await reqGet(`${this.couplingUrl}`);
         if (this._name in response.data) {
             return response.data[this._name];
         }
