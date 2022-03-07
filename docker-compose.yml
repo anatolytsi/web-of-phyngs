@@ -2,6 +2,8 @@ version: '3.1'
 
 services:
   backend-python:
+    user: foam
+    privileged: true
     build:
       context: ./backend/python
     ports:
