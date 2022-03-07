@@ -70,16 +70,16 @@ export interface ActuatorPropsCreated extends ActuatorPropsBase {
  * Template actuator properties, used by
  * actuators created using template.
  */
-export interface ActuatorPropsTemplate extends ActuatorPropsBase {
-    /** Actuator template name. */
-    template: string
+export interface ActuatorPropsStl extends ActuatorPropsBase {
+    /** Actuator geometry STL name. */
+    stlName: string
 }
 
 /**
  * Type to combine various actuator
  * properties into a single type.
  */
-export type ActuatorProps = ActuatorPropsCreated | ActuatorPropsTemplate;
+export type ActuatorProps = ActuatorPropsCreated | ActuatorPropsStl;
 
 /**
  * Sensor properties.

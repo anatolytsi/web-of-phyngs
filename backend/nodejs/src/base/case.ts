@@ -11,6 +11,9 @@ import {AbstractPhyng} from './phyng';
 import {responseIsSuccessful, responseIsUnsuccessful} from './helpers';
 import {reqGet, reqPost, reqPatch, makeRequest} from './axios-requests';
 import {AxiosResponse} from 'axios';
+import FormData from "form-data";
+import fs from "fs";
+import {InteractionOutput} from "wot-typescript-definitions";
 
 /** Case commands allowed in the simulator. */
 type CaseCommand = 'run' | 'stop' | 'setup' | 'clean' | 'postprocess' | 'time';
@@ -351,6 +354,25 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     }
 
     /**
+     * Upload an ASCII STL file.
+     * @param {any} data File form data.
+     * @async
+     * @protected
+     */
+    protected async uploadStl(data: any): Promise<void> {
+        let formData = new FormData();
+        let filename = data.match(/filename="(.*\.stl)"/)[1];
+        let filePath = `${__dirname}/${filename}`;
+        fs.writeFile(filePath, data.match(/(solid(.|\n)*endsolid\s.*)/gm)[0], () => {});
+        formData.append('file', fs.createReadStream(filePath));
+        await reqPost(`${this.couplingUrl}/uploadSTL`, formData,
+            {
+                headers: formData.getHeaders()
+            });
+        fs.unlinkSync(filePath)
+    }
+
+    /**
      * Executes a case command.
      * @param {CaseCommand} command Case command to execute.
      * @param {"get" | "post"} method Method to execute command with.
@@ -363,7 +385,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
             throw Error(response.data);
         }
         return response.data;
-}
+    }
 
     protected addPropertyHandlers(): void {
         this.thing.setPropertyReadHandler('meshQuality', async () => this.meshQuality);
@@ -416,6 +438,9 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         });
         this.thing.setActionHandler('removePhyng', async (name) => {
             await this.removePhyng(name);
+        });
+        this.thing.setActionHandler('uploadSTL', async (data, options) => {
+            await this.uploadStl(data);
         });
     }
 

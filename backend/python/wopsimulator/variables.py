@@ -51,15 +51,18 @@ CONFIG_DEFAULTS = {
 }
 
 # Phyngs
+CASE_DIR_K = 'case_dir'
+OF_INTERFACE_K = 'of_interface'
+BG_REGION_K = 'bg_region'
 CONFIG_PHYNG_NAME_K = 'name'
+CONFIG_PHYNG_REGION_K = 'region'
+CONFIG_PHYNG_TYPE_K = 'type'
 CONFIG_PHYNG_DIMS_K = 'dimensions'
 CONFIG_PHYNG_ROT_K = 'rotation'
 CONFIG_PHYNG_MAT_K = 'material'
 CONFIG_PHYNG_FIELD_K = 'field'
 CONFIG_PHYNG_LOC_K = 'location'
-CONFIG_PHYNG_TEMPLATE_K = 'template'
-CONFIG_PHYNG_URL_K = 'url'
-CONFIG_PHYNG_CUSTOM_K = 'custom'
+CONFIG_PHYNG_STL_K = 'stl_name'
 CONFIG_PHYNG_TEMPER_K = 'temperature'
 CONFIG_PHYNG_VEL_K = 'velocity'
 

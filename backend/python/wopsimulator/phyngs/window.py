@@ -11,29 +11,25 @@ class WindowPhyng(Phyng):
     """
     type_name = 'window'
 
-    def __init__(self, name, case_dir, bg_region: str, url='', custom=False,
-                 dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
-                 template=None, of_interface=None, **kwargs):
+    def __init__(self, stl_name='', **kwargs):
         """
         Web of Phyngs window phyng initialization function
         :param name: name of the window phyng
         :param case_dir: case directory
         :param bg_region: background region name
-        :param url: window phyng URL
-        :param custom: window phyng was created from URL
         :param dimensions: dimensions [x, y, z]
         :param location: location coordinates [x, y, z]
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
-        :param template: template name
+        :param stl_name: STL geometry name
         :param of_interface: OpenFoam interface
         """
         self._open = False
         self._velocity = [0, 0, 0]
         self._temperature = 293.15
-        model_type = 'stl' if template else 'surface'
-        template = f'windows/{template}' if template else template
-        super(WindowPhyng, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
-                                          rotation, template=template, of_interface=of_interface)
+        model_type = 'surface'
+        templates_dir = 'windows'
+        super(WindowPhyng, self).__init__(stl_name=stl_name, model_type=model_type,
+                                          templates_dir=templates_dir, **kwargs)
         self._fields = 'all'
 
     def _add_initial_boundaries(self):

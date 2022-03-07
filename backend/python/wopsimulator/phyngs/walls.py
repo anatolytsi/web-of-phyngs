@@ -11,27 +11,23 @@ class WallsPhyng(Phyng):
     """
     type_name = 'walls'
 
-    def __init__(self, name, case_dir, bg_region: str, url='', custom=False,
-                 dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
-                 template=None, of_interface=None, **kwargs):
+    def __init__(self, stl_name='', **kwargs):
         """
         Web of Phyngs walls phyng initialization function
         :param name: name of the walls phyng
         :param case_dir: case directory
         :param bg_region: background region name
-        :param url: room URL
-        :param custom: room was created from URL
         :param dimensions: dimensions [x, y, z]
         :param location: location coordinates [x, y, z]
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
-        :param template: template name
+        :param stl_name: STL geometry name
         :param of_interface: OpenFoam interface
         """
         self._temperature = 293.15
-        model_type = 'stl' if template else 'box'
-        template = f'walls/{template}' if template else template
-        super(WallsPhyng, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
-                                         rotation, template=template, of_interface=of_interface)
+        model_type = 'box'
+        templates_dir = 'walls'
+        super(WallsPhyng, self).__init__(stl_name=stl_name, model_type=model_type,
+                                         templates_dir=templates_dir, **kwargs)
         self._fields = ['T']
 
     def _add_initial_boundaries(self):

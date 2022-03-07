@@ -13,9 +13,7 @@ class HeaterPhyng(Phyng):
     """
     type_name = 'heater'
 
-    def __init__(self, name, case_dir, bg_region: str, url='', custom=False,
-                 dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0), material='copper',
-                 template=None, of_interface=None):
+    def __init__(self, name, material='copper', stl_name='', **kwargs):
         """
         Web of Phyngs heater phyng initialization function
         :param name: name of the heater phyng
@@ -25,14 +23,14 @@ class HeaterPhyng(Phyng):
         :param location: location coordinates [x, y, z]
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
         :param material: heater phyng material
-        :param template: template name
+        :param stl_name: STL geometry name
         :param of_interface: OpenFoam interface
         """
         self._temperature = 293.15
-        model_type = 'stl' if template else 'box'
-        template = f'heaters/{template}' if template else template
-        super(HeaterPhyng, self).__init__(name, case_dir, model_type, bg_region, url, custom, dimensions, location,
-                                          rotation, template=template, of_interface=of_interface)
+        model_type = 'box'
+        templates_dir = 'heaters'
+        super(HeaterPhyng, self).__init__(name=name, model_type=model_type, stl_name=stl_name,
+                                          templates_dir=templates_dir, **kwargs)
         self._region = name
         self._fields = ['T']
         self._material = material

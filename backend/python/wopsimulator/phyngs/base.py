@@ -18,21 +18,21 @@ class Phyng(ABC):
     """
     type_name = 'phyng'
 
-    def __init__(self, name: str, case_dir: str, model_type: str, bg_region: str, url='', custom=False,
+    def __init__(self, name: str, case_dir: str, model_type: str, bg_region: str,
                  dimensions=(0, 0, 0), location=(0, 0, 0), rotation=(0, 0, 0),
-                 facing_zero=True, template=None, of_interface=None, **kwargs):
+                 facing_zero=True, stl_name='', templates_dir='',
+                 of_interface=None, **kwargs):
         """
         Phyng initialization function
         :param name: name of an phyng
         :param case_dir: case directory
         :param bg_region: background region name
-        :param url: phyng URL
-        :param custom: phyng was created from URL
         :param dimensions: dimensions [x, y, z]
         :param location: location coordinates [x, y, z]
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
         :param facing_zero: normal vector direction towards zero coordinates, used for model_type = 'surface'
-        :param template: template name
+        :param stl_name: STL geometry name
+        :param templates_dir: STL templates directory name
         :param of_interface: OpenFoam interface
         """
         self.name = name
@@ -46,59 +46,39 @@ class Phyng(ABC):
         self._region = bg_region
         self._fields = []
         self.snappy = None
-        self.custom = custom
-        if custom:
-            self._get_custom_stl()
+        if stl_name:
             model_type = 'stl'
-        elif template:
-            self._get_stl_from_template(template)
-        elif url:
-            model_type = 'stl'
-            self._get_stl_from_url(url)
+            self._get_stl(f'{stl_name}{"" if stl_name[-4:] == ".stl" else ".stl"}', templates_dir)
         else:
             self.path = ''
-        self.template = template.split('/')[-1] if template else ''
+        self.stl_name = stl_name
         self.model = Model(name, model_type, dimensions, location, rotation, facing_zero, self.path, self._case_dir)
 
-    def _get_stl_from_url(self, url):
-        """
-        Gets STL from a given URL
-        :param url: STL URL
-        """
-        self.path = f'{self._case_dir}/geometry/{self.name}.stl'
-        pattern = r'https://drive\.google\.com/file/d/([^/]+)(/view)?'
-        match = re.match(pattern, url)
-        if not match.group():
-            raise ConnectionError(f'Provided download URL ({url}) does not match pattern {pattern}')
-        url = f'https://drive.google.com/uc?id={match.group(1)}'
-        gdown.download(url, self.path, quiet=True)
-        if not os.path.exists(self.path):
-            raise FileNotFoundError(f'Custom STL was not loaded for phyng {self.name}')
-        with open(self.path, 'r') as f:
-            stl = f.read()
-            stl_match = re.match(r'^solid [^\s]*\s[\S\s]+endsolid [^\s]*$', stl)
-            if not stl_match.group():
-                raise OSError('Verify provided STL file for integrity')
-        self.custom = True
+    def _get_stl(self, stl_name: str, templates_dir: str):
+        success = self._get_custom_stl(stl_name)
+        if not success:
+            success = self._get_template_stl(stl_name, templates_dir)
+        if not success:
+            raise Exception(f'Geometry "{stl_name}" was neither uploaded nor is present in templates')
 
-    def _get_stl_from_template(self, template):
+    def _get_template_stl(self, stl_name, templates_dir):
         """
         Gets STL from a template
-        :param template: STL template name
+        :param stl_name: STL file template geometry name
         """
-        path = f'{os.path.dirname(os.path.abspath(__file__))}/../geometry/templates/{template}' \
-               f'{"" if template[-4:] == ".stl" else ".stl"}'
+        path = f'{os.path.dirname(os.path.abspath(__file__))}/../geometry/templates/{templates_dir}/{stl_name}'
         if not os.path.exists(path):
-            raise FileNotFoundError(f'Template {template} STL does not exist for phyng {self.name} ({path})')
+            return False
         self.path = os.path.abspath(path)
+        return True
 
-    def _get_custom_stl(self):
+    def _get_custom_stl(self, stl_name):
         """
-        Gets a custom (URL created) STL
+        Gets a custom (uploaded) STL
+        :param stl_name: uploaded STL file geometry name
         """
-        self.path = f'{self._case_dir}/geometry/{self.name}.stl'
-        if not os.path.exists(self.path):
-            raise FileNotFoundError(f'Custom STL was not loaded for phyng {self.name}')
+        self.path = f'{self._case_dir}/geometry/{stl_name}'
+        return os.path.exists(self.path)
 
     @abstractmethod
     def _add_initial_boundaries(self):
@@ -113,8 +93,7 @@ class Phyng(ABC):
             'dimensions': self.model.dimensions,
             'location': self.model.location,
             'rotation': self.model.rotation,
-            'template': self.template,
-            'custom': self.custom
+            'stl_name': self.stl_name
         }}
         return dump
 

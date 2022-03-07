@@ -6,6 +6,9 @@ from .exceptions import catch_error
 from wopsimulator.loader import save_case
 from wopsimulator.exceptions import PhyngNotFound
 
+from wopsimulator.variables import CONFIG_PHYNG_NAME_K, CONFIG_PHYNG_TYPE_K, CONFIG_PHYNG_DIMS_K, CONFIG_PHYNG_LOC_K, \
+    CONFIG_PHYNG_ROT_K, CONFIG_PHYNG_STL_K, CONFIG_PHYNG_MAT_K, CONFIG_PHYNG_FIELD_K
+
 
 class PhyngList(Resource):
     current_cases = None
@@ -16,11 +19,11 @@ class PhyngList(Resource):
         obj_list = []
         for obj in self.current_cases[case_name].get_phyngs().values():
             dump = obj.dump_settings()
-            if 'name' not in dump.keys():
+            if CONFIG_PHYNG_NAME_K not in dump.keys():
                 name = list(dump.keys())[0]
                 dump = list(dump.values())[0]
-                dump['name'] = name
-            dump['type'] = obj.type_name
+                dump[CONFIG_PHYNG_NAME_K] = name
+            dump[CONFIG_PHYNG_TYPE_K] = obj.type_name
             obj_list.append(dump)
         return obj_list
 
@@ -30,16 +33,14 @@ class Phyng(Resource):
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('name', type=str, help='Phyng name')
-        self.reqparse.add_argument('type', type=str, help='Phyng type')
-        self.reqparse.add_argument('url', type=str, help='Phyng STL url')
-        self.reqparse.add_argument('file', type=werkzeug.datastructures.FileStorage, location='files')
-        self.reqparse.add_argument('dimensions', type=list, help='Phyng dimensions', location='json')
-        self.reqparse.add_argument('location', type=list, help='Phyng location', location='json')
-        self.reqparse.add_argument('rotation', type=list, help='Phyng rotation', location='json')
-        self.reqparse.add_argument('template', type=str, help='Phyng template geometry')
-        self.reqparse.add_argument('material', type=str, help='Phyng material')
-        self.reqparse.add_argument('field', type=str, help='Sensor field')
+        self.reqparse.add_argument(CONFIG_PHYNG_NAME_K, type=str, help='Phyng name')
+        self.reqparse.add_argument(CONFIG_PHYNG_TYPE_K, type=str, help='Phyng type')
+        self.reqparse.add_argument(CONFIG_PHYNG_DIMS_K, type=list, help='Phyng dimensions', location='json')
+        self.reqparse.add_argument(CONFIG_PHYNG_LOC_K, type=list, help='Phyng location', location='json')
+        self.reqparse.add_argument(CONFIG_PHYNG_ROT_K, type=list, help='Phyng rotation', location='json')
+        self.reqparse.add_argument(CONFIG_PHYNG_STL_K, type=str, help='Phyng geometry STL name (uploaded or template)')
+        self.reqparse.add_argument(CONFIG_PHYNG_MAT_K, type=str, help='Phyng material')
+        self.reqparse.add_argument(CONFIG_PHYNG_FIELD_K, type=str, help='Sensor field')
         super(Phyng, self).__init__()
 
     @catch_error
@@ -52,16 +53,8 @@ class Phyng(Resource):
     @auto_load_case
     def post(self, case_name, phyng_name):
         args = self.reqparse.parse_args()
-        file = args['file']
-        if file and '.stl' in file.filename:
-            file.save(f'{self.current_cases[case_name].path}/geometry/{phyng_name}.stl')
-            self.current_cases[case_name].modify_phyng(phyng_name, {'custom': True})
-            save_case(case_name, self.current_cases[case_name])
-            return '', 200
-        self.current_cases[case_name].add_phyng(phyng_name, args['type'], url=args['url'], template=args['template'],
-                                                dimensions=args['dimensions'], location=args['location'],
-                                                rotation=args['rotation'], sns_field=args['field'],
-                                                material=args['material'])
+        params = {**args, CONFIG_PHYNG_NAME_K: phyng_name}
+        self.current_cases[case_name].add_phyng(**params)
         save_case(case_name, self.current_cases[case_name])
         return '', 201
 

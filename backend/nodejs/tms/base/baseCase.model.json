@@ -111,6 +111,14 @@
     "removePhyng": {
       "description": "Remove a Phyng from WoP simulation case",
       "type": "string"
+    },
+    "uploadSTL": {
+      "description": "Upload an ASCII STL geometry file",
+      "properties": {
+        "file": {
+          "type": "string"
+        }
+      }
     }
   }
 }

@@ -1,3 +1,5 @@
+import os
+import werkzeug.datastructures
 from flask_restful import Resource, reqparse
 
 from .case import auto_load_case
@@ -16,6 +18,7 @@ COMMAND_RUN = 'run'
 COMMAND_STOP = 'stop'
 COMMAND_PROCESS = 'postprocess'
 COMMAND_SIMULATION_TIME = 'time'
+COMMAND_UPLOAD_STL = 'uploadSTL'
 
 COMMANDS = {
     COMMAND_HELP: 'Returns this JSON',
@@ -25,7 +28,8 @@ COMMANDS = {
     COMMAND_RUN: 'Runs case',
     COMMAND_STOP: 'Stops case',
     COMMAND_PROCESS: 'Post-process case',
-    COMMAND_SIMULATION_TIME: 'Current real, simulation time of a case and their difference'
+    COMMAND_SIMULATION_TIME: 'Current real, simulation time of a case and their difference',
+    COMMAND_UPLOAD_STL: 'Upload STL geometry of a Phyng'
 }
 
 
@@ -36,6 +40,9 @@ class Command(Resource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('fields', type=list, help='Fields to post-process', location='json')
         self.reqparse.add_argument('region', type=str, help='Region to post-process')
+        self.reqparse.add_argument('file', type=werkzeug.datastructures.FileStorage, location='files',
+                                   help="Custom STL geometry")
+        self.reqparse.add_argument('stl_name', type=str, help='Custom STL geometry name')
         super(Command, self).__init__()
 
     @catch_error
@@ -75,4 +82,12 @@ class Command(Resource):
                     self.current_cases[case_name].run_reconstruct(all_regions=True)
                 else:
                     self.current_cases[case_name].run_reconstruct(region=args['region'], fields=args['fields'])
-        return '', 200
+        elif command == COMMAND_UPLOAD_STL:
+            args = self.reqparse.parse_args()
+            file = args['file']
+            if file and '.stl' in file.filename:
+                geometry_path = f'{self.current_cases[case_name].path}/geometry'
+                os.makedirs(geometry_path, exist_ok=True)
+                file.save(f'{geometry_path}/{file.filename}')
+                return '', 200
+        return 'Command not found', 404

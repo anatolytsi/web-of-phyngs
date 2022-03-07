@@ -14,9 +14,9 @@ from .phyngs.sensor import SensorPhyng
 from .phyngs.base import Phyng
 from .variables import (CHT_PHYNG_TYPES, CONFIG_BACKGROUND_K, CONFIG_WALLS_K, CONFIG_HEATERS_K, CONFIG_WINDOWS_K,
                         CONFIG_DOORS_K, CONFIG_SENSORS_K, CONFIG_PHYNG_DIMS_K, CONFIG_PHYNG_ROT_K,
-                        CONFIG_PHYNG_FIELD_K, CONFIG_PHYNG_LOC_K, CONFIG_PHYNG_TEMPLATE_K, CONFIG_PHYNG_CUSTOM_K,
-                        CONFIG_PHYNG_TEMPER_K, CONFIG_PHYNG_VEL_K, CONFIG_PHYNG_MAT_K, CONFIG_PHYNG_NAME_K,
-                        CONFIG_PHYNG_URL_K)
+                        CONFIG_PHYNG_FIELD_K, CONFIG_PHYNG_LOC_K, CONFIG_PHYNG_STL_K, CONFIG_PHYNG_TEMPER_K,
+                        CONFIG_PHYNG_VEL_K, CONFIG_PHYNG_MAT_K, CONFIG_PHYNG_NAME_K, CASE_DIR_K,
+                        CONFIG_PHYNG_REGION_K, CONFIG_PHYNG_TYPE_K, OF_INTERFACE_K, BG_REGION_K)
 
 
 logger = logging.getLogger('wop')
@@ -64,11 +64,6 @@ class ChtCase(OpenFoamCase):
                 if CONFIG_PHYNG_MAT_K in params and params[CONFIG_PHYNG_MAT_K] else phyng.material
             })
         return new_params
-
-    def _add_phyng_from_parameters(self, phyng_name, params: dict, custom: bool):
-        self.add_phyng(params[CONFIG_PHYNG_NAME_K], phyng_name, params[CONFIG_PHYNG_URL_K], custom,
-                       params[CONFIG_PHYNG_TEMPLATE_K], params[CONFIG_PHYNG_DIMS_K], params[CONFIG_PHYNG_LOC_K],
-                       params[CONFIG_PHYNG_ROT_K], params[CONFIG_PHYNG_MAT_K])
 
     def prepare_partitioned_mesh(self):
         super(ChtCase, self).prepare_partitioned_mesh()
@@ -137,27 +132,24 @@ class ChtCase(OpenFoamCase):
         # self.background = case_param[CONFIG_BACKGROUND_K]
         if CONFIG_WALLS_K in case_param and case_param[CONFIG_WALLS_K]:
             walls = case_param[CONFIG_WALLS_K]
-            self.add_phyng(name=walls[CONFIG_PHYNG_NAME_K], custom=walls[CONFIG_PHYNG_CUSTOM_K], phyng_type='walls',
-                           dimensions=walls[CONFIG_PHYNG_DIMS_K], location=walls[CONFIG_PHYNG_LOC_K],
-                           template=walls[CONFIG_PHYNG_TEMPLATE_K])
+            params = {**walls, CONFIG_PHYNG_TYPE_K: WallsPhyng.type_name}
+            self.add_phyng(**params)
         if CONFIG_HEATERS_K in case_param and case_param[CONFIG_HEATERS_K]:
             for name, heater in case_param[CONFIG_HEATERS_K].items():
-                self.add_phyng(name, 'heater', custom=heater[CONFIG_PHYNG_CUSTOM_K],
-                               dimensions=heater[CONFIG_PHYNG_DIMS_K], location=heater[CONFIG_PHYNG_LOC_K],
-                               template=heater[CONFIG_PHYNG_TEMPLATE_K], material=heater[CONFIG_PHYNG_MAT_K])
+                params = {**heater, CONFIG_PHYNG_NAME_K: name, CONFIG_PHYNG_TYPE_K: HeaterPhyng.type_name}
+                self.add_phyng(**params)
         if CONFIG_WINDOWS_K in case_param and case_param[CONFIG_WINDOWS_K]:
             for name, window in case_param[CONFIG_WINDOWS_K].items():
-                self.add_phyng(name, 'window', custom=window[CONFIG_PHYNG_CUSTOM_K],
-                               dimensions=window[CONFIG_PHYNG_DIMS_K], location=window[CONFIG_PHYNG_LOC_K],
-                               template=window[CONFIG_PHYNG_TEMPLATE_K])
+                params = {**window, CONFIG_PHYNG_NAME_K: name, CONFIG_PHYNG_TYPE_K: WindowPhyng.type_name}
+                self.add_phyng(**params)
         if CONFIG_DOORS_K in case_param and case_param[CONFIG_DOORS_K]:
             for name, door in case_param[CONFIG_DOORS_K].items():
-                self.add_phyng(name, 'door', custom=door[CONFIG_PHYNG_CUSTOM_K], dimensions=door[CONFIG_PHYNG_DIMS_K],
-                               location=door[CONFIG_PHYNG_LOC_K], template=door[CONFIG_PHYNG_TEMPLATE_K])
+                params = {**door, CONFIG_PHYNG_NAME_K: name, CONFIG_PHYNG_TYPE_K: DoorPhyng.type_name}
+                self.add_phyng(**params)
         if CONFIG_SENSORS_K in case_param and case_param[CONFIG_SENSORS_K]:
             for name, sensor in case_param[CONFIG_SENSORS_K].items():
-                self.add_phyng(name, 'sensor', location=sensor[CONFIG_PHYNG_LOC_K],
-                               sns_field=sensor[CONFIG_PHYNG_FIELD_K])
+                params = {**sensor, CONFIG_PHYNG_NAME_K: name, CONFIG_PHYNG_TYPE_K: SensorPhyng.type_name}
+                self.add_phyng(**params)
 
     def setup(self):
         """Setups CHT case"""
@@ -174,13 +166,11 @@ class ChtCase(OpenFoamCase):
         self.bind_boundary_conditions()
         self.initialized = True
 
-    def add_phyng(self, name: str, phyng_type: str, url: str = '', custom=False, template: str = '',
-                  dimensions: List[float] = (0, 0, 0), location: List[float] = (0, 0, 0),
-                  rotation: List[float] = (0, 0, 0), material: str = None, sns_field: str = None):
+    def add_phyng(self, type: str, **kwargs):
         """
         Adds Phyng to a CHT case
         :param name: name of the phyng
-        :param phyng_type: type of a phyng, one of: 'heater', 'walls', 'door', 'window'
+        :param type: type of a phyng, one of: 'heater', 'walls', 'door', 'window'
         :param url: phyng URL
         :param custom: phyng was created from URL
         :param template: phyng template
@@ -191,42 +181,44 @@ class ChtCase(OpenFoamCase):
         :param material: material of an phyng
         """
         # TODO: check if name contains spaces
-        if phyng_type == HeaterPhyng.type_name:
-            phyng = HeaterPhyng(name, self.path, self.background_name, url, custom, dimensions=dimensions,
-                                location=location, rotation=rotation, template=template, of_interface=self,
-                                material=material)
+        params = {
+            **kwargs,
+            OF_INTERFACE_K: self,
+            BG_REGION_K: self.background_name,
+            CASE_DIR_K: self.path,
+            CONFIG_PHYNG_REGION_K: self.background_name,
+        }
+        if type == HeaterPhyng.type_name:
+            phyng = HeaterPhyng(**params)
             phyng.bind_snappy(self.snappy_dict, 'cell_zone', refinement_level=2)
-            self.heaters.update({name: phyng})
-        elif phyng_type == WindowPhyng.type_name:
-            phyng = WindowPhyng(name, self.path, self.background_name, url, custom, dimensions=dimensions,
-                                location=location, rotation=rotation, template=template, of_interface=self)
+            self.heaters.update({phyng.name: phyng})
+        elif type == WindowPhyng.type_name:
+            phyng = WindowPhyng(**params)
             phyng.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
             self.windows.update({phyng.name: phyng})
             if self.walls:
                 self.walls.model.geometry.cut_surface(phyng.model.geometry)
-        elif phyng_type == DoorPhyng.type_name:
-            phyng = DoorPhyng(name, self.path, self.background_name, url, custom, dimensions=dimensions,
-                              location=location, rotation=rotation, template=template, of_interface=self)
+        elif type == DoorPhyng.type_name:
+            phyng = DoorPhyng(**params)
             phyng.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
             self.doors.update({phyng.name: phyng})
             if self.walls:
                 self.walls.model.geometry.cut_surface(phyng.model.geometry)
-        elif phyng_type == WallsPhyng.type_name:
-            phyng = WallsPhyng(name, self.path, self.background_name, url, custom, dimensions=dimensions,
-                               location=location, rotation=rotation, template=template, of_interface=self)
+        elif type == WallsPhyng.type_name:
+            phyng = WallsPhyng(**params)
             phyng.bind_snappy(self.snappy_dict, 'region', 'wall')
             self.walls = phyng
             for window in self.windows.values():
                 phyng.model.geometry.cut_surface(window.model.geometry)
             for door in self.windows.values():
                 phyng.model.geometry.cut_surface(door.model.geometry)
-        elif phyng_type == SensorPhyng.type_name:
-            sensor = SensorPhyng(name, self.path, sns_field, self.background_name, location)
+        elif type == SensorPhyng.type_name:
+            sensor = SensorPhyng(**params)
             self.sensors.update({sensor.name: sensor})
             self.initialized = False
             return
         else:
-            raise WrongPhyngType(f'Wrong phyng type {phyng_type}! Possible types are {CHT_PHYNG_TYPES}')
+            raise WrongPhyngType(f'Wrong phyng type {type}! Possible types are {CHT_PHYNG_TYPES}')
         self.initialized = False
         self.phyngs.update({phyng.name: phyng})
 

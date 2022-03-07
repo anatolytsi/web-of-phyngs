@@ -40,26 +40,11 @@
       "readOnly": false,
       "writeOnly": false
     },
-    "custom": {
-      "description": "Phyng created from custom STL",
-      "type": "boolean",
-      "readOnly": true,
-      "writeOnly": false
-    },
-    "template": {
-      "description": "Phyng custom template",
+    "stlName": {
+      "description": "Phyng geometry STL name",
       "type": "string",
       "readOnly": false,
       "writeOnly": false
-    }
-  },
-  "actions": {
-    "uploadSTL": {
-      "properties": {
-        "file": {
-          "type": "string"
-        }
-      }
     }
   }
 }

@@ -12,9 +12,8 @@ from .openfoam.common.filehandling import get_latest_time, get_latest_time_paral
 from .runtime_monitor import RunTimeMonitor
 from .variables import CONFIG_TYPE_K, CONFIG_PATH_K, CONFIG_BLOCKING_K, CONFIG_PARALLEL_K, \
     CONFIG_CORES_K, CONFIG_INITIALIZED_K, CONFIG_MESH_QUALITY_K, CONFIG_CLEAN_LIMIT_K, CONFIG_PHYNG_DIMS_K, \
-    CONFIG_PHYNG_ROT_K, CONFIG_PHYNG_LOC_K, CONFIG_PHYNG_TEMPLATE_K, CONFIG_PHYNG_URL_K, CONFIG_PHYNG_FIELD_K, \
-    CONFIG_PHYNG_NAME_K, \
-    CONFIG_STARTED_TIMESTAMP_K, CONFIG_REALTIME_K, CONFIG_END_TIME_K, CONFIG_PHYNG_CUSTOM_K
+    CONFIG_PHYNG_ROT_K, CONFIG_PHYNG_LOC_K, CONFIG_PHYNG_STL_K, CONFIG_PHYNG_FIELD_K, CONFIG_PHYNG_NAME_K, \
+    CONFIG_STARTED_TIMESTAMP_K, CONFIG_REALTIME_K, CONFIG_END_TIME_K, CONFIG_PHYNG_TYPE_K
 from .openfoam.interface import OpenFoamInterface
 from .openfoam.system.snappyhexmesh import SnappyRegion, SnappyPartitionedMesh, SnappyCellZoneMesh
 
@@ -169,20 +168,9 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         pass
 
     @abstractmethod
-    def add_phyng(self, name: str, phyng_type: str, url: str = '', custom=False, template: str = '',
-                  dimensions: List[float] = (0, 0, 0), location: List[float] = (0, 0, 0),
-                  rotation: List[float] = (0, 0, 0), sns_field: str = None, **kwargs):
+    def add_phyng(self, type: str, **kwargs):
         """
         Adds WoP phyng/sensor to a case
-        :param name: name of the phyng
-        :param phyng_type: type of an phyng, case specific
-        :param url: phyng URL
-        :param custom: phyng was created from URL
-        :param template: phyng template
-        :param dimensions: phyng dimensions
-        :param location: phyng location
-        :param rotation: phyng rotation
-        :param sns_field: field to monitor for sensor
         """
         pass
 
@@ -209,15 +197,15 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             CONFIG_PHYNG_NAME_K: sensor.name,
             CONFIG_PHYNG_LOC_K: params[CONFIG_PHYNG_LOC_K] if params[CONFIG_PHYNG_LOC_K] else sensor.location,
             CONFIG_PHYNG_FIELD_K: params[CONFIG_PHYNG_FIELD_K] if params[CONFIG_PHYNG_FIELD_K] else sensor.field,
+            CONFIG_PHYNG_TYPE_K: sensor.type_name
         }
         self.remove_phyng(sensor.name)
-        self.add_phyng(new_params[CONFIG_PHYNG_NAME_K], sensor.type_name, location=new_params[CONFIG_PHYNG_LOC_K],
-                       sns_field=new_params[CONFIG_PHYNG_FIELD_K])
+        self.add_phyng(**new_params)
 
     @staticmethod
     def _get_new_params(phyng: Phyng, params: dict):
         """
-        Gets new parameters of an phyng according to present key - values
+        Gets new parameters of a phyng according to present key - values
         :param phyng: WoP phyng
         :param params: new parameters
         :return: new parameters combined with old dict
@@ -229,20 +217,17 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             if CONFIG_PHYNG_LOC_K in params and params[CONFIG_PHYNG_LOC_K] else phyng.model.location,
             CONFIG_PHYNG_ROT_K: params[CONFIG_PHYNG_ROT_K]
             if CONFIG_PHYNG_ROT_K in params and params[CONFIG_PHYNG_ROT_K] else phyng.model.rotation,
-            CONFIG_PHYNG_TEMPLATE_K: phyng.template,
-            CONFIG_PHYNG_URL_K: None
+            CONFIG_PHYNG_STL_K: phyng.stl_name
         }
 
-    def _add_phyng_from_parameters(self, phyng_name, params: dict, custom: bool):
+    def _add_phyng_from_parameters(self, phyng_name, params: dict):
         """
         Adds phyng from parameters
         :param phyng_name: phyng name
         :param params: phyng parameters
-        :param custom: is custom flag
         """
-        self.add_phyng(params[CONFIG_PHYNG_NAME_K], phyng_name, params[CONFIG_PHYNG_URL_K], custom,
-                       params[CONFIG_PHYNG_TEMPLATE_K],
-                       params[CONFIG_PHYNG_DIMS_K], params[CONFIG_PHYNG_LOC_K], params[CONFIG_PHYNG_ROT_K])
+        params = {**params, CONFIG_PHYNG_NAME_K: phyng_name}
+        self.add_phyng(**params)
 
     def _reinit_phyng_from_parameters(self, phyng: Phyng, params: dict):
         """
@@ -251,27 +236,15 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :param params: new parameters
         """
         new_params = self._get_new_params(phyng, params)
-        custom = phyng.custom
         if CONFIG_PHYNG_DIMS_K in params and params[CONFIG_PHYNG_DIMS_K]:
             new_params[CONFIG_PHYNG_DIMS_K] = params[CONFIG_PHYNG_DIMS_K]
-            new_params[CONFIG_PHYNG_TEMPLATE_K] = ''
-            custom = False
-        elif CONFIG_PHYNG_TEMPLATE_K in params and params[CONFIG_PHYNG_TEMPLATE_K]:
+            new_params[CONFIG_PHYNG_STL_K] = ''
+        elif CONFIG_PHYNG_STL_K in params and params[CONFIG_PHYNG_STL_K]:
             new_params[CONFIG_PHYNG_DIMS_K] = [0, 0, 0]
-            new_params[CONFIG_PHYNG_TEMPLATE_K] = params[CONFIG_PHYNG_TEMPLATE_K]
-            custom = False
-        elif CONFIG_PHYNG_CUSTOM_K in params and params[CONFIG_PHYNG_CUSTOM_K]:
-            new_params[CONFIG_PHYNG_DIMS_K] = [0, 0, 0]
-            new_params[CONFIG_PHYNG_TEMPLATE_K] = ''
-            custom = params[CONFIG_PHYNG_CUSTOM_K]
-        elif CONFIG_PHYNG_URL_K in params and params[CONFIG_PHYNG_URL_K]:
-            new_params[CONFIG_PHYNG_DIMS_K] = [0, 0, 0]
-            new_params[CONFIG_PHYNG_TEMPLATE_K] = ''
-            new_params[CONFIG_PHYNG_URL_K] = params[CONFIG_PHYNG_URL_K]
-            custom = True
+            new_params[CONFIG_PHYNG_STL_K] = params[CONFIG_PHYNG_STL_K]
         phyng_name = phyng.name
         self.remove_phyng(phyng.name)
-        self._add_phyng_from_parameters(phyng_name, new_params, custom)
+        self._add_phyng_from_parameters(phyng_name, new_params)
 
     @staticmethod
     def _get_model_param_set():
@@ -279,9 +252,13 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Gets a set that defines model parameters
         :return: model parameters set
         """
-        return {CONFIG_PHYNG_DIMS_K, CONFIG_PHYNG_ROT_K, CONFIG_PHYNG_LOC_K, CONFIG_PHYNG_TEMPLATE_K,
-                CONFIG_PHYNG_URL_K,
-                CONFIG_PHYNG_FIELD_K, CONFIG_PHYNG_CUSTOM_K}
+        return {
+            CONFIG_PHYNG_DIMS_K,
+            CONFIG_PHYNG_ROT_K,
+            CONFIG_PHYNG_LOC_K,
+            CONFIG_PHYNG_STL_K,
+            CONFIG_PHYNG_FIELD_K
+        }
 
     def modify_phyng(self, phyng_name: str, params: dict):
         """
