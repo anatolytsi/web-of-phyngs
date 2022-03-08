@@ -37,6 +37,8 @@ class AcPhyng(Phyng):
         self.snappy_out = ''
         self.model_type_in = 'surface'
         self.model_type_out = 'surface'
+        self.path_in = ''
+        self.path_out = ''
 
         model_type = 'box'
         templates_dir = 'acs'
