@@ -179,3 +179,56 @@ export class OpenableProperties {
         });
     }
 }
+
+/**
+ * Actuator rotatable properties.
+ *
+ * This class can be extended by an Actuator class to inherit rotatable properties.
+ * @class RotatableProperties
+ */
+export class RotatableProperties {
+    /**
+     * Get angle state of an actuator.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @return {Promise<number>} Angle of an actuator.
+     */
+    public async getAngle(couplingUrl: AnyUri): Promise<boolean> {
+        let response = await reqGet(`${couplingUrl}/angle`);
+        return response.data;
+    }
+
+    /**
+     * Set angle of an actuator.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @param {number} angle actuator angle.
+     * @return {Promise<any>} Server response.
+     */
+    public async setOpen(couplingUrl: AnyUri, angle: number): Promise<any> {
+        let response = await reqPost(`${couplingUrl}/angle`, {value: angle});
+        return response.data
+    }
+
+    /**
+     * Sets Web of Things actuator angle get handler.
+     * @param {WoT.ExposedThing} thing WoT exposed thing.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @protected
+     */
+    protected setAngleGetHandler(thing: WoT.ExposedThing, couplingUrl: AnyUri): void {
+        thing.setPropertyReadHandler('angle', async () => {
+            return await this.getAngle(couplingUrl);
+        });
+    }
+
+    /**
+     * Sets Web of Things actuator angle write handler.
+     * @param {WoT.ExposedThing} thing WoT exposed thing.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @protected
+     */
+    protected setAngleSetHandler(thing: WoT.ExposedThing, couplingUrl: AnyUri): void {
+        thing.setPropertyWriteHandler('angle', async (angle) => {
+            await this.setOpen(couplingUrl, angle);
+        });
+    }
+}

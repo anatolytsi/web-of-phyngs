@@ -44,6 +44,10 @@ interface PhyngPropsBase {
     type: string
     /** Phyng location. */
     location?: Coordinates
+    /** Phyng in location. */
+    locationIn?: Coordinates
+    /** Phyng out location. */
+    locationOut?: Coordinates
 }
 
 /**
@@ -51,10 +55,14 @@ interface PhyngPropsBase {
  * actuators created by geometry and template.
  */
 export interface ActuatorPropsBase extends PhyngPropsBase {
-    /** Custom actuator STL URL */
+    /** Custom actuator STL URL TODO: remove this */
     url?: AnyUri
     /** Actuator geometry rotation. */
     rotation?: Vector
+    /** Actuator in geometry rotation. */
+    rotationIn?: Vector
+    /** Actuator out geometry rotation. */
+    rotationOut?: Vector
 }
 
 /**
@@ -64,6 +72,10 @@ export interface ActuatorPropsBase extends PhyngPropsBase {
 export interface ActuatorPropsCreated extends ActuatorPropsBase {
     /** Actuator geometry dimensions. */
     dimensions: Size
+    /** Actuator in geometry dimensions. */
+    dimensionsIn?: Size
+    /** Actuator out geometry dimensions. */
+    dimensionsOut?: Size
 }
 
 /**
@@ -73,6 +85,10 @@ export interface ActuatorPropsCreated extends ActuatorPropsBase {
 export interface ActuatorPropsStl extends ActuatorPropsBase {
     /** Actuator geometry STL name. */
     stlName: string
+    /** Actuator in geometry STL name. */
+    stlNameIn?: string
+    /** Actuator out geometry STL name. */
+    stlNameOut?: string
 }
 
 /**
