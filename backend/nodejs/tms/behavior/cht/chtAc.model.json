@@ -5,7 +5,7 @@
   "links" : [
     {
       "rel": "tm:extends",
-      "href": "baseActuator.model.json",
+      "href": "baseActuatorInOut.model.json",
       "type": "application/td+json"
     },
     {
