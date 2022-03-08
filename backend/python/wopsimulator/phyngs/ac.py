@@ -33,8 +33,6 @@ class AcPhyng(Phyng):
 
         self.name_in = f'{name}_in'
         self.name_out = f'{name}_out'
-        self.snappy_in = ''
-        self.snappy_out = ''
         self.model_type_in = 'surface'
         self.model_type_out = 'surface'
         self.path_in = ''
@@ -122,8 +120,9 @@ class AcPhyng(Phyng):
         :param refinement_level: mesh refinement level
         """
         super(AcPhyng, self).bind_snappy(snappy_dict, snappy_type, 'wall', refinement_level)
-        self.snappy_in = SnappyRegion(self.name, region_type, refinement_level)
-        self.snappy_out = SnappyRegion(self.name, region_type, refinement_level)
+        snappy_in = SnappyRegion(self.name, region_type, refinement_level)
+        snappy_out = SnappyRegion(self.name, region_type, refinement_level)
+        self.snappy = [self.snappy, snappy_in, snappy_out]
 
     def destroy(self):
         raise NotImplementedError('Destroying of an AC is not yet implemented')

@@ -311,7 +311,13 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :param partition_name: partitioned mesh name
         """
         logger.debug(f'Partitioning mesh {partition_name}')
-        regions = [phyng.snappy for phyng in self.phyngs.values() if type(phyng.snappy) == SnappyRegion]
+        regions = []
+        for phyng in self.phyngs.values():
+            if isinstance(phyng.snappy, list):
+                snappies = [snappy for snappy in phyng.snappy if type(snappy) == SnappyRegion]
+                regions.extend(snappies)
+            elif type(phyng.snappy) == SnappyRegion:
+                regions.append(phyng.snappy)
         region_paths = [f'{self.path}/constant/triSurface/{region.name}.stl' for region in regions]
         combine_stls(f'{self.path}/constant/triSurface/{partition_name}.stl', region_paths)
         self._partitioned_mesh = SnappyPartitionedMesh(partition_name, f'{partition_name}.stl')
@@ -324,7 +330,13 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         """
         logger.debug('Preparing partioned mesh')
         # Get all partitions
-        partitions = [phyng.snappy for phyng in self.phyngs.values() if type(phyng.snappy) == SnappyCellZoneMesh]
+        partitions = []
+        for phyng in self.phyngs.values():
+            if isinstance(phyng.snappy, list):
+                snappies = [snappy for snappy in phyng.snappy if type(snappy) == SnappyCellZoneMesh]
+                partitions.extend(snappies)
+            elif type(phyng.snappy) == SnappyCellZoneMesh:
+                partitions.append(phyng.snappy)
         partitions.insert(0, self._partitioned_mesh)
         for partition in partitions:
             logger.debug(f'Coupling partitions {partition.name} material')
