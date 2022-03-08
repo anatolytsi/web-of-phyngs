@@ -73,6 +73,11 @@ class AcPhyng(Phyng):
             self.path_out,
             self._case_dir
         )
+
+        if self.model_type != 'stl':
+            self.model.geometry.cut_surface(self.model_in)
+            self.model.geometry.cut_surface(self.model_out)
+
         self._region = name
         self._fields = ['all']
 
