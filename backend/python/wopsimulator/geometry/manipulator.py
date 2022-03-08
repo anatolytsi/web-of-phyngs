@@ -370,10 +370,8 @@ class Model:
         # TODO: split this ifs into separate method for code readability
         if self.model_type == self._surface_type:
             logger.info(f'Creating {self.name} surface')
-            if all(self.dimensions):
-                raise ValueError(f'Model type {self._surface_type} must be 2D. Check your dimensions')
-            elif len([dim for dim in self.dimensions if dim]) <= 1:
-                raise ValueError(f'Model type {self._surface_type} must be 2D. Check your dimensions')
+            if all(self.dimensions) or len([dim for dim in self.dimensions if dim]) <= 1:
+                raise ValueError(f'Model type {self._surface_type} must be 2D. Incorrect dimensions {self.dimensions}')
             else:
                 d = self.dimensions
                 l = self.location
