@@ -298,9 +298,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      */
     public async addPhyng(pd: PhysicalDescription): Promise<void> {
         this.validatePd(pd);
-        let data: any = {...pd.phyProperties}
-        // @ts-ignore
-        if (pd.phyProperties.stlName) data['stl_name'] = pd.phyProperties.stlName;
+        let data: any = this.getDataFromPd(pd);
         let response = await reqPost(
             `${this.couplingUrl}/phyng/${pd.title}`,
             data
@@ -334,6 +332,25 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
             }
         }
         return phyngs;
+    }
+
+    /**
+     * Gets Phyng data from PD
+     * @param {PhysicalDescription} pd - Phyng Description
+     * @protected
+     */
+    protected getDataFromPd(pd: PhysicalDescription): any {
+        let data: any = {...pd.phyProperties}
+        if ('stlName' in pd.phyProperties) data['stl_name'] = pd.phyProperties.stlName;
+        if ('dimensionsIn' in pd.phyProperties) data['dimensions_in'] = pd.phyProperties.dimensionsIn;
+        if ('locationIn' in pd.phyProperties) data['location_in'] = pd.phyProperties.locationIn;
+        if ('rotationIn' in pd.phyProperties) data['rotation_in'] = pd.phyProperties.rotationIn;
+        if ('stlNameIn' in pd.phyProperties) data['stl_name_in'] = pd.phyProperties.stlNameIn;
+        if ('dimensionsOut' in pd.phyProperties) data['dimensions_out'] = pd.phyProperties.dimensionsOut;
+        if ('locationOut' in pd.phyProperties) data['location_out'] = pd.phyProperties.locationOut;
+        if ('rotationOut' in pd.phyProperties) data['rotation_out'] = pd.phyProperties.rotationOut;
+        if ('stlNameOut' in pd.phyProperties) data['stl_name_out'] = pd.phyProperties.stlNameOut;
+        return data;
     }
 
     /**
