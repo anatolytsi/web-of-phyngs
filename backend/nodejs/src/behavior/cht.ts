@@ -438,6 +438,7 @@ const chtObjectConstructors: { [type: string]: Function } = {
     walls: (host: string, wot: WoT.WoT, caseName: string, props: ActuatorProps) => new Walls(host, wot, caseName, props),
     window: (host: string, wot: WoT.WoT, caseName: string, props: ActuatorProps) => new Window(host, wot, caseName, props),
     door: (host: string, wot: WoT.WoT, caseName: string, props: ActuatorProps) => new Door(host, wot, caseName, props),
+    ac: (host: string, wot: WoT.WoT, caseName: string, props: ActuatorProps) => new AC(host, wot, caseName, props),
     sensor: (host: string, wot: WoT.WoT, caseName: string, props: SensorProps) => newSensor(host, wot, caseName, props)
 };
 
