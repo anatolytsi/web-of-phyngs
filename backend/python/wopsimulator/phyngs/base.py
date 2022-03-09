@@ -184,9 +184,10 @@ class Phyng(ABC):
             self._of_interface.stop()
             if self._of_interface.parallel:
                 if self._fields == 'all':
-                    self._of_interface.run_reconstruct(latest_time=True, region=self._region)
+                    self._of_interface.run_reconstruct(latest_time=True, region=self._region, waiting=True)
                 else:
-                    self._of_interface.run_reconstruct(latest_time=True, region=self._region, fields=self._fields)
+                    self._of_interface.run_reconstruct(latest_time=True, region=self._region,
+                                                       fields=self._fields, waiting=True)
         setattr(self, key, value)
         if case_was_stopped:
             self._of_interface.run()
