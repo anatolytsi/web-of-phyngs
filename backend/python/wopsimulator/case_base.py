@@ -441,6 +441,8 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         self.stop()
         self.start_time = 0
         super(OpenFoamCase, self).clean_case()
+        for phyng in self.phyngs.values():
+            phyng.reload_parameters()
 
     def run(self):
         """
