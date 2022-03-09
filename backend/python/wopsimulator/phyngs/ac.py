@@ -125,8 +125,8 @@ class AcPhyng(Phyng):
         :param refinement_level: mesh refinement level
         """
         super(AcPhyng, self).bind_snappy(snappy_dict, snappy_type, 'wall', refinement_level)
-        snappy_in = SnappyRegion(self.name, region_type, refinement_level)
-        snappy_out = SnappyRegion(self.name, region_type, refinement_level)
+        snappy_in = SnappyRegion(self.name_in, region_type, refinement_level)
+        snappy_out = SnappyRegion(self.name_out, region_type, refinement_level)
         self.snappy = [self.snappy, snappy_in, snappy_out]
 
     def destroy(self):
