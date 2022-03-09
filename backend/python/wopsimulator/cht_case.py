@@ -219,7 +219,7 @@ class ChtCase(OpenFoamCase):
                 phyng.model.geometry.cut_surface(door.model.geometry)
         elif type == AcPhyng.type_name:
             phyng = AcPhyng(**params)
-            phyng.bind_snappy(self.snappy_dict, 'region', 'wall')
+            phyng.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
             self.acs.update({phyng.name: phyng})
         elif type == SensorPhyng.type_name:
             sensor = SensorPhyng(**params)
