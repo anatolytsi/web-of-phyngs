@@ -57,7 +57,8 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         """
         logger.info('Setting up initialized case')
         try:
-            self.run_reconstruct(all_regions=True, latest_time=True)
+            if self.parallel:
+                self.run_reconstruct(all_regions=True, latest_time=True)
         except Exception:
             pass
         self.extract_boundary_conditions()
