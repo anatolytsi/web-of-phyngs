@@ -34,6 +34,7 @@ class AcPhyng(Phyng):
         self._velocity_out = [0.001, 0, -0.001]
         self._angle_out = 45
         self._temperature = 293.15
+        self._enabled = False
 
         self.name_in = f'{name}_in'
         self.name_out = f'{name}_out'
@@ -41,6 +42,8 @@ class AcPhyng(Phyng):
         self.model_type_out = 'surface'
         self.path_in = ''
         self.path_out = ''
+        self.stl_name_in = ''
+        self.stl_name_out = ''
 
         model_type = 'box'
         templates_dir = 'acs'
@@ -96,14 +99,18 @@ class AcPhyng(Phyng):
             'location': self.model.location,
             'rotation': self.model.rotation,
             'stl_name': self.stl_name,
-            'dimensions_in': self.model.dimensions_in,
-            'location_in': self.model.location_in,
-            'rotation_in': self.model.rotation_in,
-            'stl_name_in': self.stl_name_out,
-            'dimensions_out': self.model.dimensions_out,
-            'location_out': self.model.location_out,
-            'rotation_out': self.model.rotation_out,
+            'dimensions_in': self.model_in.dimensions,
+            'location_in': self.model_in.location,
+            'rotation_in': self.model_in.rotation,
+            'stl_name_in': self.stl_name_in,
+            'dimensions_out': self.model_out.dimensions,
+            'location_out': self.model_out.location,
+            'rotation_out': self.model_out.rotation,
             'stl_name_out': self.stl_name_out,
+            'enabled': self.enabled,
+            'velocity': self.velocity,
+            'temperature': self.temperature,
+            'angle': self.angle,
         }}
         return dump
 
@@ -139,17 +146,49 @@ class AcPhyng(Phyng):
         raise NotImplementedError('Removal of an AC is not yet implemented')
 
     @property
+    def enabled(self):
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, value):
+        if self._snappy_dict is None or self._boundary_conditions is None:
+            return
+        latest_result = get_latest_time(self._case_dir)
+        value = value == 'True'
+        try:
+            if value:
+                set_boundary_to_outlet(self.name_in, self._boundary_conditions, self._velocity_in, self._temperature,
+                                       latest_result,
+                                       bg_name=self._bg_region, of_interface=self._of_interface)
+                set_boundary_to_inlet(self.name_out, self._boundary_conditions, self._velocity_out, self._temperature,
+                                      latest_result,
+                                      bg_name=self._bg_region, of_interface=self._of_interface)
+            else:
+                set_boundary_to_wall(self.name_in, self._boundary_conditions, self._temperature, latest_result,
+                                     bg_name=self._bg_region, of_interface=self._of_interface)
+                set_boundary_to_wall(self.name_out, self._boundary_conditions, self._temperature, latest_result,
+                                     bg_name=self._bg_region, of_interface=self._of_interface)
+                self._velocity_in = [0, 0, -0.01]
+                self._velocity_out = [0.001, 0, -0.001]
+                self._angle_out = 45
+                self._temperature = 293.15
+        except Exception as e:
+            raise PhyngSetValueFailed(e)
+        self._enabled = value
+
+    @property
     def temperature(self):
         return self._temperature
 
     @temperature.setter
     def temperature(self, value):
         self._temperature = float(value)
-        if self._snappy_dict is None or self._boundary_conditions is None:
+        if self._snappy_dict is None or self._boundary_conditions is None or not self._enabled:
             return
         latest_result = get_latest_time(self._case_dir)
         try:
             self._boundary_conditions['T'].update_time(latest_result)
+            self._boundary_conditions['T'][self.name_in].value = self._temperature
             self._boundary_conditions['T'][self.name_out].value = self._temperature
         except Exception as e:
             raise PhyngSetValueFailed(e)
@@ -172,7 +211,7 @@ class AcPhyng(Phyng):
         else:
             vel_x = vel_side
         self._velocity_out = [vel_x, vel_y, vel_z]
-        if self._snappy_dict is None or self._boundary_conditions is None:
+        if self._snappy_dict is None or self._boundary_conditions is None or not self._enabled:
             return
         latest_result = get_latest_time(self._case_dir)
         try:
@@ -190,7 +229,11 @@ class AcPhyng(Phyng):
 
     @angle.setter
     def angle(self, value):
+        value = float(value)
         if value > 45 or value < -45:
             raise PhyngSetValueFailed(f'Angle can only be between -45 and 45 degrees')
         self._angle_out = value
         self.velocity = self.velocity
+
+    def reload_parameters(self):
+        self.enabled = self._enabled

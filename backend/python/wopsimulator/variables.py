@@ -66,6 +66,8 @@ CONFIG_PHYNG_LOC_K = 'location'
 CONFIG_PHYNG_STL_K = 'stl_name'
 CONFIG_PHYNG_TEMPER_K = 'temperature'
 CONFIG_PHYNG_VEL_K = 'velocity'
+CONFIG_PHYNG_EN_K = 'enabled'
+CONFIG_PHYNG_ANGLE_K = 'angle'
 
 # Specific cases data
 CHT_PHYNG_TYPES = [

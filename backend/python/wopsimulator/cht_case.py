@@ -16,7 +16,7 @@ from .phyngs.base import Phyng
 from .variables import (CHT_PHYNG_TYPES, CONFIG_BACKGROUND_K, CONFIG_WALLS_K, CONFIG_HEATERS_K, CONFIG_WINDOWS_K,
                         CONFIG_DOORS_K, CONFIG_SENSORS_K, CONFIG_PHYNG_TEMPER_K, CONFIG_PHYNG_VEL_K, CONFIG_PHYNG_MAT_K,
                         CONFIG_PHYNG_NAME_K, CASE_DIR_K, CONFIG_PHYNG_REGION_K, CONFIG_PHYNG_TYPE_K, OF_INTERFACE_K,
-                        BG_REGION_K, CONFIG_ACS_K)
+                        BG_REGION_K, CONFIG_ACS_K, CONFIG_PHYNG_EN_K, CONFIG_PHYNG_ANGLE_K)
 
 
 logger = logging.getLogger('wop')
@@ -93,6 +93,7 @@ class ChtCase(OpenFoamCase):
         config[CONFIG_DOORS_K] = {}
         config[CONFIG_SENSORS_K] = {}
         config[CONFIG_WALLS_K] = {}
+        config[CONFIG_ACS_K] = {}
         if self.walls:
             config[CONFIG_WALLS_K] = self.walls.dump_settings()
         for name, heater in self.heaters.items():
@@ -101,6 +102,8 @@ class ChtCase(OpenFoamCase):
             config[CONFIG_WINDOWS_K].update(window.dump_settings())
         for name, door in self.doors.items():
             config[CONFIG_DOORS_K].update(door.dump_settings())
+        for name, ac in self.acs.items():
+            config[CONFIG_ACS_K].update(ac.dump_settings())
         for name, sensor in self.sensors.items():
             config[CONFIG_SENSORS_K].update(sensor.dump_settings())
         return config
@@ -123,6 +126,12 @@ class ChtCase(OpenFoamCase):
                 self.doors[name].temperature = door[CONFIG_PHYNG_TEMPER_K]
                 self.doors[name].is_open = any(door[CONFIG_PHYNG_VEL_K])
                 self.doors[name].velocity = door[CONFIG_PHYNG_VEL_K]
+        if CONFIG_ACS_K in case_param and case_param[CONFIG_ACS_K]:
+            for name, ac in case_param[CONFIG_ACS_K].items():
+                self.acs[name].temperature = ac[CONFIG_PHYNG_TEMPER_K]
+                self.acs[name].enabled = ac[CONFIG_PHYNG_EN_K]
+                self.acs[name].velocity = ac[CONFIG_PHYNG_VEL_K]
+                self.acs[name].angle = ac[CONFIG_PHYNG_ANGLE_K]
 
     def load_initial_phyngs(self, case_param: dict):
         """

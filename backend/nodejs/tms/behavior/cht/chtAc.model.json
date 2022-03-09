@@ -22,6 +22,11 @@
       "rel": "tm:extends",
       "href": "baseRotatable.model.json",
       "type": "application/td+json"
+    },
+    {
+      "rel": "tm:extends",
+      "href": "baseEnableable.model.json",
+      "type": "application/td+json"
     }
   ],
   "security": "nosec_sc",

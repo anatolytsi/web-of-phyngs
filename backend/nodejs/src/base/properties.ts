@@ -181,6 +181,71 @@ export class OpenableProperties {
 }
 
 /**
+ * Actuator enableable properties.
+ *
+ * This class can be extended by an Actuator class to inherit enableable properties.
+ * @class EnableableProperties
+ */
+export class EnableableProperties {
+    /**
+     * Get enabled state of an actuator.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @return {Promise<number>} Enabled state of an actuator.
+     */
+    public async getEnabled(couplingUrl: AnyUri): Promise<boolean> {
+        let response = await reqGet(`${couplingUrl}/enabled`);
+        return response.data;
+    }
+
+    /**
+     * Turn on/off an actuator.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @param {boolean} enable Flag to turn on/off an actuator.
+     * @return {Promise<any>} Server response.
+     */
+    public async setEnabled(couplingUrl: AnyUri, enable: boolean): Promise<any> {
+        let response = await reqPost(`${couplingUrl}/enabled`, {value: enable});
+        return response.data
+    }
+
+    /**
+     * Sets Web of Things actuator is enabled get handler.
+     * @param {WoT.ExposedThing} thing WoT exposed thing.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @protected
+     */
+    protected setEnabledGetHandler(thing: WoT.ExposedThing, couplingUrl: AnyUri): void {
+        thing.setPropertyReadHandler('enabled', async () => {
+            return await this.getEnabled(couplingUrl);
+        });
+    }
+
+    /**
+     * Sets Web of Things actuator turn on handler.
+     * @param {WoT.ExposedThing} thing WoT exposed thing.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @protected
+     */
+    protected setTurnOnHandler(thing: WoT.ExposedThing, couplingUrl: AnyUri): void {
+        thing.setActionHandler('turnOn', async () => {
+            await this.setEnabled(couplingUrl, true);
+        });
+    }
+
+    /**
+     * Sets Web of Things actuator turn off handler.
+     * @param {WoT.ExposedThing} thing WoT exposed thing.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @protected
+     */
+    protected setTurnOffHandler(thing: WoT.ExposedThing, couplingUrl: AnyUri): void {
+        thing.setActionHandler('turnOff', async () => {
+            await this.setEnabled(couplingUrl, false);
+        });
+    }
+}
+
+/**
  * Actuator rotatable properties.
  *
  * This class can be extended by an Actuator class to inherit rotatable properties.

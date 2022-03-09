@@ -6,7 +6,13 @@
  * @since  01.12.2021
  */
 import {use} from 'typescript-mix';
-import {HeatingProperties, OpenableProperties, RotatableProperties, VelocityProperties} from '../base/properties'
+import {
+    EnableableProperties,
+    HeatingProperties,
+    OpenableProperties,
+    RotatableProperties,
+    VelocityProperties
+} from '../base/properties'
 import {Actuator} from '../base/actuator';
 import {
     ActuatorProps,
@@ -178,7 +184,7 @@ class Window extends Actuator {
 
 /** AC interface wrapper for
  * multiple class extension. */
-interface AC extends HeatingProperties, VelocityProperties, RotatableProperties {
+interface AC extends HeatingProperties, VelocityProperties, RotatableProperties, EnableableProperties {
 }
 
 /**
@@ -188,7 +194,7 @@ interface AC extends HeatingProperties, VelocityProperties, RotatableProperties 
  * @class AC
  */
 class AC extends Actuator {
-    @use(HeatingProperties, VelocityProperties, RotatableProperties) this: any;
+    @use(HeatingProperties, VelocityProperties, RotatableProperties, EnableableProperties) this: any;
     /** AC inlet location. */
     protected _locationIn: Coordinates;
     /** AC outlet location. */
@@ -419,10 +425,13 @@ class AC extends Actuator {
         this.setVelocitySetHandler(this.thing, this.couplingUrl);
         this.setAngleGetHandler(this.thing, this.couplingUrl);
         this.setAngleSetHandler(this.thing, this.couplingUrl);
+        this.setEnabledGetHandler(this.thing, this.couplingUrl);
     }
 
     protected addActionHandlers() {
         super.addActionHandlers();
+        this.setTurnOffHandler(this.thing, this.couplingUrl);
+        this.setTurnOnHandler(this.thing, this.couplingUrl);
     }
 
     protected addEventHandlers() {
