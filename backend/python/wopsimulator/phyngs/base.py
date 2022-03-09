@@ -200,3 +200,6 @@ class Phyng(ABC):
     def __delitem__(self, key):
         """Allow to delete individual attributes of a class"""
         del self.__dict__[key]
+
+    def reload_parameters(self):
+        pass

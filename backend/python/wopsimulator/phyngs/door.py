@@ -106,6 +106,9 @@ class DoorPhyng(Phyng):
         except Exception as e:
             raise PhyngSetValueFailed(e)
 
+    def reload_parameters(self):
+        self.open = self._open
+
 
 def main():
     case_dir = 'test.case'
