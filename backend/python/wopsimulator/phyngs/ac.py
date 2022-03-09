@@ -1,7 +1,11 @@
+import numpy as np
+
+from ..openfoam.common.filehandling import get_latest_time
 from ..openfoam.system.snappyhexmesh import SnappyHexMeshDict, SnappyRegion
 from ..geometry.manipulator import Model
 from .base import Phyng
-from .behavior.cht import set_boundary_to_wall
+from .behavior.cht import set_boundary_to_wall, set_boundary_to_outlet, set_boundary_to_inlet, update_boundaries
+from ..exceptions import PhyngSetValueFailed
 
 
 class AcPhyng(Phyng):
@@ -26,9 +30,9 @@ class AcPhyng(Phyng):
         :param template: template name
         :param of_interface: OpenFoam interface
         """
-        self._velocity_in = [0, 0, 0]
-        self._velocity_out = [0, 0, 0]  # Default - 45 degrees TODO: should be perpendicular!!
-        self._angle_out = 0
+        self._velocity_in = [0, 0, -0.01]
+        self._velocity_out = [0.001, 0, -0.001]
+        self._angle_out = 45
         self._temperature = 293.15
 
         self.name_in = f'{name}_in'
@@ -78,8 +82,7 @@ class AcPhyng(Phyng):
             self.model.geometry.cut_surface(self.model_in.geometry)
             self.model.geometry.cut_surface(self.model_out.geometry)
 
-        self._region = name
-        self._fields = ['all']
+        self._fields = 'all'
 
     def _add_initial_boundaries(self):
         """Adds initial boundaries of a door phyng"""
@@ -135,16 +138,21 @@ class AcPhyng(Phyng):
     def remove(self):
         raise NotImplementedError('Removal of an AC is not yet implemented')
 
-    def __setitem__(self, key, value):
-        raise NotImplementedError('Setting items of an AC is not yet implemented')
-
     @property
     def temperature(self):
         return self._temperature
 
     @temperature.setter
     def temperature(self, value):
-        pass
+        self._temperature = float(value)
+        if self._snappy_dict is None or self._boundary_conditions is None:
+            return
+        latest_result = get_latest_time(self._case_dir)
+        try:
+            self._boundary_conditions['T'].update_time(latest_result)
+            self._boundary_conditions['T'][self.name_out].value = self._temperature
+        except Exception as e:
+            raise PhyngSetValueFailed(e)
 
     @property
     def velocity(self):
@@ -152,8 +160,29 @@ class AcPhyng(Phyng):
 
     @velocity.setter
     def velocity(self, value):
-        # TODO: recalculate velocity out according to angle and set velocity in z axis directly
-        pass
+        value = float(value)
+        if value > 20 or value < 0.01:
+            raise PhyngSetValueFailed(f'Velocity can only be between 0 and 20 m/s')
+        self._velocity_in = [0, 0, -value]
+        vel_x, vel_y = 0, 0
+        vel_z = -value * np.cos(np.deg2rad(abs(self._angle_out)))
+        vel_side = value * np.sin(np.deg2rad(self._angle_out))
+        if self.model.dimensions[0] > self.model.dimensions[1]:
+            vel_y = vel_side
+        else:
+            vel_x = vel_side
+        self._velocity_out = [vel_x, vel_y, vel_z]
+        if self._snappy_dict is None or self._boundary_conditions is None:
+            return
+        latest_result = get_latest_time(self._case_dir)
+        try:
+            update_boundaries(self._boundary_conditions, latest_result)
+            self._boundary_conditions['U'][self.name_in].value = self._velocity_in
+            self._boundary_conditions['U'][self.name_out].value = self._velocity_out
+            self._boundary_conditions['U'][self.name_in].save()
+            self._boundary_conditions['U'][self.name_out].save()
+        except Exception as e:
+            raise PhyngSetValueFailed(e)
 
     @property
     def angle(self):
@@ -161,5 +190,7 @@ class AcPhyng(Phyng):
 
     @angle.setter
     def angle(self, value):
-        # TODO: set the velocity to itself to invoke recalculation of outlet velocity
-        pass
+        if value > 45 or value < -45:
+            raise PhyngSetValueFailed(f'Angle can only be between -45 and 45 degrees')
+        self._angle_out = value
+        self.velocity = self.velocity
