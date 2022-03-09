@@ -237,7 +237,7 @@ class OpenFoamInterface(ABC):
         :param region: region to reconstruct
         :return: None
         """
-        # TODO: check if case is decomposed
+        self.remove_solution_dirs()  # Hope no bug is implemented by this, be aware
         logger.info('Running reconstruct')
         cmd = 'reconstructPar'
         argv = [cmd, '-newTimes', '-case', self.path]
