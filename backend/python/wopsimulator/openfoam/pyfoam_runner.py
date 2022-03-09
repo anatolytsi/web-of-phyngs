@@ -84,8 +84,10 @@ class BasicRunnerWrapper(BasicRunner):
     def start(self):
         """Starts executing command"""
         self.running = True
-        super(BasicRunnerWrapper, self).start()
-        self.running = False
+        try:
+            super(BasicRunnerWrapper, self).start()
+        finally:
+            self.running = False
 
 
 class PyFoamCmd(BasicRunnerWrapper):
