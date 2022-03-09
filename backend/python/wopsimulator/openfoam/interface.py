@@ -228,7 +228,7 @@ class OpenFoamInterface(ABC):
         logger.info('Case decomposed')
 
     def run_reconstruct(self, all_regions: bool = False, latest_time: bool = False, fields: list = None,
-                        region: str = ''):
+                        region: str = '', waiting: bool = False):
         """
         Runs OpenFOAM case reconstruction after a parallel run, described in system/decomposeParDict
         :param all_regions: flag to reconstruct all regions (used for multi-region cases like cht)
@@ -249,7 +249,10 @@ class OpenFoamInterface(ABC):
             argv.insert(1, '-latestTime')
         if fields:
             argv.insert(1, f'-fields \'({" ".join(fields)})\'')
-        PyFoamCmd(argv).start()
+        command = PyFoamCmd(argv)
+        command.start()
+        while waiting and command.running:
+            time.sleep(0.001)
         logger.info('Case reconstructed')
 
     def run_block_mesh(self):
