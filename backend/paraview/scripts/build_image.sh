@@ -3,7 +3,7 @@ CURRENT_DIR=`dirname "$0"`
 
 cd $CURRENT_DIR/..
 DEPLOY_DIR=$PWD
-cd ..
+cd frontend
 ROOT_DIR=$PWD
 cd $DEPLOY_DIR
 
