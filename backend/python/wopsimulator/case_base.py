@@ -459,7 +459,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         get_time = get_latest_time
         if self.parallel:
             get_time = get_latest_time_parallel
-        if get_time(self.path) != '0' and not self.start_time:
+        if not self.start_time:
             self.start_time, _ = self.get_current_time()
         super(OpenFoamCase, self).run()
         self._runtime_monitor.start()
