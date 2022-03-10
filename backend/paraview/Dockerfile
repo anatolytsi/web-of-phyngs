@@ -1,12 +1,3 @@
-FROM lhofmann/paraview-superbuild:5.6.0-osmesa
-USER root
+FROM kitware/paraviewweb:pvw-v5.7.0-rc2-osmesa
 
-COPY ./start.sh /start.sh
-RUN sed -i "s/\r$//g" /start.sh
-RUN chmod +x /start.sh
-CMD ["/bin/bash", "/start.sh"]
-
-# Set work directory
-WORKDIR /wop/cases
-
-USER paraview
+COPY ./config.json /pvw/launcher/config.json

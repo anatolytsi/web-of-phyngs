@@ -33,7 +33,7 @@ services:
     build:
       context: ./backend/paraview
     ports:
-      - 11111:11111
+      - 11111:8080
     container_name: wop_backend_paraview
     volumes:
       - cases_volume:/wop/cases
