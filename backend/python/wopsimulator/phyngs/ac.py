@@ -140,10 +140,14 @@ class AcPhyng(Phyng):
         self.snappy = [self.snappy, snappy_in, snappy_out]
 
     def destroy(self):
-        raise NotImplementedError('Destroying of an AC is not yet implemented')
+        super(AcPhyng, self).destroy()
+        self._destroy_by_name(self.name_in)
+        self._destroy_by_name(self.name_out)
 
     def remove(self):
-        raise NotImplementedError('Removal of an AC is not yet implemented')
+        super(AcPhyng, self).remove()
+        self.model_in.remove()
+        self.model_out.remove()
 
     @property
     def enabled(self):
