@@ -163,9 +163,30 @@ class Probe:
         self.field = field
         self.region = region
         self._location = location
-        self.value = 0
-        self.time = 0
+        self._value = 0
+        self._time = 0
         self._add_probe_to_dict()
+        self._lock = Lock()
+
+    @property
+    def value(self):
+        with self._lock:
+            return self._value
+
+    @value.setter
+    def value(self, value):
+        with self._lock:
+            self._value = value
+
+    @property
+    def time(self):
+        with self._lock:
+            return self._time
+
+    @time.setter
+    def time(self, value):
+        with self._lock:
+            self._time = value
 
     @property
     def location(self):
