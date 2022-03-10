@@ -435,6 +435,10 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         else:
             self.disable_realtime()
 
+    @property
+    def running(self):
+        return super(OpenFoamCase, self).running() or self._runtime_monitor.running
+
     def clean_case(self):
         """
         Removes old results and logs in the case directory.
