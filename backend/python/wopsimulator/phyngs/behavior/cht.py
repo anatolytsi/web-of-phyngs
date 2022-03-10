@@ -51,7 +51,7 @@ def set_boundary_to_wall(boundary_name: str, boundary: dict, temperature: float,
     u[boundary_name] = Boundary('noSlip')
     if of_interface and bg_name:
         of_interface.run_foam_dictionary(f'constant/{bg_name}/polyMesh/boundary',
-                                         f'entry0.{boundary_name}.type', 'wall')
+                                         f'entry0.{boundary_name}.type', 'wall', waiting=True)
 
 
 def set_boundary_to_inlet(boundary_name: str, boundary: dict, velocity: List[float], temperature: float,
@@ -90,7 +90,7 @@ def set_boundary_to_inlet(boundary_name: str, boundary: dict, velocity: List[flo
     u[boundary_name] = Boundary('fixedValue', value=velocity, value_uniform=True)
     if of_interface and bg_name:
         of_interface.run_foam_dictionary(f'constant/{bg_name}/polyMesh/boundary',
-                                         f'entry0.{boundary_name}.type', 'patch')
+                                         f'entry0.{boundary_name}.type', 'patch', waiting=True)
 
 
 def set_boundary_to_outlet(boundary_name: str, boundary: dict, velocity: List[float], temperature: float,
@@ -127,7 +127,7 @@ def set_boundary_to_outlet(boundary_name: str, boundary: dict, velocity: List[fl
                                       inletValue=0.001, inletValue_uniform=True)
     if of_interface and bg_name:
         of_interface.run_foam_dictionary(f'constant/{bg_name}/polyMesh/boundary',
-                                         f'entry0.{boundary_name}.type', 'patch')
+                                         f'entry0.{boundary_name}.type', 'patch', waiting=True)
 
 
 def set_boundary_to_heater(boundary_name: str, background_region_name: str, boundaries: dict, temperature: float,

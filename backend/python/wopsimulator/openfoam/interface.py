@@ -308,7 +308,8 @@ class OpenFoamInterface(ABC):
         PyFoamCmd(argv).start()
         logger.info('CHT case is setup')
 
-    def run_foam_dictionary(self, path: str, entry: str, set_value: str):
+    def run_foam_dictionary(self, path: str, entry: str, set_value: str,
+                            waiting: bool = False):
         """
         Runs OpenFOAM command to change dictionary specified in the path
         :param path: path to dictionary
@@ -319,7 +320,10 @@ class OpenFoamInterface(ABC):
         logger.debug(f'Setting a value of {path} field {entry} to {set_value}')
         cmd = 'foamDictionary'
         argv = [cmd, f'{self.path}/{path}', '-entry', entry, '-set', set_value]
-        subprocess.Popen(argv)
+        command = PyFoamCmd(argv)
+        command.start()
+        while waiting and command.running:
+            time.sleep(0.001)
         logger.debug('Value changed')
 
     def _add_time_probe(self, field, region):
