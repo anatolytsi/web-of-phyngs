@@ -188,10 +188,11 @@ class Phyng(ABC):
         """Allow to set attributes of a class as in dictionary"""
         logger.debug(f'Value set of Phyng {self.name} was requested')
         case_was_stopped = False
-        if self._of_interface.running and self._fields:
-            logger.debug('Case is running so stopping it')
+        if self._of_interface.running:
+            logger.debug('Case is running, remembering it')
             case_was_stopped = True
-            self._of_interface.stop()
+        self._of_interface.stop()
+        if self._fields:
             if self._of_interface.parallel:
                 logger.debug(f'Case is parallel, running reconstruction of fields: {self._fields}')
                 if self._fields == 'all':
