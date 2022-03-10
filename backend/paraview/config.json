@@ -7,7 +7,7 @@
     "proxy_file": "/.../proxy-mapping.txt",
     "sessionURL": "ws://${host}:${port}/ws",
     "timeout": 25,
-    "log_dir": "/.../viz-logs",
+    "log_dir": "/.../logs",
     "upload_dir": "/wop/cases",
     "fields": [
       "file",
@@ -60,31 +60,6 @@
         "--authKey",
         "${secret}",
         "-f"
-      ],
-      "ready_line": "Starting factory"
-    },
-    "loader": {
-      "cmd": [
-        "${pvpython}",
-        "-dr",
-        "${pv_python_path}/pv_web_file_loader.py",
-        "--port",
-        "${port}",
-        "--data-dir",
-        "${dataDir}",
-        "--load-file",
-        "${dataDir}/${fileToLoad}",
-        "-f"
-      ],
-      "ready_line": "Starting factory"
-    },
-    "launcher": {
-      "cmd": [
-        "/.../ParaView/Web/Applications/Parallel/server/launcher.sh",
-        "${port}",
-        "${client}",
-        "${resources}",
-        "${file}"
       ],
       "ready_line": "Starting factory"
     }
