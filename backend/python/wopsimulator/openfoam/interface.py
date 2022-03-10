@@ -63,7 +63,7 @@ class OpenFoamInterface(ABC):
         self.material_props = MaterialProperties(self.path)
         self.regions = []
         self.boundaries = {}
-        self._is_decomposed = False
+        self.is_decomposed = False
         self._solver_type = solver_type
         self._solver_thread = None
         self._solver_lock = thr.Lock()
@@ -208,7 +208,7 @@ class OpenFoamInterface(ABC):
         :return: None
         """
         logger.info('Running decompose')
-        if self._is_decomposed:
+        if self.is_decomposed:
             latest_time = True
             force = True
         else:
@@ -227,7 +227,7 @@ class OpenFoamInterface(ABC):
         command.start()
         while waiting and command.running:
             time.sleep(0.001)
-        self._is_decomposed = True
+        self.is_decomposed = True
         logger.info('Case decomposed')
 
     def run_reconstruct(self, all_regions: bool = False, latest_time: bool = False, fields: list = None,
