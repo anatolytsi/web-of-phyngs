@@ -319,7 +319,11 @@ class OpenFoamInterface(ABC):
         logger.debug(f'Setting a value of {path} field {entry} to {set_value}')
         cmd = 'foamDictionary'
         argv = [cmd, f'{self.path}/{path}', '-entry', entry, '-set', set_value]
-        subprocess.Popen(argv)
+        p = subprocess.Popen(argv)
+        output, err = p.communicate()
+        if err:
+            raise Exception(err)
+        p.wait()
         logger.debug('Value changed')
 
     def _add_time_probe(self, field, region):
