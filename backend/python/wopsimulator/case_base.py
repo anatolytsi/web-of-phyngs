@@ -42,7 +42,8 @@ class OpenFoamCase(OpenFoamInterface, ABC):
             if CONFIG_STARTED_TIMESTAMP_K in kwargs and kwargs[CONFIG_STARTED_TIMESTAMP_K] else 0
         runtime_enabled = kwargs[CONFIG_REALTIME_K] \
             if CONFIG_REALTIME_K in kwargs and kwargs[CONFIG_REALTIME_K] else False
-        self._runtime_monitor = RunTimeMonitor(runtime_enabled, 5, self.run, self.stop, self.get_time_difference)
+        self._runtime_monitor = RunTimeMonitor(runtime_enabled, 5, self.run, self.stop, self.get_time_difference,
+                                               lambda: self.solved)
         if loaded:
             if initialized:
                 self._setup_initialized_case(kwargs)

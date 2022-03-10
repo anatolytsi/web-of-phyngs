@@ -14,10 +14,11 @@ logger.setLevel(logging.DEBUG)
 
 class RunTimeMonitor(Thread):
     def __init__(self, enabled: bool, tolerance: int, case_runner: Callable, case_stopper: Callable,
-                 time_difference_getter: Callable):
+                 time_difference_getter: Callable, solved_getter: Callable):
         self._enabled = enabled
         self.running = False
         self.tolerance = tolerance
+        self._solved_getter = solved_getter
         self._run_case = case_runner
         self._stop_case = case_stopper
         self._get_time_diff = time_difference_getter
@@ -39,7 +40,7 @@ class RunTimeMonitor(Thread):
         self.running = True
         self._mutex.acquire()
         logger.debug('Starting runtime monitor')
-        while self.running and self._enabled:
+        while self.running and self._enabled and not self._solved_getter():
             time_difference = self._get_time_diff()
             if (previous_difference - time_difference) >= CHECKER_DELAY_WAIT:
                 time.sleep(CHECKER_DELAY_WAIT)
