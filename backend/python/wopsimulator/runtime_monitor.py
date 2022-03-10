@@ -1,3 +1,4 @@
+import logging
 import time
 from threading import Thread, Lock
 from typing import Callable
@@ -5,6 +6,10 @@ from typing import Callable
 CHECKER_SLEEP_TIME = 0.01
 CHECKER_DELAY_WAIT_SCALE = 100
 CHECKER_DELAY_WAIT = CHECKER_DELAY_WAIT_SCALE * CHECKER_SLEEP_TIME
+
+
+logger = logging.getLogger('wop')
+logger.setLevel(logging.DEBUG)
 
 
 class RunTimeMonitor(Thread):
@@ -33,17 +38,21 @@ class RunTimeMonitor(Thread):
         previous_difference = 0
         self.running = True
         self._mutex.acquire()
+        logger.debug('Starting runtime monitor')
         while self.running and self._enabled:
             time_difference = self._get_time_diff()
             if (previous_difference - time_difference) >= CHECKER_DELAY_WAIT:
                 time.sleep(CHECKER_DELAY_WAIT)
             previous_difference = time_difference
             if time_difference >= self.tolerance:
+                logger.debug('Runtime monitor stops the case')
                 self._stop_case(runtime_checker=True)
             elif time_difference <= 0:
+                logger.debug('Runtime monitor starts the case')
                 self._run_case()
             time.sleep(CHECKER_SLEEP_TIME)
         self._mutex.release()
+        logger.debug('Runtime monitor stopped')
 
     def start(self) -> None:
         if not self._enabled:
