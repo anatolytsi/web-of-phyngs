@@ -198,7 +198,7 @@ class OpenFoamInterface(ABC):
         copy_tree(stls_path, path_to_copy)
 
     def run_decompose(self, all_regions: bool = False, copy_zero: bool = False, latest_time: bool = False,
-                      force: bool = False):
+                      force: bool = False, waiting: bool = False):
         """
         Runs OpenFOAM case decomposition for parallel run, described in system/decomposeParDict
         :param all_regions: flag to decompose all regions (used for multi-region cases like cht)
@@ -223,7 +223,10 @@ class OpenFoamInterface(ABC):
             argv.insert(1, '-latestTime')
         if force:
             argv.insert(1, '-force')
-        PyFoamCmd(argv).start()
+        command = PyFoamCmd(argv)
+        command.start()
+        while waiting and command.running:
+            time.sleep(0.001)
         self._is_decomposed = True
         logger.info('Case decomposed')
 
@@ -397,7 +400,7 @@ class OpenFoamInterface(ABC):
         self.save_boundaries()
         cleaner_thread = thr.Thread(target=self.result_cleaner, daemon=True)
         if self.parallel:
-            self.run_decompose(all_regions=True, latest_time=True, force=True)
+            self.run_decompose(all_regions=True, latest_time=True, force=True, waiting=True)
         self._solver_thread = PyFoamSolver(self._solver_type, self.path, self._solver_lock, self.parallel, self.cores)
         self._solver_thread.start()
         self._running = True
