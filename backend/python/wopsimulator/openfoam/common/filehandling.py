@@ -113,7 +113,7 @@ def get_latest_time(case_dir: str) -> str:
     :return: latest simulation time
     """
     try:
-        return sorted(get_numerated_dirs(case_dir, exception='0'))[-1]
+        return sorted(get_numerated_dirs(case_dir, exception='0'), key=lambda x: float(x))[-1]
     except (IndexError, FileNotFoundError):
         return '0'
 
@@ -127,6 +127,6 @@ def get_latest_time_parallel(case_dir: str) -> str:
     :return: latest simulation time
     """
     try:
-        return sorted(get_numerated_dirs(f'{case_dir}/processor0', exception='0'))[-1]
+        return sorted(get_numerated_dirs(f'{case_dir}/processor0', exception='0'), key=lambda x: float(x))[-1]
     except (IndexError, FileNotFoundError):
-        return 0
+        return '0'
