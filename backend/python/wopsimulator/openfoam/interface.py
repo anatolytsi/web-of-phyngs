@@ -322,6 +322,10 @@ class OpenFoamInterface(ABC):
         subprocess.Popen(argv)
         logger.debug('Value changed')
 
+    def _add_time_probe(self, field, region):
+        self._time_probe = Probe(self.path, field, region, [0, 0, 0])
+        self._probe_parser_thread.parse_probe(self._time_probe)
+
     def extract_boundary_conditions(self):
         """
         Extracts initial boundary conditions for current case from files
@@ -337,9 +341,6 @@ class OpenFoamInterface(ABC):
             for region in region_dirs:
                 self.boundaries.update({region: {}})
                 region_dir = os.listdir(f'{self.path}/0/{region}')
-                if not self._time_probe:
-                    self._time_probe = Probe(self.path, region_dir[0], region, [0, 0, 0])
-                    self._probe_parser_thread.parse_probe(self._time_probe)
                 for field in region_dir:
                     cls_instance = BoundaryCondition(field, self.path, region=region)
                     if cls_instance:

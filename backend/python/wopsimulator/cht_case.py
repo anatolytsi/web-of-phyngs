@@ -44,6 +44,10 @@ class ChtCase(OpenFoamCase):
         self.background = background
         super(ChtCase, self).__init__('chtMultiRegionFoam', *args, **kwargs)
 
+    def _setup_initialized_case(self, case_param: dict):
+        super(ChtCase, self)._setup_initialized_case(case_param)
+        self._add_time_probe('T', 'fluid')
+
     def _setup_uninitialized_case(self, case_param: dict):
         """
         Sets up the loaded uninitialized CHT case
@@ -177,6 +181,7 @@ class ChtCase(OpenFoamCase):
         self.run_split_mesh_regions(cell_zones_only=True)
         self.run_setup_cht()
         self.extract_boundary_conditions()
+        self._add_time_probe('T', 'fluid')
         self.bind_boundary_conditions()
         self.initialized = True
 
