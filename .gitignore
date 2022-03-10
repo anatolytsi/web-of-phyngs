@@ -13,3 +13,5 @@ node_modules/
 *.out
 *.synctex.gz
 *.toc
+errors.json
+wop.config.json
