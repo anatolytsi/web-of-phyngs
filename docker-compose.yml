@@ -30,10 +30,9 @@ services:
     networks:
       - wop-network
   backend-paraview:
-    build:
-      context: ./backend/paraview
+    image: pvw-v5.6.0-osmesa
     ports:
-      - 11111:11111
+      - 11111:8080
     container_name: wop_backend_paraview
     volumes:
       - cases_volume:/wop/cases
