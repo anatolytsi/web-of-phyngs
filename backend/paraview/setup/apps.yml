@@ -16,7 +16,7 @@ PyWebVue: # Default app under /index.html
     - ${secret}
     - --server
     - --data
-    - /data
+    - /wop/cases
 Visualizer: # /Visualizer.html or /?name=Visualizer&data=...
   app: pv-visualizer
   cmd:
