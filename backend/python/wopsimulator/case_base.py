@@ -417,7 +417,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         to keep simulation running at realtime
         """
         self._runtime_monitor.enabled = True
-        if self.running:
+        if self._running:
             self._runtime_monitor.start()
 
     def disable_realtime(self):
@@ -455,7 +455,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Runs solver and monitor threads
         Case must be setup before running
         """
-        if self.running:
+        if self._running:
             return
         if not self.initialized:
             self.clean_case()
