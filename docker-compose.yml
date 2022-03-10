@@ -34,8 +34,6 @@ services:
       context: ./backend/paraview
     ports:
       - 11111:11111
-    environment:
-      - CORES=8
     container_name: wop_backend_paraview
     volumes:
       - cases_volume:/wop/cases
