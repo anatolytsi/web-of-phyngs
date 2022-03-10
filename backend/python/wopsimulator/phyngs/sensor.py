@@ -5,7 +5,7 @@ class SensorPhyng:
     """Web of Phyngs Sensor base class"""
     type_name = 'sensor'
 
-    def __init__(self, name, case_dir, field, region, location):
+    def __init__(self, name, case_dir, field, region, location, **kwargs):
         """
         Web of Phyngs sensor initialization function
         :param name: name of the sensor

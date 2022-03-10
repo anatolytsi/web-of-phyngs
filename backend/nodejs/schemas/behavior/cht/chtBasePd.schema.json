@@ -11,7 +11,7 @@
             "door",
             "heater",
             "ac",
-            "furniture"
+            "sensor"
           ]
         },
         "material": {
