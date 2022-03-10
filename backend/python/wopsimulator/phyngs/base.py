@@ -146,28 +146,31 @@ class Phyng(ABC):
             self._boundary_conditions = region_boundaries[self._bg_region]
             self._add_initial_boundaries()
 
+    def _destroy_by_name(self, name: str):
+        if os.path.exists(path := f'{self._case_dir}/constant/triSurface/{name}.stl'):
+            os.remove(path)
+        if os.path.exists(path := f'{self._case_dir}/0/{name}'):
+            force_remove_dir(path)
+        if os.path.exists(path := f'{self._case_dir}/constant/{name}'):
+            force_remove_dir(path)
+        if os.path.exists(path := f'{self._case_dir}/system/{name}'):
+            force_remove_dir(path)
+        self._snappy_dict.remove(name)
+        if self._boundary_conditions:
+            for bc in self._boundary_conditions.values():
+                if name in bc:
+                    del bc[name]
+                if reg := f'{name}_to_{self._bg_region}' in bc:
+                    del bc[reg]
+                if reg := f'{self._bg_region}_to_{name}' in bc:
+                    del bc[reg]
+
     def destroy(self):
         """
         Destroys a phyng by removing all
         connected data, e.g., files, from simulation
         """
-        if os.path.exists(path := f'{self._case_dir}/constant/triSurface/{self.name}.stl'):
-            os.remove(path)
-        if os.path.exists(path := f'{self._case_dir}/0/{self.name}'):
-            force_remove_dir(path)
-        if os.path.exists(path := f'{self._case_dir}/constant/{self.name}'):
-            force_remove_dir(path)
-        if os.path.exists(path := f'{self._case_dir}/system/{self.name}'):
-            force_remove_dir(path)
-        self._snappy_dict.remove(self.name)
-        if self._boundary_conditions:
-            for bc in self._boundary_conditions.values():
-                if self.name in bc:
-                    del bc[self.name]
-                if reg := f'{self.name}_to_{self._bg_region}' in bc:
-                    del bc[reg]
-                if reg := f'{self._bg_region}_to_{self.name}' in bc:
-                    del bc[reg]
+        self._destroy_by_name(self.name)
 
     def remove(self):
         self.model.remove()
