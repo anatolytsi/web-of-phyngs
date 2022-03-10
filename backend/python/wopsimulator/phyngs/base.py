@@ -1,4 +1,5 @@
 """Web of Phyngs base Phyngs (Object and Sensor)"""
+import logging
 import os
 import re
 
@@ -9,6 +10,10 @@ import gdown
 from ..geometry.manipulator import Model
 from ..openfoam.common.filehandling import force_remove_dir
 from ..openfoam.system.snappyhexmesh import SnappyHexMeshDict, SnappyRegion, SnappyCellZoneMesh
+
+
+logger = logging.getLogger('wop')
+logger.setLevel(logging.DEBUG)
 
 
 class Phyng(ABC):
@@ -181,18 +186,23 @@ class Phyng(ABC):
 
     def __setitem__(self, key, value):
         """Allow to set attributes of a class as in dictionary"""
+        logger.debug(f'Value set of Phyng {self.name} was requested')
         case_was_stopped = False
         if self._of_interface.running and self._fields:
+            logger.debug('Case is running so stopping it')
             case_was_stopped = True
             self._of_interface.stop()
             if self._of_interface.parallel:
+                logger.debug(f'Case is parallel, running reconstruction of fields: {self._fields}')
                 if self._fields == 'all':
                     self._of_interface.run_reconstruct(latest_time=True, region=self._region, waiting=True)
                 else:
                     self._of_interface.run_reconstruct(latest_time=True, region=self._region,
                                                        fields=self._fields, waiting=True)
+        logger.info(f'Setting value "{key}" of Phyng "{self.name}" to "{value}"')
         setattr(self, key, value)
         if case_was_stopped:
+            logger.debug('Case can be run now')
             self._of_interface.run()
 
     def __iter__(self):
