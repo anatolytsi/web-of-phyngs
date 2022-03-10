@@ -384,7 +384,7 @@ class OpenFoamInterface(ABC):
         else:
             latest_time = get_latest_time(self.path)
         latest_time = float(latest_time)
-        if not self.running and self.control_dict.write_interval + latest_time > self.control_dict.end_time:
+        if (self.control_dict.write_interval + latest_time) > self.control_dict.end_time:
             return True
         return False
 
