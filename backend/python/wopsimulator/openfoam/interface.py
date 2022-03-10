@@ -240,6 +240,7 @@ class OpenFoamInterface(ABC):
         :param region: region to reconstruct
         :return: None
         """
+        logger.debug('Removing old solutions')
         self.remove_solution_dirs()  # Hope no bug is implemented by this, be aware
         logger.info('Running reconstruct')
         cmd = 'reconstructPar'
