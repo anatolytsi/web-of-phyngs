@@ -61,6 +61,7 @@ class RunTimeMonitor(Thread):
         super(RunTimeMonitor, self).start()
 
     def stop(self) -> None:
+        logger.debug('Stopping the runtime monitor')
         self.running = False
         self._mutex.acquire()
         self._mutex.release()
