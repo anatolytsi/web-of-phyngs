@@ -1,19 +1,13 @@
-FROM kitware/paraviewweb:pvw-v5.7.0-rc2-osmesa
+FROM kitware/trame:1.2-glvnd-runtime-ubuntu20.04-py39
 
-RUN mkdir -p /var/run/apache2 && \
-    chown -R 999:999 /var/run/apache2* && \
-    chown -R 999:999 /var/run/apache2* && \
-    chmod -R g+w /var/run/apache2*     && \
-    chown -R 999:99 /var/log/apache2
-RUN groupadd -g 999 paraview && useradd -o -u 999 -g 999 paraview
-COPY ./config-template.json /opt/launcher/config-template.json
-COPY ./001-pvw.conf /etc/apache2/sites-available/001-pvw.conf
-COPY ./envvars /etc/apache2/
-COPY ./ports.conf /etc/apache2
-COPY ./start.sh /opt/paraviewweb/scripts/
+# Create the /deploy directory with trame-user as the owner
+RUN install -d -o trame-user -g trame-user /deploy
 
-RUN ["/opt/paraviewweb/scripts/addEndpoints.sh", \
-    "visualizer", "/opt/paraview/share/paraview-5.7/web/visualizer/www" \
-]
+# Install ParaView-OSMesa
+ARG PV_URL=https://www.paraview.org/files/v5.10/ParaView-5.10.0-osmesa-MPI-Linu>
+RUN mkdir -p /opt/paraview && cd /opt/paraview && wget -qO- $PV_URL | tar --str>
+# Needed for PV 5.10.0 but not in 5.10.1
+COPY ./trame.py /opt/paraview/lib/python3.9/site-packages/paraview/apps/
 
-ENTRYPOINT ["/opt/paraviewweb/scripts/start.sh"]
+# Copy the server directory
+COPY --chown=trame-user:trame-user ./server /deploy/server
