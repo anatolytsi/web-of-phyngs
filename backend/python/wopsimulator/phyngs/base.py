@@ -193,7 +193,7 @@ class Phyng(ABC):
             case_was_stopped = True
         self._of_interface.stop()
         if self._fields:
-            if self._of_interface.parallel:
+            if self._of_interface.parallel and self._of_interface.is_decomposed:
                 logger.debug(f'Case is parallel, running reconstruction of fields: {self._fields}')
                 if self._fields == 'all':
                     self._of_interface.run_reconstruct(latest_time=True, region=self._region, waiting=True)
