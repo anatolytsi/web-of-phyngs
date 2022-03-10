@@ -38,7 +38,7 @@
         "${secret}",
         "--server",
         "--data",
-        "/data"
+        "/wop/cases"
       ],
       "ready_line": "Starting factory"
     },
