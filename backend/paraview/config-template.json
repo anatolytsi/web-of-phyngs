@@ -35,6 +35,7 @@
     "visualizer": {
       "cmd": [
         "${python_exec}",
+        EXTRA_PVPYTHON_ARGS
         "${webapps_dir}/visualizer/server/pvw-visualizer.py",
         "--port", "${port}",
         "--data", "${dataDir}",
