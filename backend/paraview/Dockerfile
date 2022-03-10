@@ -7,3 +7,5 @@ RUN ["/opt/paraviewweb/scripts/addEndpoints.sh", \
 ]
 
 COPY ./start.sh /opt/paraviewweb/scripts/
+
+ENTRYPOINT ["/opt/paraviewweb/scripts/start.sh"]
