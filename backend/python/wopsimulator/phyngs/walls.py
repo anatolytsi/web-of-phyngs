@@ -23,7 +23,7 @@ class WallsPhyng(Phyng):
         :param stl_name: STL geometry name
         :param of_interface: OpenFoam interface
         """
-        self._temperature = 293.15
+        self._temperature = self.environment.temperature
         model_type = 'box'
         templates_dir = 'walls'
         super(WallsPhyng, self).__init__(stl_name=stl_name, model_type=model_type,
@@ -56,6 +56,7 @@ class WallsPhyng(Phyng):
             return
         latest_result = get_latest_time(self._case_dir)
         try:
+            self.environment.temperature = temperature
             self._boundary_conditions['T'].update_time(latest_result)
             self._boundary_conditions['T'].internalField.value = temperature
         except Exception as e:

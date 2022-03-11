@@ -1,16 +1,12 @@
 """Web of Phyngs base Phyngs (Object and Sensor)"""
 import logging
 import os
-import re
-
 from abc import ABC, abstractmethod
-
-import gdown
 
 from ..geometry.manipulator import Model
 from ..openfoam.common.filehandling import force_remove_dir
 from ..openfoam.system.snappyhexmesh import SnappyHexMeshDict, SnappyRegion, SnappyCellZoneMesh
-
+from .common import Environment
 
 logger = logging.getLogger('wop')
 logger.setLevel(logging.DEBUG)
@@ -40,6 +36,7 @@ class Phyng(ABC):
         :param templates_dir: STL templates directory name
         :param of_interface: OpenFoam interface
         """
+        self.environment = Environment(case_dir=case_dir)
         self.name = name
         self._case_dir = case_dir
         self._boundary_conditions = None

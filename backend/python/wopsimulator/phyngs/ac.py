@@ -33,7 +33,7 @@ class AcPhyng(Phyng):
         self._velocity_in = [0, 0, -0.01]
         self._velocity_out = [0.001, 0, -0.001]
         self._angle_out = 45
-        self._temperature = 293.15
+        self._temperature = self.environment.temperature
         self._enabled = False
 
         self.name_in = f'{name}_in'
@@ -162,20 +162,19 @@ class AcPhyng(Phyng):
         try:
             if value:
                 set_boundary_to_outlet(self.name_in, self._boundary_conditions, self._velocity_in, self._temperature,
-                                       latest_result,
-                                       bg_name=self._bg_region, of_interface=self._of_interface)
-                set_boundary_to_inlet(self.name_out, self._boundary_conditions, self._velocity_out, self._temperature,
-                                      latest_result,
+                                       latest_result, bg_name=self._bg_region, of_interface=self._of_interface)
+                set_boundary_to_inlet(self.name_out, self._boundary_conditions, self._velocity_out,
+                                      self.environment.temperature, latest_result,
                                       bg_name=self._bg_region, of_interface=self._of_interface)
             else:
-                set_boundary_to_wall(self.name_in, self._boundary_conditions, self._temperature, latest_result,
-                                     bg_name=self._bg_region, of_interface=self._of_interface)
-                set_boundary_to_wall(self.name_out, self._boundary_conditions, self._temperature, latest_result,
-                                     bg_name=self._bg_region, of_interface=self._of_interface)
+                set_boundary_to_wall(self.name_in, self._boundary_conditions, self.environment.temperature,
+                                     latest_result, bg_name=self._bg_region, of_interface=self._of_interface)
+                set_boundary_to_wall(self.name_out, self._boundary_conditions, self.environment.temperature,
+                                     latest_result, bg_name=self._bg_region, of_interface=self._of_interface)
                 self._velocity_in = [0, 0, -0.01]
                 self._velocity_out = [0.001, 0, -0.001]
                 self._angle_out = 45
-                self._temperature = 293.15
+                self._temperature = self.environment.temperature
         except Exception as e:
             raise PhyngSetValueFailed(e)
         self._enabled = value
@@ -192,7 +191,7 @@ class AcPhyng(Phyng):
         latest_result = get_latest_time(self._case_dir)
         try:
             self._boundary_conditions['T'].update_time(latest_result)
-            self._boundary_conditions['T'][self.name_in].value = self._temperature
+            self._boundary_conditions['T'][self.name_in].value = self.environment.temperature
             self._boundary_conditions['T'][self.name_out].value = self._temperature
         except Exception as e:
             raise PhyngSetValueFailed(e)
