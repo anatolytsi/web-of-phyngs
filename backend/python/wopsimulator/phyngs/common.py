@@ -7,7 +7,7 @@ class Environment:
     def __new__(cls, case_dir, **kwargs):
         if case_dir in cls._instances:
             return cls._instances[case_dir]
-        instance = cls.__new__(case_dir, **kwargs)
+        instance = super(Environment, cls).__new__(cls)
         cls._instances[case_dir] = instance
         return instance
 
