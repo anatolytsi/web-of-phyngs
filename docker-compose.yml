@@ -39,22 +39,9 @@ services:
     container_name: wop_backend_paraview
     volumes:
       - cases_volume:/wop/cases
-      - paraview_volume:/opt/paraview
-  frontend-paraview:
-    build:
-      context: ./frontend/paraview
-    ports:
-      - 11112:80
-    container_name: wop_frontend_paraview
-    volumes:
-      - cases_volume:/wop/cases
-      - paraview_volume:/opt/paraview
-    depends_on:
-      - backend-paraview
 
 volumes:
   cases_volume:
-  paraview_volume:
 
 networks:
   wop-network:
