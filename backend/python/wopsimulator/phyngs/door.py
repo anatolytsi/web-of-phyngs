@@ -25,11 +25,11 @@ class DoorPhyng(Phyng):
         """
         self._open = False
         self._velocity = [0, 0, 0]
-        self._temperature = self.environment.temperature
         model_type = 'surface'
         templates_dir = 'doors'
         super(DoorPhyng, self).__init__(stl_name=stl_name, model_type=model_type,
                                         templates_dir=templates_dir, **kwargs)
+        self._temperature = self.environment.temperature
         self._fields = 'all'
 
     def _add_initial_boundaries(self):

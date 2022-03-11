@@ -26,11 +26,11 @@ class HeaterPhyng(Phyng):
         :param stl_name: STL geometry name
         :param of_interface: OpenFoam interface
         """
-        self._temperature = self.environment.temperature
         model_type = 'box'
         templates_dir = 'heaters'
         super(HeaterPhyng, self).__init__(name=name, model_type=model_type, stl_name=stl_name,
                                           templates_dir=templates_dir, **kwargs)
+        self._temperature = self.environment.temperature
         self._region = name
         self._fields = ['T']
         self._material = material

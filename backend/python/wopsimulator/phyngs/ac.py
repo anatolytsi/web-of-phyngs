@@ -33,7 +33,6 @@ class AcPhyng(Phyng):
         self._velocity_in = [0, 0, -0.01]
         self._velocity_out = [0.001, 0, -0.001]
         self._angle_out = 45
-        self._temperature = self.environment.temperature
         self._enabled = False
 
         self.name_in = f'{name}_in'
@@ -49,6 +48,7 @@ class AcPhyng(Phyng):
         templates_dir = 'acs'
         super(AcPhyng, self).__init__(name=name, stl_name=stl_name, model_type=model_type,
                                       templates_dir=templates_dir, **kwargs)
+        self._temperature = self.environment.temperature
 
         if self.model_type == 'stl':
             self.model_type_in = 'stl'

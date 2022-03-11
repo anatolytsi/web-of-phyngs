@@ -23,11 +23,11 @@ class WallsPhyng(Phyng):
         :param stl_name: STL geometry name
         :param of_interface: OpenFoam interface
         """
-        self._temperature = self.environment.temperature
         model_type = 'box'
         templates_dir = 'walls'
         super(WallsPhyng, self).__init__(stl_name=stl_name, model_type=model_type,
                                          templates_dir=templates_dir, **kwargs)
+        self._temperature = self.environment.temperature
         self._fields = ['T']
 
     def _add_initial_boundaries(self):
