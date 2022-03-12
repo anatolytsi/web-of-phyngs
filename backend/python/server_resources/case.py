@@ -5,7 +5,7 @@ from wopsimulator.loader import load_case, create_case, get_cases_names, save_ca
 
 from wopsimulator.variables import CONFIG_TYPE_K, CONFIG_MESH_QUALITY_K, CONFIG_CLEAN_LIMIT_K, \
     CONFIG_PARALLEL_K, CONFIG_CORES_K, CONFIG_REALTIME_K, CONFIG_BACKGROUND_K, CONFIG_DEFAULTS, \
-    CONFIG_END_TIME_K
+    CONFIG_END_TIME_K, CONFIG_BLOCKING_K
 
 
 def auto_load_case(func):
@@ -33,6 +33,7 @@ class Case(Resource):
         self.reqparse.add_argument(CONFIG_MESH_QUALITY_K, type=int, help='Case mesh quality in percents')
         self.reqparse.add_argument(CONFIG_CLEAN_LIMIT_K, type=int,
                                    help='Case maximum amount of results before cleaning')
+        self.reqparse.add_argument(CONFIG_BLOCKING_K, type=bool, help='Run case as blocking')
         self.reqparse.add_argument(CONFIG_PARALLEL_K, type=bool, help='Run case in parallel')
         self.reqparse.add_argument(CONFIG_CORES_K, type=int, help='Number of cores for parallel run', )
         self.reqparse.add_argument(CONFIG_REALTIME_K, type=bool,

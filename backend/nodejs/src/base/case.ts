@@ -43,6 +43,8 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     protected _meshQuality: number = 50;
     /** Case result cleaning limit (0 - no cleaning). */
     protected _cleanLimit: number = 0;
+    /** Is case run blocking. */
+    protected _blocking: boolean = true;
     /** Is case running in parallel. */
     protected _parallel: boolean = true;
     /** Amount of cores to run in parallel. */
@@ -146,6 +148,24 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
             // TODO: error
             console.error('Cleaning limit cannot be negative!')
         }
+    }
+
+    /**
+     * Gets blocking flag.
+     * @return {boolean} blocking flag.
+     */
+    public get blocking(): boolean {
+        return this._blocking;
+    }
+
+    /**
+     * Enable/disable case blocking solving.
+     * @param {boolean} blocking: blocking flag.
+     * @async
+     */
+    public async setBlocking(blocking: boolean): Promise<void> {
+        this._blocking = blocking;
+        await reqPatch(this.couplingUrl, {blocking});
     }
 
     /**
@@ -288,6 +308,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         this._meshQuality = caseParams.mesh_quality;
         this._cleanLimit = caseParams.clean_limit;
         this._parallel = caseParams.parallel;
+        this._blocking = caseParams.blocking;
         this._cores = caseParams.cores;
     }
 
@@ -410,6 +431,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
     protected addPropertyHandlers(): void {
         this.thing.setPropertyReadHandler('meshQuality', async () => this.meshQuality);
         this.thing.setPropertyReadHandler('cleanLimit', async () => this.cleanLimit);
+        this.thing.setPropertyReadHandler('blocking', async () => this.blocking);
         this.thing.setPropertyReadHandler('parallel', async () => this.parallel);
         this.thing.setPropertyReadHandler('cores', async () => this.cores);
         this.thing.setPropertyReadHandler('phyngs', async () => this.getPhyngs());

@@ -123,6 +123,8 @@ export interface CaseParameters {
     meshQuality?: number
     /** Case result cleaning limit (0 - no cleaning). */
     cleanLimit?: number
+    /** Is case blocking. */
+    blocking?: boolean
     /** Is case running in parallel. */
     parallel?: boolean
     /** Amount of cores to run in parallel. */

@@ -18,6 +18,9 @@
           "type": "number",
           "minimum": 0
         },
+        "blocking": {
+          "type": "boolean"
+        },
         "parallel": {
           "type": "boolean"
         },
