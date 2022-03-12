@@ -75,6 +75,9 @@ class DoorPhyng(Phyng):
 
     @velocity.setter
     def velocity(self, wind_speed):
+        wind_speed_check = [True if v < 0.01 or v > 5 else False for v in wind_speed]
+        if any(wind_speed_check):
+            raise PhyngSetValueFailed(f'Velocity can only be between 0.01 and 5 m/s')
         self._velocity = wind_speed
         if self._snappy_dict is None or self._boundary_conditions is None:
             return

@@ -203,8 +203,8 @@ class AcPhyng(Phyng):
     @velocity.setter
     def velocity(self, value):
         value = float(value)
-        if value > 20 or value < 0.01:
-            raise PhyngSetValueFailed(f'Velocity can only be between 0 and 20 m/s')
+        if value > 5 or value < 0.01:
+            raise PhyngSetValueFailed(f'Velocity can only be between 0.01 and 5 m/s')
         self._velocity_in = [0, 0, -value]
         vel_x, vel_y = 0, 0
         vel_z = -value * np.cos(np.deg2rad(abs(self._angle_out)))
