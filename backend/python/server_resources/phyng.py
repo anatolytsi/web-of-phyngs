@@ -1,3 +1,5 @@
+import json
+
 import werkzeug.datastructures
 from flask_restful import Resource, reqparse
 
@@ -111,7 +113,7 @@ class PhyngValue(Resource):
         value = self.reqparse.parse_args(strict=True)['value']
         phyng = self.current_cases[case_name].get_phyng(phyng_name)
         if phyng_value in phyng:
-            phyng[phyng_value] = value
+            phyng[phyng_value] = json.loads(value)
             return '', 200
         # TODO: move this error
         raise KeyError(f'Property "{phyng_value}" for phyng "{phyng_name} does not exist')
