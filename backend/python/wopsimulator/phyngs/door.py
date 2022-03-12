@@ -77,7 +77,7 @@ class DoorPhyng(Phyng):
     @velocity.setter
     def velocity(self, wind_speed):
         wind_speed_check = [True if v <= MIN_VEL or v >= MAX_VEL else False for v in wind_speed]
-        if any(wind_speed_check):
+        if not all(wind_speed_check):
             raise PhyngSetValueFailed(f'Velocity can only be between {MIN_VEL} and {MAX_VEL} m/s, '
                                       f'not {wind_speed}')
         self._velocity = wind_speed
