@@ -4,6 +4,7 @@ from ..openfoam.common.filehandling import get_latest_time
 from ..openfoam.constant.material_properties import SOLID_MATERIALS
 from .behavior.cht import set_boundary_to_heater
 from .base import Phyng
+from .common import MIN_TEMP
 
 
 class HeaterPhyng(Phyng):
@@ -84,6 +85,8 @@ class HeaterPhyng(Phyng):
         :param temperature: temperature in K
         """
         self._temperature = float(temperature)
+        if self._temperature > MIN_TEMP:
+            raise PhyngSetValueFailed(f'Heater temperature can only be higher than {MIN_TEMP}')
         if self._snappy_dict is None or self._boundary_conditions is None:
             return
         latest_result = get_latest_time(self._case_dir)

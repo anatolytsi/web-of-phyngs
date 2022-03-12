@@ -1,6 +1,11 @@
 from threading import Lock
 
 
+MIN_TEMP = 233.15
+ROOM_TEMP = 293.15
+MAX_TEMP = 313.15
+
+
 class Environment:
     _instances = {}
 
@@ -11,7 +16,7 @@ class Environment:
         cls._instances[case_dir] = instance
         return instance
 
-    def __init__(self, case_dir, temperature: float = 293.15):
+    def __init__(self, case_dir, temperature: float = ROOM_TEMP):
         self._lock = Lock()
         self._case_dir = case_dir
         self._temperature = temperature
