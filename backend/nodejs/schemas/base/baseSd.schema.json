@@ -1,14 +1,14 @@
 {
   "properties": {
+    "@type": {
+      "type": "string",
+      "enum": [
+        "cht"
+      ]
+    },
     "sysProperties": {
       "type": "object",
       "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "cht"
-          ]
-        },
         "meshQuality": {
           "type": "number",
           "minimum": 0,
@@ -35,10 +35,7 @@
           "type": "number",
           "minimum": 0
         }
-      },
-      "required": [
-        "type"
-      ]
+      }
     }
   },
   "required": [

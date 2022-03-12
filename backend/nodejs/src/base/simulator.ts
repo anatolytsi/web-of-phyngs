@@ -245,7 +245,7 @@ export class Simulator extends AbstractThing {
      */
     public async createCase(sd: SystemDescription): Promise<string> {
         this.validateSd(sd);
-        let data: any = {...sd.sysProperties}
+        let data: any = {...sd.sysProperties, type: sd['@type']}
         if (sd.sysProperties.meshQuality) data['mesh_quality'] = sd.sysProperties.meshQuality;
         if (sd.sysProperties.cleanLimit) data['clean_limit'] = sd.sysProperties.cleanLimit;
         if (sd.sysProperties.endTime) data['end_time'] = sd.sysProperties.endTime;
@@ -277,7 +277,7 @@ export class Simulator extends AbstractThing {
      */
     protected validateSd(sd: SystemDescription): void {
         validateSchema(sd, sdSchema);
-        validateSchema(sd, this.caseTypesConstructors[sd.sysProperties.type].sdValidator);
+        validateSchema(sd, this.caseTypesConstructors[sd['@type']].sdValidator);
     }
 
     protected addPropertyHandlers(): void {

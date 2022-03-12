@@ -170,6 +170,7 @@ export interface SimulationErrors {
 }
 
 export interface SystemDescription extends WoT.ThingDescription {
+    '@type': string;
     sysProperties: CaseParameters;
 }
 
