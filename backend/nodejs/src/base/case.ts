@@ -361,7 +361,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      * @protected
      */
     protected getDataFromPd(pd: PhysicalDescription): any {
-        let data: any = {...pd.phyProperties}
+        let data: any = {...pd.phyProperties, type: pd['@type']}
         if ('stlName' in pd.phyProperties) data['stl_name'] = pd.phyProperties.stlName;
         if ('dimensionsIn' in pd.phyProperties) data['dimensions_in'] = pd.phyProperties.dimensionsIn;
         if ('locationIn' in pd.phyProperties) data['location_in'] = pd.phyProperties.locationIn;
