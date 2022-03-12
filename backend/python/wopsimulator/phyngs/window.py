@@ -105,7 +105,7 @@ class WindowPhyng(Phyng):
         :param temperature: temperature in K
         """
         self._temperature = float(temperature)
-        if self._temperature > MIN_TEMP or self._temperature < MAX_TEMP:
+        if self._temperature < MIN_TEMP or self._temperature > MAX_TEMP:
             raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}, '
                                       f'not {self._temperature}')
         if self._snappy_dict is None or self._boundary_conditions is None:

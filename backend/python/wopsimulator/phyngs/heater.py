@@ -85,7 +85,7 @@ class HeaterPhyng(Phyng):
         :param temperature: temperature in K
         """
         self._temperature = float(temperature)
-        if self._temperature > MIN_TEMP:
+        if self._temperature < MIN_TEMP:
             raise PhyngSetValueFailed(f'Heater temperature can only be higher than {MIN_TEMP}, '
                                       f'not {self._temperature}')
         if self._snappy_dict is None or self._boundary_conditions is None:
