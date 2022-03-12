@@ -9,6 +9,12 @@ import {AnyUri} from 'wot-thing-description-types';
 import {Vector} from './interfaces';
 import {reqGet, reqPost} from './axios-requests';
 
+async function phyngValueSetter(url: string, value: any) {
+    value = JSON.stringify(value);
+    let response = await reqPost(url, {value});
+    return response.data;
+}
+
 /**
  * Actuator heating properties.
  *
@@ -33,8 +39,7 @@ export class HeatingProperties {
      * @return {Promise<any>} Server response.
      */
     public async setTemperature(couplingUrl: AnyUri, temperature: number): Promise<any> {
-        let response = await reqPost(`${couplingUrl}/temperature`, {value: temperature});
-        return response.data
+        return await phyngValueSetter(`${couplingUrl}/temperature`, temperature);
     }
 
     /**
@@ -86,8 +91,7 @@ export class VelocityProperties {
      * @return {Promise<any>} Server response.
      */
     public async setVelocity(couplingUrl: AnyUri, velocity: Vector): Promise<any> {
-        let response = await reqPost(`${couplingUrl}/velocity`, {value: velocity});
-        return response.data
+        return await phyngValueSetter(`${couplingUrl}/velocity`, velocity);
     }
 
     /**
@@ -139,8 +143,7 @@ export class OpenableProperties {
      * @return {Promise<any>} Server response.
      */
     public async setOpen(couplingUrl: AnyUri, open: boolean): Promise<any> {
-        let response = await reqPost(`${couplingUrl}/open`, {value: open});
-        return response.data
+        return await phyngValueSetter(`${couplingUrl}/open`, open);
     }
 
     /**
@@ -204,8 +207,7 @@ export class EnableableProperties {
      * @return {Promise<any>} Server response.
      */
     public async setEnabled(couplingUrl: AnyUri, enable: boolean): Promise<any> {
-        let response = await reqPost(`${couplingUrl}/enabled`, {value: enable});
-        return response.data
+        return await phyngValueSetter(`${couplingUrl}/enabled`, enable);
     }
 
     /**
@@ -269,8 +271,7 @@ export class RotatableProperties {
      * @return {Promise<any>} Server response.
      */
     public async setOpen(couplingUrl: AnyUri, angle: number): Promise<any> {
-        let response = await reqPost(`${couplingUrl}/angle`, {value: angle});
-        return response.data
+        return await phyngValueSetter(`${couplingUrl}/angle`, angle);
     }
 
     /**
