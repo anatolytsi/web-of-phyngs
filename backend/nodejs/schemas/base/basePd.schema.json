@@ -3,9 +3,6 @@
     "phyProperties": {
       "type": "object",
       "properties": {
-        "type": {
-          "type": "string"
-        },
         "location": {
           "type": "array",
           "minItems": 3,

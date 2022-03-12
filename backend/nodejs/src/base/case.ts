@@ -380,7 +380,7 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
      * @protected
      */
     protected addPhyngToDictPd(pd: PhysicalDescription) {
-        this.addPhyngToDict({...pd.phyProperties, name: pd.title});
+        this.addPhyngToDict({...pd.phyProperties, name: pd.title, type: pd['@type']});
     }
 
     /**
@@ -475,8 +475,8 @@ export abstract class AbstractCase extends AbstractThing implements CaseParamete
         this.thing.setActionHandler('postprocess', async () => {
             await this.postprocess();
         });
-        this.thing.setActionHandler('addPhyng', async (props) => {
-            await this.addPhyng(props);
+        this.thing.setActionHandler('addPhyng', async (pd: PhysicalDescription) => {
+            await this.addPhyng(pd);
         });
         this.thing.setActionHandler('removePhyng', async (name) => {
             await this.removePhyng(name);

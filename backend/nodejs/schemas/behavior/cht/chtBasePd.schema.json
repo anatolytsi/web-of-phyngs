@@ -1,19 +1,19 @@
 {
   "properties": {
+    "@type": {
+      "type": "string",
+      "enum": [
+        "walls",
+        "window",
+        "door",
+        "heater",
+        "ac",
+        "sensor"
+      ]
+    },
     "phyProperties": {
       "type": "object",
       "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "walls",
-            "window",
-            "door",
-            "heater",
-            "ac",
-            "sensor"
-          ]
-        },
         "material": {
           "type": "string",
           "enum": [

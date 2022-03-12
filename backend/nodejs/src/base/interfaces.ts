@@ -174,5 +174,6 @@ export interface SystemDescription extends WoT.ThingDescription {
 }
 
 export interface PhysicalDescription extends WoT.ThingDescription {
+    '@type': string;
     phyProperties: PhyngProps;
 }
