@@ -24,12 +24,13 @@ class WindowPhyng(Phyng):
         :param of_interface: OpenFoam interface
         """
         self._open = False
-        self._velocity = [0, 0, 0]
-        self._temperature = 293.15
         model_type = 'surface'
         templates_dir = 'windows'
         super(WindowPhyng, self).__init__(stl_name=stl_name, model_type=model_type,
                                           templates_dir=templates_dir, **kwargs)
+        self._temperature = self.environment.temperature
+        self._velocity = [0.01 if dim else 0 for dim in self.model.dimensions]
+        self._velocity[2] = 0
         self._fields = 'all'
 
     def _add_initial_boundaries(self):
