@@ -5,6 +5,9 @@ MIN_TEMP = 233.15
 ROOM_TEMP = 293.15
 MAX_TEMP = 313.15
 
+MIN_VEL = 0.01
+MAX_VEL = 5
+
 
 class Environment:
     _instances = {}

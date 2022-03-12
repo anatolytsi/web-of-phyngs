@@ -2,7 +2,7 @@ from ..exceptions import PhyngSetValueFailed
 from ..openfoam.common.filehandling import get_latest_time
 from .behavior.cht import set_boundary_to_outlet, set_boundary_to_wall, update_boundaries
 from .base import Phyng
-from .common import MIN_TEMP, MAX_TEMP
+from .common import MIN_TEMP, MAX_TEMP, MIN_VEL, MAX_VEL
 
 
 class DoorPhyng(Phyng):
@@ -30,7 +30,7 @@ class DoorPhyng(Phyng):
         super(DoorPhyng, self).__init__(stl_name=stl_name, model_type=model_type,
                                         templates_dir=templates_dir, **kwargs)
         self._temperature = self.environment.temperature
-        self._velocity = [0.01 if dim else 0 for dim in self.model.dimensions]
+        self._velocity = [MIN_VEL if dim else 0 for dim in self.model.dimensions]
         self._velocity[2] = 0
         self._fields = 'all'
 
@@ -65,7 +65,7 @@ class DoorPhyng(Phyng):
             else:
                 set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature, latest_result,
                                      bg_name=self._bg_region, of_interface=self._of_interface)
-            self._velocity = [0.01 if dim else 0 for dim in self.model.dimensions]
+            self._velocity = [MIN_VEL if dim else 0 for dim in self.model.dimensions]
             self._velocity[2] = 0
         except Exception as e:
             raise PhyngSetValueFailed(e)
@@ -76,9 +76,9 @@ class DoorPhyng(Phyng):
 
     @velocity.setter
     def velocity(self, wind_speed):
-        wind_speed_check = [True if v < 0.01 or v > 5 else False for v in wind_speed]
+        wind_speed_check = [True if v < MIN_VEL or v > MAX_VEL else False for v in wind_speed]
         if any(wind_speed_check):
-            raise PhyngSetValueFailed(f'Velocity can only be between 0.01 and 5 m/s, '
+            raise PhyngSetValueFailed(f'Velocity can only be between {MIN_VEL} and {MAX_VEL} m/s, '
                                       f'not {wind_speed}')
         self._velocity = wind_speed
         if self._snappy_dict is None or self._boundary_conditions is None:

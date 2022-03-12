@@ -4,7 +4,7 @@ from ..openfoam.common.filehandling import get_latest_time
 from ..openfoam.system.snappyhexmesh import SnappyHexMeshDict, SnappyRegion
 from ..geometry.manipulator import Model
 from .base import Phyng
-from .common import MIN_TEMP, MAX_TEMP
+from .common import MIN_TEMP, MAX_TEMP, MIN_VEL, MAX_VEL
 from .behavior.cht import set_boundary_to_wall, set_boundary_to_outlet, set_boundary_to_inlet, update_boundaries
 from ..exceptions import PhyngSetValueFailed
 
@@ -31,8 +31,8 @@ class AcPhyng(Phyng):
         :param template: template name
         :param of_interface: OpenFoam interface
         """
-        self._velocity_in = [0, 0, -0.01]
-        self._velocity_out = [0.001, 0, -0.001]
+        self._velocity_in = [0, 0, -MIN_VEL]
+        self._velocity_out = [np.sqrt(MIN_VEL), 0, -np.sqrt(MIN_VEL)]
         self._angle_out = 45
         self._enabled = False
 
@@ -207,8 +207,8 @@ class AcPhyng(Phyng):
     @velocity.setter
     def velocity(self, value):
         value = float(value)
-        if value > 5 or value < 0.01:
-            raise PhyngSetValueFailed(f'Velocity can only be between 0.01 and 5 m/s, '
+        if value > MAX_VEL or value < MIN_VEL:
+            raise PhyngSetValueFailed(f'Velocity can only be between {MIN_VEL} and {MAX_VEL} m/s, '
                                       f'not {value}')
         self._velocity_in = [0, 0, -value]
         vel_x, vel_y = 0, 0
