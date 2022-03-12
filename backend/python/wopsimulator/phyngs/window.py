@@ -65,7 +65,8 @@ class WindowPhyng(Phyng):
             else:
                 set_boundary_to_wall(self.name, self._boundary_conditions, self._temperature, latest_result,
                                      bg_name=self._bg_region, of_interface=self._of_interface)
-                self._velocity = [0, 0, 0]
+            self._velocity = [0.01 if dim else 0 for dim in self.model.dimensions]
+            self._velocity[2] = 0
         except Exception as e:
             raise PhyngSetValueFailed(e)
 
