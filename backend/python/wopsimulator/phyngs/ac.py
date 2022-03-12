@@ -4,6 +4,7 @@ from ..openfoam.common.filehandling import get_latest_time
 from ..openfoam.system.snappyhexmesh import SnappyHexMeshDict, SnappyRegion
 from ..geometry.manipulator import Model
 from .base import Phyng
+from .common import MIN_TEMP, MAX_TEMP
 from .behavior.cht import set_boundary_to_wall, set_boundary_to_outlet, set_boundary_to_inlet, update_boundaries
 from ..exceptions import PhyngSetValueFailed
 
@@ -186,6 +187,8 @@ class AcPhyng(Phyng):
     @temperature.setter
     def temperature(self, value):
         self._temperature = float(value)
+        if self._temperature > MIN_TEMP or self._temperature < MAX_TEMP:
+            raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}')
         if self._snappy_dict is None or self._boundary_conditions is None or not self._enabled:
             return
         latest_result = get_latest_time(self._case_dir)
