@@ -90,10 +90,7 @@
         "field": {
           "type": "string"
         }
-      },
-      "required": [
-        "type"
-      ]
+      }
     }
   },
   "required": [
