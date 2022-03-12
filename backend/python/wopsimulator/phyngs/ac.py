@@ -187,7 +187,7 @@ class AcPhyng(Phyng):
     @temperature.setter
     def temperature(self, value):
         self._temperature = float(value)
-        if self._temperature < MIN_TEMP or self._temperature > MAX_TEMP:
+        if self._temperature <= MIN_TEMP or self._temperature >= MAX_TEMP:
             raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}, '
                                       f'not {self._temperature}')
         if self._snappy_dict is None or self._boundary_conditions is None or not self._enabled:
@@ -207,7 +207,7 @@ class AcPhyng(Phyng):
     @velocity.setter
     def velocity(self, value):
         value = float(value)
-        if value > MAX_VEL or value < MIN_VEL:
+        if value >= MAX_VEL or value <= MIN_VEL:
             raise PhyngSetValueFailed(f'Velocity can only be between {MIN_VEL} and {MAX_VEL} m/s, '
                                       f'not {value}')
         self._velocity_in = [0, 0, -value]
