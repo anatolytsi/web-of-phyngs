@@ -188,7 +188,8 @@ class AcPhyng(Phyng):
     def temperature(self, value):
         self._temperature = float(value)
         if self._temperature > MIN_TEMP or self._temperature < MAX_TEMP:
-            raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}')
+            raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}, '
+                                      f'not {self._temperature}')
         if self._snappy_dict is None or self._boundary_conditions is None or not self._enabled:
             return
         latest_result = get_latest_time(self._case_dir)
@@ -207,7 +208,8 @@ class AcPhyng(Phyng):
     def velocity(self, value):
         value = float(value)
         if value > 5 or value < 0.01:
-            raise PhyngSetValueFailed(f'Velocity can only be between 0.01 and 5 m/s')
+            raise PhyngSetValueFailed(f'Velocity can only be between 0.01 and 5 m/s, '
+                                      f'not {value}')
         self._velocity_in = [0, 0, -value]
         vel_x, vel_y = 0, 0
         vel_z = -value * np.cos(np.deg2rad(abs(self._angle_out)))

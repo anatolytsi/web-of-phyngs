@@ -54,7 +54,8 @@ class WallsPhyng(Phyng):
         """
         self._temperature = float(temperature)
         if self._temperature > MIN_TEMP or self._temperature < MAX_TEMP:
-            raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}')
+            raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}, '
+                                      f'not {self._temperature}')
         if self._snappy_dict is None or self._boundary_conditions is None:
             return
         latest_result = get_latest_time(self._case_dir)

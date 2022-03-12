@@ -86,7 +86,8 @@ class HeaterPhyng(Phyng):
         """
         self._temperature = float(temperature)
         if self._temperature > MIN_TEMP:
-            raise PhyngSetValueFailed(f'Heater temperature can only be higher than {MIN_TEMP}')
+            raise PhyngSetValueFailed(f'Heater temperature can only be higher than {MIN_TEMP}, '
+                                      f'not {self._temperature}')
         if self._snappy_dict is None or self._boundary_conditions is None:
             return
         latest_result = get_latest_time(self._case_dir)

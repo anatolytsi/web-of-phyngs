@@ -78,7 +78,8 @@ class DoorPhyng(Phyng):
     def velocity(self, wind_speed):
         wind_speed_check = [True if v < 0.01 or v > 5 else False for v in wind_speed]
         if any(wind_speed_check):
-            raise PhyngSetValueFailed(f'Velocity can only be between 0.01 and 5 m/s')
+            raise PhyngSetValueFailed(f'Velocity can only be between 0.01 and 5 m/s, '
+                                      f'not {wind_speed}')
         self._velocity = wind_speed
         if self._snappy_dict is None or self._boundary_conditions is None:
             return
@@ -104,7 +105,8 @@ class DoorPhyng(Phyng):
         """
         self._temperature = float(temperature)
         if self._temperature > MIN_TEMP or self._temperature < MAX_TEMP:
-            raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}')
+            raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}, '
+                                      f'not {self._temperature}')
         if self._snappy_dict is None or self._boundary_conditions is None:
             return
         latest_result = get_latest_time(self._case_dir)
