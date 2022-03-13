@@ -1,11 +1,3 @@
-ARG BASE_URL
-ARG MESH_STEP
-ARG MAX_CORES
-ARG HEATERS
-ARG ACS
-ARG WINDOWS
-ARG DOORS
-
 FROM node:17
 
 # Install any extra things that might be need
