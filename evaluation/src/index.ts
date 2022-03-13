@@ -147,7 +147,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
     let numOfPhyngs = getMaxPhyngs(data) + 1;
     for (let phyngIter = 0; phyngIter < numOfPhyngs; phyngIter++) {
         if (!caseThing) {
-            let caseName = `evalmesh${meshQuality}cores${cores}phyngs${type}${phyngIter}`
+            let caseName = `evalmesh${meshQuality}cores${cores}phyngs${type}${phyngIter + 1}`
             caseThing = await addCase(simulator, caseName, meshQuality, cores);
             await addPhyng(caseThing, `walls`, WALLS_DATA.phyProperties.location, WALLS_DATA);
             if (type !== 'heaters') {
