@@ -132,7 +132,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
     let numOfPhyngs = getMaxPhyngs(data) + 1;
     for (let phyngIter = 0; phyngIter < numOfPhyngs; phyngIter++) {
         if (!caseThing) {
-            let caseName = `eval_mesh${meshQuality}_cores${cores}_${type}${phyngIter}`
+            let caseName = `evalMesh${meshQuality}Cores${cores}Phyngs${type}${phyngIter}`
             caseThing = await addCase(simulator, caseName, meshQuality, cores);
             await addPhyng(caseThing, `heater`, HEATER_DATA.phyProperties.location, HEATER_DATA);
         }
@@ -172,7 +172,7 @@ async function evaluateCases(simulator: WoT.ConsumedThing, meshStep: number,
             }
 
             // Evaluate all phyngs at once
-            let caseName = `eval_mesh${meshQuality}_cores${cores}_phyngsAll`
+            let caseName = `evalMesh${meshQuality}Cores${cores}PhyngsAll`
             let caseThing = await addCase(simulator, caseName, meshQuality, cores);
             let maxPhyngs = 0;
             if (heaters) {
