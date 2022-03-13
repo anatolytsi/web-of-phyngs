@@ -134,6 +134,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
         if (!caseThing) {
             let caseName = `evalmesh${meshQuality}cores${cores}phyngs${type}${phyngIter}`
             caseThing = await addCase(simulator, caseName, meshQuality, cores);
+            await addPhyng(caseThing, `walls`, WALLS_DATA.phyProperties.location, WALLS_DATA);
             await addPhyng(caseThing, `heater`, HEATER_DATA.phyProperties.location, HEATER_DATA);
         }
         for (let phyngNum = 0; phyngNum < (phyngIter + 1); phyngNum++) {
@@ -151,6 +152,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
 async function evaluateCases(simulator: WoT.ConsumedThing, meshStep: number,
                              maxCores: number, heaters: boolean, acs: boolean,
                              windows: boolean, doors: boolean) {
+    if (!(heaters || acs || windows || doors)) throw Error('Specify at least one evaluation Phyng');
     let maxMeshIter = 100 / meshStep + 1;
     maxCores /= 2 + 1;
     for (let meshIter = 0; meshIter < maxMeshIter; meshIter++) {
@@ -178,6 +180,7 @@ async function evaluateCases(simulator: WoT.ConsumedThing, meshStep: number,
             // Evaluate all phyngs at once
             let caseName = `evalmesh${meshQuality}cores${cores}phyngsall`
             let caseThing = await addCase(simulator, caseName, meshQuality, cores);
+            await addPhyng(caseThing, `walls`, WALLS_DATA.phyProperties.location, WALLS_DATA);
             let maxPhyngs = 0;
             console.log(`Evaluating all phyngs with ${meshQuality} mesh, ${cores} cores`);
             if (heaters) {
