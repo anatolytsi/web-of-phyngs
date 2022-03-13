@@ -52,7 +52,7 @@ servient.start()
     })
 
 function writeToCsv(data: CsvData) {
-    let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsed}\n`;
+    let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsed}${data.error}\n`;
     fs.appendFile(filePath, row, function (err: any) {
         if (err) throw err;
     })
