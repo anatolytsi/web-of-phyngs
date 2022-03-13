@@ -1,7 +1,7 @@
 import {Servient, Helpers} from '@node-wot/core';
 import {HttpClientFactory} from '@node-wot/binding-http';
 import dotenv from 'dotenv';
-const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const fs = require('fs');
 
 type PhyngsType = 'heaters' | 'acs' | 'windows' | 'doors' | 'all';
 interface CsvData {
@@ -30,19 +30,13 @@ const HEATER_DATA = require('../data/heater.json');
 const WINDOW_DATA = require('../data/window.json');
 const DOOR_DATA = require('../data/door.json');
 
-const csvWriter = createCsvWriter({
-  path: `../results/${new Date().toISOString()}.csv`,
-  header: [
-    {id: 'caseName', title: 'Case Name'},
-    {id: 'cores', title: 'Cores'},
-    {id: 'meshQuality', title: 'Mesh Quality'},
-    {id: 'type', title: 'Phyngs Type'},
-    {id: 'phyngAmount', title: 'Phyngs Amount'},
-    {id: 'elapsed', title: 'Time, ms'},
-  ]
-});
+const CSV_COLUMN = 'Case Name;Cores;Mesh Quality;Phyngs Type;Phyngs Amount;Time, ms\n';
 
-let csvData: Array<CsvData> = [];
+let filePath = `../results/${new Date().toISOString()}.csv`;
+
+fs.writeFile(filePath, CSV_COLUMN, function (err: any) {
+    if (err) throw err;
+});
 
 let servient = new Servient();
 servient.addClientFactory(new HttpClientFactory());
@@ -55,6 +49,13 @@ servient.start()
     .then((WoT) => {
         wotClient = WoT;
     })
+
+function writeToCsv(data: CsvData) {
+    let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsed}\n`;
+    fs.appendFile(filePath, row, function (err: any) {
+        if (err) throw err;
+    })
+}
 
 async function addPhyng(caseThing: WoT.ConsumedThing, name: string,
                         location: Array<number>, data: any): Promise<WoT.ConsumedThing> {
@@ -114,10 +115,7 @@ async function solveCase(caseThing: WoT.ConsumedThing,
         phyngAmount,
         elapsed
     }
-    csvData.push(data);
-    csvWriter
-        .writeRecords(csvData)
-        .then(() => console.log('The CSV file was written successfully'));
+    writeToCsv(data);
 }
 
 function getMaxPhyngs(data: any) {
