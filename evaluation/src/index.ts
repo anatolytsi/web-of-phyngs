@@ -1,5 +1,6 @@
 import {Servient, Helpers} from '@node-wot/core';
 import {HttpClientFactory} from '@node-wot/binding-http';
+import dotenv from 'dotenv';
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 
 type PhyngsType = 'heaters' | 'acs' | 'windows' | 'doors' | 'all';
@@ -12,14 +13,15 @@ interface CsvData {
     elapsed: number
 }
 
+dotenv.config();
 const BASE_URL = process.env.HOST;
 const MESH_STEP = Number(process.env.MESH_STEP);
 const MAX_CORES = Number(process.env.MAX_CORES);
-const HEATERS = Boolean(process.env.HEATERS);
-const ACS = Boolean(process.env.ACS);
-const WINDOWS = Boolean(process.env.WINDOWS);
+const HEATERS = process.env.HEATERS === 'true';
+const ACS = process.env.ACS === 'true';
+const WINDOWS = process.env.WINDOWS === 'true';
+const DOORS = process.env.DOORS === 'true';
 
-const DOORS = Boolean(process.env.DOORS);
 const SIMULATOR_URL = `${BASE_URL}/wopsimulator/`;
 const CASE_DATA = require('../data/case.json');
 const WALLS_DATA = require('../data/walls.json');
