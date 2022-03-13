@@ -50,7 +50,7 @@ ENTRYPOINT ["./entrypoint.sh"]
 RUN usermod -G root foam
 RUN mkdir -p /wop/cases
 RUN chown -R foam:foam /wop/cases
-RUN chmod +rw /wop/cases
+RUN chmod -R 0777 /wop/cases
 USER foam
 
 # Install project dependencies
