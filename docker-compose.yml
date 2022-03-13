@@ -39,6 +39,25 @@ services:
     container_name: wop_backend_paraview
     volumes:
       - cases_volume:/wop/cases
+  evaluation:
+    build:
+      context: ./evaluation
+    tty: true
+    environment:
+      - BASE_URL=http://wop_backend_nodejs:8080
+      - MESH_STEP=10
+      - MAX_CORES=12
+      - HEATERS=1
+      - ACS=1
+      - WINDOWS=1
+      - DOORS=1
+    networks:
+      - wop-network
+    depends_on:
+      - backend-nodejs
+    container_name: wop_evaluation
+    volumes:
+      - ./evaluation/results:/app/evaluation/results
 
 volumes:
   cases_volume:

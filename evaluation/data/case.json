@@ -1,0 +1,19 @@
+{
+  "@type": "cht",
+  "@context": "https://www.w3.org/2019/wot/td/v1",
+  "security": "nosec_sc",
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  },
+  "title": "chtCase",
+  "sysProperties": {
+    "background": "air",
+    "meshQuality": 50,
+    "cores": 1,
+    "parallel": false,
+    "endTime": 60,
+    "blocking": true
+  }
+}
