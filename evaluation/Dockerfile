@@ -19,11 +19,3 @@ COPY . ./
 RUN echo -e "\n\n\n********** Building NodeJS project **********\n\n\n" && \
     npm run build
 
-ENV BASE_URL $BASE_URL
-ENV MESH_STEP $MESH_STEP
-ENV MAX_CORES $MAX_CORES
-ENV HEATERS $HEATERS
-ENV ACS $ACS
-ENV WINDOWS $WINDOWS
-ENV DOORS $DOORS
-
