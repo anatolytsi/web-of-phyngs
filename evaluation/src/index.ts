@@ -12,6 +12,7 @@ interface CsvData {
     elapsed: number
 }
 
+require('dotenv').config()
 const BASE_URL = process.env.HOST;
 const MESH_STEP = Number(process.env.MESH_STEP);
 const MAX_CORES = Number(process.env.MAX_CORES);

@@ -13,17 +13,16 @@ COPY package.json package-lock.json tsconfig.json ./
 RUN echo -e "\n\n\n********** Installing NodeJS project dependencies **********\n\n\n" && \
     npm install
 
+RUN echo "HOST $HOST\n" \
+         "MESH_STEP $MESH_STEP\n" \
+         "MAX_CORES $MAX_CORES\n" \
+         "HEATERS $HEATERS\n" \
+         "ACS $ACS\n" \
+         "WINDOWS $WINDOWS\n" \
+         "DOORS $DOORS\n" > .env
+
 COPY . ./
 
 # Build NodeJS
 RUN echo -e "\n\n\n********** Building NodeJS project **********\n\n\n" && \
     npm run build
-
-ENV BASE_URL $BASE_URL
-ENV MESH_STEP $MESH_STEP
-ENV MAX_CORES $MAX_CORES
-ENV HEATERS $HEATERS
-ENV ACS $ACS
-ENV WINDOWS $WINDOWS
-ENV DOORS $DOORS
-
