@@ -158,7 +158,7 @@ async function evaluateCases(simulator: WoT.ConsumedThing, meshStep: number,
     for (let meshIter = 0; meshIter < maxMeshIter; meshIter++) {
         let meshQuality = meshStep * meshIter;
         for (let coreIter = 0; coreIter < maxCores; coreIter++) {
-            let cores = (2 * coreIter) ?? 1;
+            let cores = (2 * coreIter) || 1;
             // First - evaluate individual Phyng types
             if (heaters) {
                 console.log(`Evaluating heaters with ${meshQuality} mesh, ${cores} cores`);
