@@ -61,7 +61,7 @@ async function addPhyng(caseThing: WoT.ConsumedThing, name: string,
     data = {...data, 'title': name, 'location': location};
     await caseThing.invokeAction('addPhyng', data);
     let caseName = caseThing.getThingDescription().title;
-    let td = await wotHelper.fetch(`${BASE_URL}/${caseName}-${name}`);
+    let td = await wotHelper.fetch(`${BASE_URL}/${caseName}-${name}/`);
     return wotClient.consume(td);
 }
 
@@ -93,7 +93,7 @@ async function addCase(simulatorThing: WoT.ConsumedThing, caseName: string,
     let parallel = cores > 1;
     let data = {...CASE_DATA, 'title': caseName, 'meshQuality': meshQuality, parallel};
     await simulatorThing.invokeAction('createCase', data);
-    let caseTd = await wotHelper.fetch(`${BASE_URL}/${caseName}`);
+    let caseTd = await wotHelper.fetch(`${BASE_URL}/${caseName}/`);
     return wotClient.consume(caseTd);
 }
 
