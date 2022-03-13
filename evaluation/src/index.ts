@@ -17,10 +17,10 @@ dotenv.config();
 const BASE_URL = process.env.HOST;
 const MESH_STEP = Number(process.env.MESH_STEP);
 const MAX_CORES = Number(process.env.MAX_CORES);
-const HEATERS = process.env.HEATERS === 'true';
-const ACS = process.env.ACS === 'true';
-const WINDOWS = process.env.WINDOWS === 'true';
-const DOORS = process.env.DOORS === 'true';
+const HEATERS = process.env.HEATERS === '1';
+const ACS = process.env.ACS === '1';
+const WINDOWS = process.env.WINDOWS === '1';
+const DOORS = process.env.DOORS === '1';
 
 const SIMULATOR_URL = `${BASE_URL}/wopsimulator/`;
 const CASE_DATA = require('../data/case.json');
