@@ -259,7 +259,7 @@ class OpenFoamInterface(ABC):
             time.sleep(0.001)
         logger.info('Case reconstructed')
 
-    def run_block_mesh(self):
+    def run_block_mesh(self, waiting: bool = False):
         """
         Runs OpenFOAM command to create a mesh as described in system/blockMeshDict
         :return: None
@@ -268,10 +268,13 @@ class OpenFoamInterface(ABC):
         self.blockmesh_dict.save()
         cmd = 'blockMesh'
         argv = [cmd, '-case', self.path]
-        PyFoamCmd(argv).start()
+        command = PyFoamCmd(argv)
+        command.start()
+        while waiting and command.running:
+            time.sleep(0.001)
         logger.info('Block mesh created')
 
-    def run_snappy_hex_mesh(self):
+    def run_snappy_hex_mesh(self, waiting: bool = False):
         """
         Runs OpenFOAM command to snap additional mesh to a background mesh as described in system/snappyHexMeshDict
         :return: None
@@ -280,10 +283,14 @@ class OpenFoamInterface(ABC):
         self.snappy_dict.save()
         cmd = 'snappyHexMesh'
         argv = [cmd, '-case', self.path, '-overwrite']
-        PyFoamCmd(argv).start()
+        command = PyFoamCmd(argv)
+        command.start()
+        while waiting and command.running:
+            time.sleep(0.001)
         logger.info('Surfaces snapped')
 
-    def run_split_mesh_regions(self, cell_zones: bool = False, cell_zones_only: bool = False):
+    def run_split_mesh_regions(self, cell_zones: bool = False, cell_zones_only: bool = False,
+                               waiting: bool = False):
         """
         Runs OpenFOAM command to split mesh regions for a produced mesh
         :param cell_zones: split additionally cellZones off into separate regions
@@ -297,10 +304,13 @@ class OpenFoamInterface(ABC):
             argv.insert(1, '-cellZones')
         if cell_zones_only:
             argv.insert(1, '-cellZonesOnly')
-        PyFoamCmd(argv).start()
+        command = PyFoamCmd(argv)
+        command.start()
+        while waiting and command.running:
+            time.sleep(0.001)
         logger.info('Mesh was split')
 
-    def run_setup_cht(self):
+    def run_setup_cht(self, waiting: bool = False):
         """
         Runs OpenFOAM command to setup CHT, which copies data from case/templates folder
         :return: None
@@ -309,7 +319,10 @@ class OpenFoamInterface(ABC):
         self.material_props.save()
         cmd = 'foamSetupCHT'
         argv = [cmd, '-case', self.path]
-        PyFoamCmd(argv).start()
+        command = PyFoamCmd(argv)
+        command.start()
+        while waiting and command.running:
+            time.sleep(0.001)
         logger.info('CHT case is setup')
 
     def run_foam_dictionary(self, path: str, entry: str, set_value: str):
