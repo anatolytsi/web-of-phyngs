@@ -32,7 +32,7 @@ const DOOR_DATA = require('../data/door.json');
 
 const CSV_COLUMN = 'Case Name;Cores;Mesh Quality;Phyngs Type;Phyngs Amount;Time, ms\n';
 
-let filePath = `../results/${new Date().toISOString()}.csv`;
+let filePath = `./results/${new Date().toISOString()}.csv`;
 
 fs.writeFile(filePath, CSV_COLUMN, function (err: any) {
     if (err) throw err;
