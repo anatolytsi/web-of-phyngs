@@ -11,6 +11,7 @@ interface CsvData {
     type: PhyngsType
     phyngAmount: number
     elapsed: number
+    error: string
 }
 
 dotenv.config();
@@ -30,7 +31,7 @@ const HEATER_DATA = require('../data/heater.json');
 const WINDOW_DATA = require('../data/window.json');
 const DOOR_DATA = require('../data/door.json');
 
-const CSV_COLUMN = 'Case Name;Cores;Mesh Quality;Phyngs Type;Phyngs Amount;Time, ms\n';
+const CSV_COLUMN = 'Case Name;Cores;Mesh Quality;Phyngs Type;Phyngs Amount;Time, ms;Error\n';
 
 let filePath = `./results/${new Date().toISOString()}.csv`;
 
@@ -103,19 +104,33 @@ async function solveCase(caseThing: WoT.ConsumedThing,
                          meshQuality: number, cores: number,
                          type: PhyngsType, phyngAmount: number) {
     console.log(`Setting up the case with ${meshQuality} mesh, ${cores} cores`);
-    let result = await caseThing.invokeAction('setup');
-    if (result) console.log(result);
-    let start = process.hrtime();
-    result = await caseThing.invokeAction('run');
-    let elapsed: number = process.hrtime(start)[1] / 1000000;
-    if (result) console.log(result);
+    let error = '';
+    let elapsed: number = 0;
+    try {
+        let result = await caseThing.invokeAction('setup');
+        if (result) {
+            console.log(result);
+            error = result;
+        }
+        let start = process.hrtime();
+        result = await caseThing.invokeAction('run');
+        elapsed = process.hrtime(start)[1] / 1000000;
+        if (result) {
+            console.log(result);
+            error = result;
+        }
+    }
+    catch (e: any) {
+        error = e;
+    }
     let data: CsvData = {
         caseName: caseThing.getThingDescription().title,
         cores,
         meshQuality,
         type,
         phyngAmount,
-        elapsed
+        elapsed,
+        error
     }
     writeToCsv(data);
 }
