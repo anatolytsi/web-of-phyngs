@@ -8,10 +8,14 @@
 import {AnyUri} from 'wot-thing-description-types';
 import {Vector} from './interfaces';
 import {reqGet, reqPost} from './axios-requests';
+import {responseIsUnsuccessful} from "./helpers";
 
 async function phyngValueSetter(url: string, value: any) {
     value = JSON.stringify(value);
     let response = await reqPost(url, {value});
+    if (responseIsUnsuccessful(response.status)) {
+        throw Error(response.data);
+    }
     return response.data;
 }
 
