@@ -137,8 +137,7 @@ class PyFoamSolver(Thread):
                 return
             pid = self._solver.run.run.pid
             process = psutil.Process(pid)
-            if self._parallel:
-                process.children()[0].send_signal(signal)
+            process.children()[0].send_signal(signal)
             process.send_signal(signal)
         except psutil.NoSuchProcess:
             pass
@@ -154,8 +153,7 @@ class PyFoamSolver(Thread):
             pid = self._solver.run.run.pid
             process = psutil.Process(pid)
             process.send_signal(SIGINT)
-            if self._parallel:
-                process.children()[0].send_signal(SIGINT)
+            process.children()[0].send_signal(SIGINT)
         except psutil.NoSuchProcess:
             pass
         self._solver = None
