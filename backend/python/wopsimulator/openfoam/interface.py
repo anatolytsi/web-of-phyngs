@@ -98,6 +98,7 @@ class OpenFoamInterface(ABC):
                 self._cores //= 2
         else:
             self._cores = 1
+        self.decompose_dict.num_of_domains = self._cores
         logger.info(f'Number of cores are set to {self._cores}')
 
     @property
