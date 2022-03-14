@@ -114,16 +114,16 @@ async function solveCase(caseThing: WoT.ConsumedThing,
     let elapsedSetup: number = 0;
     let elapsedSolve: number = 0;
     try {
-        let start = process.hrtime();
+        let start = Date.now();
         let result = await caseThing.invokeAction('setup');
         if (result) {
             console.log(result);
             error = result;
         }
-        elapsedSetup = process.hrtime(start)[1] / 1000000;
-        start = process.hrtime();
+        elapsedSetup = Date.now() - start;
+        start = Date.now();
         result = await caseThing.invokeAction('run');
-        elapsedSolve = process.hrtime(start)[1] / 1000000;
+        elapsedSolve = Date.now() - start;
         if (result) {
             console.log(result);
             error = result;
