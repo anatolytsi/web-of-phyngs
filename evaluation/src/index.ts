@@ -136,8 +136,8 @@ async function solveCase(caseThing: WoT.ConsumedThing,
 }
 
 function getMaxPhyngs(data: any) {
-    return Math.round(WALLS_DATA.phyProperties.dimensions[1] / (data.phyProperties.dimensions[1] +
-        data.phyProperties.location[1]));
+    return Math.round(WALLS_DATA.phyProperties.dimensions[0] / (data.phyProperties.dimensions[0] +
+        data.phyProperties.location[0]));
 }
 
 async function phyngEvaluation(simulator: WoT.ConsumedThing,
@@ -156,7 +156,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
         }
         for (let phyngNum = 0; phyngNum < (phyngIter + 1); phyngNum++) {
             let location = data.phyProperties.location;
-            location[1] += phyngNum * (data.phyProperties.dimensions[1] + data.phyProperties.location[1]);
+            location[0] += phyngNum * (data.phyProperties.dimensions[0] + data.phyProperties.location[0]);
             let phyng = await addPhyng(caseThing, `${type}${phyngNum + 1}`, location, data);
             await setPhyng(phyng, type);
         }
