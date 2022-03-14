@@ -71,21 +71,21 @@ async function addPhyng(caseThing: WoT.ConsumedThing, name: string,
 async function setPhyng(phyng: WoT.ConsumedThing, type: PhyngsType) {
     switch (type) {
         case "heaters":
-            await phyng.writeProperty('temperature', '350');
+            await phyng.writeProperty('temperature', 350);
             break;
         case "acs":
-            await phyng.writeProperty('temperature', '283.15');
-            await phyng.writeProperty('velocity', '5');
+            await phyng.writeProperty('temperature', 283.15);
+            await phyng.writeProperty('velocity', 5);
             await phyng.invokeAction('turnOn');
             break;
         case "windows":
-            await phyng.writeProperty('temperature', '303.15');
-            await phyng.writeProperty('velocity', '[-5, 0, 0]');
+            await phyng.writeProperty('temperature', 303.15);
+            await phyng.writeProperty('velocity', [-5, 0, 0]);
             await phyng.invokeAction('open');
             break;
         case "doors":
-            await phyng.writeProperty('temperature', '296.15');
-            await phyng.writeProperty('velocity', '[5, 0, 0]');
+            await phyng.writeProperty('temperature', 296.15);
+            await phyng.writeProperty('velocity', [5, 0, 0]);
             await phyng.invokeAction('open');
             break;
     }
