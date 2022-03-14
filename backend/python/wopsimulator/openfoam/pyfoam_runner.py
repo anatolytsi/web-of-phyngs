@@ -142,12 +142,18 @@ class PyFoamSolver(Thread):
             process.send_signal(signal)
         except psutil.NoSuchProcess:
             pass
+        acquired = self._lock.acquire(timeout=1)
+        self._lock.release()
+        if not acquired:
+            logger.warning('Could not obtain the lock, killing the solving thread')
+            self.kill()
 
     def kill(self):
         """Kill solving thread"""
         self._solver.run.run.send_signal(SIGINT)
         self._solver = None
-        try:
-            self._stop()
-        except AssertionError:
-            pass
+        acquired = self._lock.acquire(timeout=10)
+        self._lock.release()
+        if not acquired:
+            logger.warning('Solver was not killed within 10 ms')
+            raise Exception('Case solving could not be stopped')

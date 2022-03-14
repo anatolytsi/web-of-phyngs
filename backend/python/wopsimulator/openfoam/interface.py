@@ -428,11 +428,6 @@ class OpenFoamInterface(ABC):
         if not self._running:
             return
         self._solver_thread.stop(int(self.control_dict.stop_at_write_now_signal))
-        acquired = self._solver_lock.acquire(timeout=1)
-        if not acquired:
-            logger.warning('Could not obtain the lock, killing the solving thread')
-            self._solver_thread.kill()
-        self._solver_lock.release()
         self._solver_thread = None
         self._running = False
 
