@@ -106,28 +106,52 @@ async function addCase(simulatorThing: WoT.ConsumedThing, caseName: string,
     return wotClient.consume(caseTd);
 }
 
-async function solveCase(caseThing: WoT.ConsumedThing,
-                         meshQuality: number, cores: number,
-                         type: PhyngsType, phyngAmount: number) {
-    console.log(`Setting up the case with ${meshQuality} mesh, ${cores} cores`);
-    let error = '';
-    let elapsedSetup: number = 0;
-    let elapsedSolve: number = 0;
+async function setupCase(caseThing: WoT.ConsumedThing, numOfRetries: number = 0,
+                         retried: boolean = false): Promise<[number, any]> {
     try {
+        if (retried) {
+            await caseThing.invokeAction('clean');
+        }
+        let error = '';
         let start = Date.now();
         let result = await caseThing.invokeAction('setup');
         if (result) {
             console.log(result);
             error = result;
         }
-        elapsedSetup = Date.now() - start;
-        start = Date.now();
-        result = await caseThing.invokeAction('run');
-        elapsedSolve = Date.now() - start;
-        if (result) {
-            console.log(result);
-            error = result;
+        return [Date.now() - start, error];
+    } catch (e: any) {
+        if (numOfRetries) {
+            return setupCase(caseThing, numOfRetries--, true)
         }
+        throw Error(e);
+    }
+}
+
+async function solveCase(caseThing: WoT.ConsumedThing): Promise<[number, any]> {
+    let error = '';
+    let start = Date.now();
+    let result = await caseThing.invokeAction('run');
+    let elapsedSolve = Date.now() - start;
+    if (result) {
+        console.log(result);
+        error = result;
+    }
+    return [elapsedSolve, error];
+}
+
+async function runCase(caseThing: WoT.ConsumedThing,
+                       meshQuality: number, cores: number,
+                       type: PhyngsType, phyngAmount: number) {
+    console.log(`Setting up the case with ${meshQuality} mesh, ${cores} cores`);
+    let error, errorSetup, errorSolve = '';
+    let elapsedSetup: number = 0;
+    let elapsedSolve: number = 0;
+    try {
+        [elapsedSetup, errorSetup] = await setupCase(caseThing, 2);
+        [elapsedSolve, errorSolve] = await solveCase(caseThing);
+        let errorPres = (elapsedSolve || errorSolve) !== '';
+        error = `${errorSetup}${errorPres ? '\t' : ''}${errorSolve}`
     } catch (e: any) {
         error = e;
     }
@@ -170,7 +194,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             await setPhyng(phyng, type);
         }
         if (solve) {
-            await solveCase(caseThing, meshQuality, cores, type, phyngIter + 1);
+            await runCase(caseThing, meshQuality, cores, type, phyngIter + 1);
             caseThing = undefined;
         }
     }
@@ -230,7 +254,7 @@ async function evaluateCases(simulator: WoT.ConsumedThing, meshStep: number,
                     caseThing, false);
                 maxPhyngs += getMaxPhyngs(DOOR_DATA);
             }
-            await solveCase(caseThing, meshQuality, cores, "all", maxPhyngs);
+            await runCase(caseThing, meshQuality, cores, "all", maxPhyngs);
         }
     }
 }
