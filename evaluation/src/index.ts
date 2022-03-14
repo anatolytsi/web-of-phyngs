@@ -22,6 +22,7 @@ const BASE_URL = process.env.HOST;
 const NUM_OF_TIMES = Number(process.env.NUM_OF_TIMES || 100);
 const MESH_STEP = Number(process.env.MESH_STEP || 10);
 const MAX_CORES = Number(process.env.MAX_CORES || 8);
+const CORES_STEP = Number(process.env.CORES_STEP || 2);
 const HEATERS = process.env.HEATERS === '1';
 const ACS = process.env.ACS === '1';
 const WINDOWS = process.env.WINDOWS === '1';
@@ -215,15 +216,16 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
 }
 
 async function evaluateCases(simulator: WoT.ConsumedThing, meshStep: number,
-                             maxCores: number, heaters: boolean, acs: boolean,
+                             maxCores: number, coresStep: number,
+                             heaters: boolean, acs: boolean,
                              windows: boolean, doors: boolean) {
     if (!(heaters || acs || windows || doors)) throw Error('Specify at least one evaluation Phyng');
     let maxMeshIter = 100 / meshStep + 1;
-    maxCores /= 2 + 1;
+    maxCores /= coresStep + 1;
     for (let meshIter = 1; meshIter < maxMeshIter; meshIter++) {
         let meshQuality = meshStep * meshIter;
         for (let coreIter = 0; coreIter < maxCores; coreIter++) {
-            let cores = (2 * coreIter) || 1;
+            let cores = (coresStep * coreIter) || 1;
             // First - evaluate individual Phyng types
             if (heaters) {
                 console.log(`Evaluating heaters with ${meshQuality} mesh, ${cores} cores`);
@@ -284,6 +286,7 @@ async function main() {
             simulator,
             MESH_STEP,
             MAX_CORES,
+            CORES_STEP,
             HEATERS,
             ACS,
             WINDOWS,
