@@ -17,7 +17,7 @@ FoamFile
 #includeEtc "caseDicts/mesh/generation/snappyHexMeshDict.cfg"
 
 castellatedMesh true;
-snap            true;
+snap            false;
 addLayers       false;
 
 geometry

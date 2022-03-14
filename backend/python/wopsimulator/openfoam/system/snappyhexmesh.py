@@ -247,7 +247,7 @@ class SnappyHexMeshDict:
         :param case_dir: case directory
         """
         self.castellated_mesh = True
-        self.snap = True
+        self.snap = False
         self.add_layers = False
         self.meshes = {}
         self.n_cells_between_levels = 1
