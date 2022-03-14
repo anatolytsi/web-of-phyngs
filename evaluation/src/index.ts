@@ -155,9 +155,9 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
         if (!caseThing) {
             let caseName = `evalmesh${meshQuality}cores${cores}phyngs${type}${phyngIter + 1}`
             caseThing = await addCase(simulator, caseName, meshQuality, cores);
-            await addPhyng(caseThing, `walls`, WALLS_DATA.phyProperties.location, WALLS_DATA);
+            await addPhyng(caseThing, `walls`, WALLS_DATA.phyProperties.location, {...WALLS_DATA});
             if (type !== 'heaters') {
-                await addPhyng(caseThing, `heater`, HEATER_DATA.phyProperties.location, HEATER_DATA);
+                await addPhyng(caseThing, `heater`, HEATER_DATA.phyProperties.location, {...HEATER_DATA});
             }
         }
         for (let phyngNum = 0; phyngNum < (phyngIter + 1); phyngNum++) {
@@ -186,19 +186,19 @@ async function evaluateCases(simulator: WoT.ConsumedThing, meshStep: number,
             // First - evaluate individual Phyng types
             if (heaters) {
                 console.log(`Evaluating heaters with ${meshQuality} mesh, ${cores} cores`);
-                await phyngEvaluation(simulator, meshQuality, cores, 'heaters', HEATER_DATA);
+                await phyngEvaluation(simulator, meshQuality, cores, 'heaters', {...HEATER_DATA});
             }
             if (acs) {
                 console.log(`Evaluating acs with ${meshQuality} mesh, ${cores} cores`);
-                await phyngEvaluation(simulator, meshQuality, cores, 'acs', AC_DATA);
+                await phyngEvaluation(simulator, meshQuality, cores, 'acs', {...AC_DATA});
             }
             if (windows) {
                 console.log(`Evaluating windows with ${meshQuality} mesh, ${cores} cores`);
-                await phyngEvaluation(simulator, meshQuality, cores, 'windows', WINDOW_DATA);
+                await phyngEvaluation(simulator, meshQuality, cores, 'windows', {...WINDOW_DATA});
             }
             if (doors) {
                 console.log(`Evaluating doors with ${meshQuality} mesh, ${cores} cores`);
-                await phyngEvaluation(simulator, meshQuality, cores, 'doors', DOOR_DATA);
+                await phyngEvaluation(simulator, meshQuality, cores, 'doors', {...DOOR_DATA});
             }
 
             // Evaluate all phyngs at once
@@ -208,19 +208,23 @@ async function evaluateCases(simulator: WoT.ConsumedThing, meshStep: number,
             let maxPhyngs = 0;
             console.log(`Evaluating all phyngs with ${meshQuality} mesh, ${cores} cores`);
             if (heaters) {
-                await phyngEvaluation(simulator, meshQuality, cores, 'heaters', HEATER_DATA, caseThing, false);
+                await phyngEvaluation(simulator, meshQuality, cores, 'heaters', {...HEATER_DATA},
+                    caseThing, false);
                 maxPhyngs += getMaxPhyngs(HEATER_DATA);
             }
             if (acs) {
-                await phyngEvaluation(simulator, meshQuality, cores, 'acs', AC_DATA, caseThing, false);
+                await phyngEvaluation(simulator, meshQuality, cores, 'acs', {...AC_DATA},
+                    caseThing, false);
                 maxPhyngs += getMaxPhyngs(AC_DATA);
             }
             if (windows) {
-                await phyngEvaluation(simulator, meshQuality, cores, 'windows', WINDOW_DATA, caseThing, false);
+                await phyngEvaluation(simulator, meshQuality, cores, 'windows', {...WINDOW_DATA},
+                    caseThing, false);
                 maxPhyngs += getMaxPhyngs(WINDOW_DATA);
             }
             if (doors) {
-                await phyngEvaluation(simulator, meshQuality, cores, 'doors', DOOR_DATA, caseThing, false);
+                await phyngEvaluation(simulator, meshQuality, cores, 'doors', {...DOOR_DATA},
+                    caseThing, false);
                 maxPhyngs += getMaxPhyngs(DOOR_DATA);
             }
             await solveCase(caseThing, meshQuality, cores, "all", maxPhyngs);
