@@ -67,6 +67,7 @@ class OpenFoamInterface(ABC):
         self._solver_type = solver_type
         self._solver_thread = None
         self._solver_lock = thr.Lock()
+        self._stop_lock = thr.Lock()
         self._probe_parser_thread = ProbeParser(self.path)
         self._time_probe = None
         self._running = False
@@ -464,9 +465,10 @@ class OpenFoamInterface(ABC):
         if self._running:
             logger.debug('Case is already being solved')
             return
-        logger.info('Starting to solve the case')
-        self.start_solving()
-        self._probe_parser_thread.start()
+        with self._stop_lock:
+            logger.info('Starting to solve the case')
+            self.start_solving()
+            self._probe_parser_thread.start()
         if self.blocking:
             self._solver_lock.acquire()
             self._solver_lock.release()
@@ -480,11 +482,12 @@ class OpenFoamInterface(ABC):
         if not self._running:
             logger.debug('Case is already stopped')
             return
-        logger.debug('Stopping probe parsers')
-        self._probe_parser_thread.stop()
-        if stop_solver:
-            logger.info('Stopping the case solver')
-            self.stop_solving()
+        with self._stop_lock:
+            logger.debug('Stopping probe parsers')
+            self._probe_parser_thread.stop()
+            if stop_solver:
+                logger.info('Stopping the case solver')
+                self.stop_solving()
 
     def remove(self):
         self.blockmesh_dict.remove()
