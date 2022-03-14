@@ -150,7 +150,14 @@ class PyFoamSolver(Thread):
 
     def kill(self):
         """Kill solving thread"""
-        self._solver.run.run.send_signal(SIGINT)
+        try:
+            pid = self._solver.run.run.pid
+            process = psutil.Process(pid)
+            process.send_signal(SIGINT)
+            if self._parallel:
+                process.children()[0].send_signal(SIGINT)
+        except psutil.NoSuchProcess:
+            pass
         self._solver = None
         acquired = self._lock.acquire(timeout=10)
         self._lock.release()
