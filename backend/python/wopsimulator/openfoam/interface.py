@@ -50,15 +50,9 @@ class OpenFoamInterface(ABC):
         :param kwargs: keys used by children and not by this class
         """
         self.path = path
-        self.parallel = parallel
-        self.blocking = blocking
-        self.cores = cores
-        self.clean_limit = clean_limit
         self.control_dict = ControlDict(self.path, solver_type)
-        self.control_dict.end_time = end_time
-        self.decompose_dict = DecomposeParDict(self.path, self.cores, 'simple')
+        self.decompose_dict = DecomposeParDict(self.path, cores, 'simple')
         self.blockmesh_dict = BlockMeshDict(self.path)
-        self.blockmesh_dict.mesh_quality = mesh_quality
         self.snappy_dict = SnappyHexMeshDict(self.path)
         self.material_props = MaterialProperties(self.path)
         self.regions = []
@@ -70,6 +64,12 @@ class OpenFoamInterface(ABC):
         self._stop_lock = thr.Lock()
         self._probe_parser_thread = ProbeParser(self.path)
         self._time_probe = None
+        self.parallel = parallel
+        self.blocking = blocking
+        self.cores = cores
+        self.clean_limit = clean_limit
+        self.control_dict.end_time = end_time
+        self.blockmesh_dict.mesh_quality = mesh_quality
         self._running = False
         logger.debug('Interface initialized')
 
