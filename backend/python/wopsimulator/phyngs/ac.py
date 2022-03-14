@@ -185,7 +185,11 @@ class AcPhyng(Phyng):
         return self._temperature
 
     @temperature.setter
-    def temperature(self, value):
+    def temperature(self, temperature):
+        if not (MIN_TEMP <= temperature <= MAX_TEMP):
+            raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}, '
+                                      f'not {temperature}')
+        self._temperature = temperature
         if self._temperature <= MIN_TEMP or self._temperature >= MAX_TEMP:
             raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}, '
                                       f'not {self._temperature}')

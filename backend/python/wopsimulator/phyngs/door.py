@@ -104,9 +104,10 @@ class DoorPhyng(Phyng):
         Sets door phyng temperature by modifying the latest results
         :param temperature: temperature in K
         """
-        if self._temperature <= MIN_TEMP or self._temperature >= MAX_TEMP:
+        if not (MIN_TEMP <= temperature <= MAX_TEMP):
             raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}, '
-                                      f'not {self._temperature}')
+                                      f'not {temperature}')
+        self._temperature = temperature
         if self._snappy_dict is None or self._boundary_conditions is None:
             return
         latest_result = get_latest_time(self._case_dir)
