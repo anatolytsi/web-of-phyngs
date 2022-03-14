@@ -159,7 +159,6 @@ class AcPhyng(Phyng):
         if self._snappy_dict is None or self._boundary_conditions is None:
             return
         latest_result = get_latest_time(self._case_dir)
-        value = value == 'True'
         try:
             if value:
                 set_boundary_to_outlet(self.name_in, self._boundary_conditions, self._velocity_in, self._temperature,
