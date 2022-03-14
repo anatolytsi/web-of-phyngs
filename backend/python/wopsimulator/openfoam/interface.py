@@ -57,7 +57,7 @@ class OpenFoamInterface(ABC):
         self.material_props = MaterialProperties(self.path)
         self.regions = []
         self.boundaries = {}
-        self.is_decomposed = False
+        self.is_decomposed = os.path.exists(f'{path}/processor0')
         self._solver_type = solver_type
         self._solver_thread = None
         self._solver_lock = thr.Lock()
@@ -118,6 +118,7 @@ class OpenFoamInterface(ABC):
         Removes processors folder
         :return: None
         """
+        self.is_decomposed = False
         remove_iterable_dirs(self.path, prepend_str='processor')
         logger.debug('Processors removed')
 
@@ -245,6 +246,9 @@ class OpenFoamInterface(ABC):
         logger.debug('Removing old solutions')
         self.remove_solution_dirs()  # Hope no bug is implemented by this, be aware
         logger.info('Running reconstruct')
+        if not self.is_decomposed:
+            logger.info('Case is not decomposed, skipping reconstruction')
+            return
         cmd = 'reconstructPar'
         argv = [cmd, '-newTimes', '-case', self.path]
         if all_regions:
