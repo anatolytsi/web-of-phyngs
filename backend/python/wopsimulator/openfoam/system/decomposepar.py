@@ -89,7 +89,6 @@ class DecomposeParDict:
         :param delta: cell skew factor
         :param order: decomposition order (for hierarchical), e.g., "xyz"
         """
-        self._parse()
         self._case_dir = case_dir
         self.num_of_domains = num_of_domains
         if method not in DECOMPOSE_METHODS:
@@ -99,6 +98,7 @@ class DecomposeParDict:
         self.regions = regions if regions else []
         self.simple_coeffs = SimpleCoeffs(n, delta)
         self.hierarchical_coeffs = HierarchicalCoeffs(n, delta, order)
+        self._parse()
 
     def _parse(self):
         """Parses decomposeParDict"""
