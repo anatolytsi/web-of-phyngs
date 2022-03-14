@@ -57,7 +57,7 @@ services:
       - backend-nodejs
     container_name: wop_evaluation
     volumes:
-      - ./evaluation/results:/app/evaluation/results
+      - ./results:/app/evaluation/results
 
 volumes:
   cases_volume:

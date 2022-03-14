@@ -15,6 +15,9 @@ RUN echo -e "\n\n\n********** Installing NodeJS project dependencies **********\
 
 COPY . ./
 
+RUN mkdir -p ./results
+RUN chmod -R 777 ./results
+
 # Build NodeJS
 RUN echo -e "\n\n\n********** Building NodeJS project **********\n\n\n" && \
     npm run build
