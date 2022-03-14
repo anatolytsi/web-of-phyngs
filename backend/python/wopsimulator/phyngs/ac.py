@@ -209,7 +209,7 @@ class AcPhyng(Phyng):
 
     @velocity.setter
     def velocity(self, value):
-        if not ((MIN_VEL <= value <= MAX_VEL) or (-MIN_VEL >= value >= -MAX_VEL)):
+        if not (MIN_VEL <= value <= MAX_VEL):
             raise PhyngSetValueFailed(f'Velocity can only be between {MIN_VEL} and {MAX_VEL} m/s, '
                                       f'not {value}')
         self._velocity_in = [0, 0, -value]
