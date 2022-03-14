@@ -77,7 +77,6 @@ class WindowPhyng(Phyng):
 
     @velocity.setter
     def velocity(self, wind_speed):
-        wind_speed = [float(v) for v in wind_speed]
         wind_speed_check = [True if (MIN_VEL <= v <= MAX_VEL) or (-MIN_VEL >= v >= -MAX_VEL) else False
                             for v in wind_speed]
         if not any(wind_speed_check):
@@ -106,7 +105,6 @@ class WindowPhyng(Phyng):
         Sets window phyng temperature by modifying the latest results
         :param temperature: temperature in K
         """
-        self._temperature = float(temperature)
         if self._temperature <= MIN_TEMP or self._temperature >= MAX_TEMP:
             raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}, '
                                       f'not {self._temperature}')
