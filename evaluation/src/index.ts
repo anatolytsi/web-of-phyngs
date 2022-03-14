@@ -19,10 +19,10 @@ interface CsvData {
 
 dotenv.config();
 const BASE_URL = process.env.HOST;
-const NUM_OF_TIMES = Number(process.env.NUM_OF_TIMES || 100);
-const MESH_STEP = Number(process.env.MESH_STEP || 10);
-const MAX_CORES = Number(process.env.MAX_CORES || 8);
-const CORES_STEP = Number(process.env.CORES_STEP || 2);
+const NUM_OF_TIMES = Number(process.env.NUM_OF_TIMES) || 100;
+const MESH_STEP = Number(process.env.MESH_STEP) || 10;
+const MAX_CORES = Number(process.env.MAX_CORES) || 8;
+const CORES_STEP = Number(process.env.CORES_STEP) || 2;
 const HEATERS = process.env.HEATERS === '1';
 const ACS = process.env.ACS === '1';
 const WINDOWS = process.env.WINDOWS === '1';
