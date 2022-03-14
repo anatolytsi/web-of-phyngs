@@ -1,9 +1,11 @@
 import {Servient, Helpers} from '@node-wot/core';
 import {HttpClientFactory} from '@node-wot/binding-http';
 import dotenv from 'dotenv';
+
 const fs = require('fs');
 
 type PhyngsType = 'heaters' | 'acs' | 'windows' | 'doors' | 'all';
+
 interface CsvData {
     caseName: string
     cores: number
@@ -123,8 +125,7 @@ async function solveCase(caseThing: WoT.ConsumedThing,
             console.log(result);
             error = result;
         }
-    }
-    catch (e: any) {
+    } catch (e: any) {
         error = e;
     }
     let data: CsvData = {
