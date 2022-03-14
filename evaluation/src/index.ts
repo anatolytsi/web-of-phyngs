@@ -116,6 +116,7 @@ async function setupCase(caseThing: WoT.ConsumedThing, numOfRetries: number = 0,
     try {
         if (retried) {
             await caseThing.invokeAction('clean');
+            await delay(1000);
         }
         let error = '';
         let start = Date.now();
@@ -127,6 +128,7 @@ async function setupCase(caseThing: WoT.ConsumedThing, numOfRetries: number = 0,
         return [Date.now() - start, error];
     } catch (e: any) {
         if (numOfRetries) {
+            await delay(1000);
             return setupCase(caseThing, numOfRetries--, true)
         }
         throw Error(e);
