@@ -19,8 +19,9 @@ interface CsvData {
 
 dotenv.config();
 const BASE_URL = process.env.HOST;
-const MESH_STEP = Number(process.env.MESH_STEP);
-const MAX_CORES = Number(process.env.MAX_CORES);
+const NUM_OF_TIMES = Number(process.env.NUM_OF_TIMES || 100);
+const MESH_STEP = Number(process.env.MESH_STEP || 10);
+const MAX_CORES = Number(process.env.MAX_CORES || 8);
 const HEATERS = process.env.HEATERS === '1';
 const ACS = process.env.ACS === '1';
 const WINDOWS = process.env.WINDOWS === '1';
@@ -49,6 +50,8 @@ servient.addClientFactory(new HttpClientFactory());
 
 let wotClient: WoT.WoT;
 let wotHelper = new Helpers(servient);
+
+let usedCases: Array<string> = [];
 
 // Start servient
 servient.start()
@@ -266,15 +269,20 @@ async function evaluateCases(simulator: WoT.ConsumedThing, meshStep: number,
 async function main() {
     let simulatorTd = await wotHelper.fetch(SIMULATOR_URL);
     let simulator = await wotClient.consume(simulatorTd);
-    await evaluateCases(
-        simulator,
-        MESH_STEP,
-        MAX_CORES,
-        HEATERS,
-        ACS,
-        WINDOWS,
-        DOORS
-    );
+    for (let i = 0; i < NUM_OF_TIMES; i++) {
+        for (const simCase of usedCases) {
+            await simulator.invokeAction('deleteCase', simCase);
+        }
+        await evaluateCases(
+            simulator,
+            MESH_STEP,
+            MAX_CORES,
+            HEATERS,
+            ACS,
+            WINDOWS,
+            DOORS
+        );
+    }
 }
 
 (async () => {
