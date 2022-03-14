@@ -84,9 +84,10 @@ class HeaterPhyng(Phyng):
         Sets heater phyng temperature by modifying the latest results
         :param temperature: temperature in K
         """
-        if self._temperature <= MIN_TEMP:
+        if temperature <= MIN_TEMP:
             raise PhyngSetValueFailed(f'Heater temperature can only be higher than {MIN_TEMP}, '
                                       f'not {self._temperature}')
+        self._temperature = temperature
         if self._snappy_dict is None or self._boundary_conditions is None:
             return
         latest_result = get_latest_time(self._case_dir)
