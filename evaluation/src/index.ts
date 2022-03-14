@@ -128,7 +128,7 @@ async function setupCase(caseThing: WoT.ConsumedThing, numOfRetries: number = 0,
     } catch (e: any) {
         if (numOfRetries) {
             await delay(1000);
-            return setupCase(caseThing, numOfRetries--, true)
+            return setupCase(caseThing, numOfRetries - 1, true)
         }
         throw Error(e);
     }
