@@ -36,6 +36,8 @@ const DOOR_DATA = require('../data/door.json');
 
 const CSV_COLUMN = 'Case Name;Cores;Mesh Quality;Phyngs Type;Phyngs Amount;Setup Time, ms;Solving Time, ms;Error\n';
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 let filePath = `./results/${new Date().toISOString()}.csv`;
 
 fs.writeFile(filePath, CSV_COLUMN, function (err: any) {
@@ -167,6 +169,7 @@ async function runCase(caseThing: WoT.ConsumedThing,
         error
     }
     writeToCsv(data);
+    await delay(5000);
 }
 
 function getMaxPhyngs(data: any) {
