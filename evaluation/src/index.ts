@@ -29,6 +29,8 @@ const ACS = process.env.ACS === '1';
 const WINDOWS = process.env.WINDOWS === '1';
 const DOORS = process.env.DOORS === '1';
 
+console.log(`Simulating for ${NUM_OF_TIMES}, Mesh step ${MESH_STEP}, cores ${MAX_CORES} with step ${CORES_STEP}`);
+
 const SIMULATOR_URL = `${BASE_URL}/wopsimulator/`;
 const CASE_DATA = require('../data/case.json');
 const WALLS_DATA = require('../data/walls.json');
