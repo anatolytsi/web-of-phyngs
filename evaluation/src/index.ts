@@ -2,6 +2,7 @@ import {Servient, Helpers} from '@node-wot/core';
 import {HttpClientFactory} from '@node-wot/binding-http';
 import dotenv from 'dotenv';
 
+const path = require('path');
 const fs = require('fs');
 
 type PhyngsType = 'heaters' | 'acs' | 'windows' | 'doors' | 'all';
@@ -17,7 +18,7 @@ interface CsvData {
     error: string
 }
 
-dotenv.config();
+dotenv.config({path: path.resolve(__dirname, '../.env')});
 const BASE_URL = process.env.HOST;
 const NUM_OF_TIMES = parseInt(process.env.NUM_OF_TIMES || "", 10) || 100;
 const MESH_STEP = parseInt(process.env.MESH_STEP || "", 10) || 10;
