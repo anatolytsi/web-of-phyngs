@@ -197,7 +197,7 @@ class Phyng(ABC):
                 else:
                     self._of_interface.run_reconstruct(latest_time=True, region=self._region,
                                                        fields=self._fields, waiting=True)
-        logger.info(f'Setting value "{key}" of Phyng "{self.name}" to "{value}"')
+        logger.info(f'Setting value "{key}" of Phyng "{self.name}" to "{value}" of type {type(value)}')
         setattr(self, key, value)
         if case_was_stopped:
             logger.debug('Case can be run now')
