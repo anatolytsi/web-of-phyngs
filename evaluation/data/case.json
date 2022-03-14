@@ -13,6 +13,7 @@
     "meshQuality": 50,
     "cores": 1,
     "parallel": false,
+    "realtime": false,
     "endTime": 60,
     "blocking": true
   }
