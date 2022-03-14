@@ -154,6 +154,7 @@ async function runCase(caseThing: WoT.ConsumedThing,
     let elapsedSolve: number = 0;
     try {
         [elapsedSetup, errorSetup] = await setupCase(caseThing, 2);
+        await delay(1000);
         [elapsedSolve, errorSolve] = await solveCase(caseThing);
         let errorPres = (elapsedSolve || errorSolve) !== '';
         error = `${errorSetup}${errorPres ? '\t' : ''}${errorSolve}`
