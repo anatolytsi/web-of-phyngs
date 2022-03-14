@@ -161,7 +161,8 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             await setPhyng(phyng, type);
         }
         if (solve) {
-            await solveCase(caseThing, meshQuality, cores, type, phyngIter);
+            await solveCase(caseThing, meshQuality, cores, type, phyngIter + 1);
+            caseThing = undefined;
         }
     }
 }
