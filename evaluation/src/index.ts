@@ -10,7 +10,8 @@ interface CsvData {
     meshQuality: number
     type: PhyngsType
     phyngAmount: number
-    elapsed: number
+    elapsedSetup: number
+    elapsedSolve: number
     error: string
 }
 
@@ -31,7 +32,7 @@ const HEATER_DATA = require('../data/heater.json');
 const WINDOW_DATA = require('../data/window.json');
 const DOOR_DATA = require('../data/door.json');
 
-const CSV_COLUMN = 'Case Name;Cores;Mesh Quality;Phyngs Type;Phyngs Amount;Time, ms;Error\n';
+const CSV_COLUMN = 'Case Name;Cores;Mesh Quality;Phyngs Type;Phyngs Amount;Setup Time, ms;Solving Time, ms;Error\n';
 
 let filePath = `./results/${new Date().toISOString()}.csv`;
 
@@ -52,7 +53,7 @@ servient.start()
     })
 
 function writeToCsv(data: CsvData) {
-    let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsed}${data.error}\n`;
+    let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsedSetup};${data.elapsedSolve}${data.error}\n`;
     fs.appendFile(filePath, row, function (err: any) {
         if (err) throw err;
     })
@@ -105,16 +106,19 @@ async function solveCase(caseThing: WoT.ConsumedThing,
                          type: PhyngsType, phyngAmount: number) {
     console.log(`Setting up the case with ${meshQuality} mesh, ${cores} cores`);
     let error = '';
-    let elapsed: number = 0;
+    let elapsedSetup: number = 0;
+    let elapsedSolve: number = 0;
     try {
+        let start = process.hrtime();
         let result = await caseThing.invokeAction('setup');
         if (result) {
             console.log(result);
             error = result;
         }
-        let start = process.hrtime();
+        elapsedSetup = process.hrtime(start)[1] / 1000000;
+        start = process.hrtime();
         result = await caseThing.invokeAction('run');
-        elapsed = process.hrtime(start)[1] / 1000000;
+        elapsedSolve = process.hrtime(start)[1] / 1000000;
         if (result) {
             console.log(result);
             error = result;
@@ -129,7 +133,8 @@ async function solveCase(caseThing: WoT.ConsumedThing,
         meshQuality,
         type,
         phyngAmount,
-        elapsed,
+        elapsedSetup,
+        elapsedSolve,
         error
     }
     writeToCsv(data);
