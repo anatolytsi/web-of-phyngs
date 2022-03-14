@@ -103,9 +103,8 @@ async function setPhyng(phyng: WoT.ConsumedThing, type: PhyngsType) {
 async function addCase(simulatorThing: WoT.ConsumedThing, caseName: string,
                        meshQuality: number, cores: number): Promise<WoT.ConsumedThing> {
     let parallel = cores > 1;
-    let data = {...CASE_DATA};
-    data.sysProperties = {...data.sysProperties, meshQuality, parallel};
-    data = {...data, 'title': caseName};
+    let data = {...CASE_DATA, 'title': caseName};
+    data.sysProperties = {...CASE_DATA.sysProperties, meshQuality, parallel};
     await simulatorThing.invokeAction('createCase', data);
     let caseTd = await wotHelper.fetch(`${BASE_URL}/${caseName}/`);
     return wotClient.consume(caseTd);
