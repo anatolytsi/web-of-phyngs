@@ -52,9 +52,10 @@ class WallsPhyng(Phyng):
         Sets room temperature by modifying the latest results
         :param temperature: temperature in K
         """
-        if self._temperature <= MIN_TEMP or self._temperature >= MAX_TEMP:
+        if temperature <= MIN_TEMP or temperature >= MAX_TEMP:
             raise PhyngSetValueFailed(f'Temperature can only be between {MIN_TEMP} and {MAX_TEMP}, '
                                       f'not {self._temperature}')
+        self._temperature = temperature
         if self._snappy_dict is None or self._boundary_conditions is None:
             return
         latest_result = get_latest_time(self._case_dir)
