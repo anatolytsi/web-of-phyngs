@@ -161,7 +161,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             }
         }
         for (let phyngNum = 0; phyngNum < (phyngIter + 1); phyngNum++) {
-            let location = data.phyProperties.location;
+            let location = [...data.phyProperties.location];
             location[0] += phyngNum * (data.phyProperties.dimensions[0] + data.phyProperties.location[0]);
             let phyng = await addPhyng(caseThing, `${type}${phyngNum + 1}`, location, data);
             await setPhyng(phyng, type);
