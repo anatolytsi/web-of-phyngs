@@ -152,6 +152,7 @@ async function runCase(caseThing: WoT.ConsumedThing,
         [elapsedSolve, errorSolve] = await solveCase(caseThing);
         let errorPres = (elapsedSolve || errorSolve) !== '';
         error = `${errorSetup}${errorPres ? '\t' : ''}${errorSolve}`
+        await caseThing.invokeAction('stop');
     } catch (e: any) {
         error = e;
     }
