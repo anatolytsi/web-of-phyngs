@@ -64,7 +64,8 @@ function writeToCsv(data: CsvData) {
 async function addPhyng(caseThing: WoT.ConsumedThing, name: string,
                         location: Array<number>, data: any): Promise<WoT.ConsumedThing> {
     console.log(`Adding Phyng ${name} at the location ${location}`);
-    data = {...data, 'title': name, 'location': location};
+    data = {...data, 'title': name};
+    data.phyProperties = {...data.phyProperties, location};
     await caseThing.invokeAction('addPhyng', data);
     let caseName = caseThing.getThingDescription().title;
     let td = await wotHelper.fetch(`${BASE_URL}/${caseName}-${name}/`);
