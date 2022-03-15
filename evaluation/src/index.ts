@@ -209,7 +209,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             await delay(100);
             if (type !== 'heaters') {
                 await addPhyng(caseThing, `heater`, HEATER_DATA.phyProperties.location, {...HEATER_DATA});
-            await delay(100);
+                await delay(100);
             }
         }
         for (let phyngNum = 0; phyngNum < (phyngIter + 1); phyngNum++) {
