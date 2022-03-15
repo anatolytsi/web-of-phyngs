@@ -118,6 +118,7 @@ async function addCase(simulatorThing: WoT.ConsumedThing, caseName: string,
     let data = {...CASE_DATA, 'title': caseName};
     data.sysProperties = {...CASE_DATA.sysProperties, meshQuality, parallel};
     await simulatorThing.invokeAction('createCase', data);
+    usedCases.push(caseName);
     let caseTd = await wotHelper.fetch(`${BASE_URL}/${caseName}/`);
     return wotClient.consume(caseTd);
 }
