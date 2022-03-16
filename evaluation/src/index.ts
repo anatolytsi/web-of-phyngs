@@ -226,7 +226,7 @@ async function evaluateCases(simulator: WoT.ConsumedThing, meshStep: number,
                              windows: boolean, doors: boolean) {
     if (!(heaters || acs || windows || doors)) throw Error('Specify at least one evaluation Phyng');
     let maxMeshIter = 100 / meshStep + 1;
-    maxCores /= coresStep + 1;
+    maxCores = maxCores / coresStep + 1;
     for (let meshIter = 1; meshIter < maxMeshIter; meshIter++) {
         let meshQuality = meshStep * meshIter;
         for (let coreIter = 0; coreIter < maxCores; coreIter++) {
