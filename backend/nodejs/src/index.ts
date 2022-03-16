@@ -1,9 +1,13 @@
 import {Servient} from '@node-wot/core';
 import {HttpServer} from '@node-wot/binding-http';
+import dotenv from 'dotenv';
 
 import {CaseConstructorType, Simulator} from './base/simulator';
 import {ChtCase} from './behavior/cht';
 import {chtSdSchema} from './base/schemas';
+import path from 'path';
+
+dotenv.config({path: path.resolve(__dirname, '../.env')});
 
 let CASE_PARAMS: CaseConstructorType = {
     'cht': {
@@ -14,7 +18,10 @@ let CASE_PARAMS: CaseConstructorType = {
     }
 }
 
-let httpServer = new HttpServer({port: 8080});
+let httpServer = new HttpServer({
+    port: 8080,
+    baseUri: process.env.BASE_URI
+});
 let servient = new Servient();
 servient.addServer(httpServer);
 
