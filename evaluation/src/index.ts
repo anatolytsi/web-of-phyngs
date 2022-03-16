@@ -46,9 +46,9 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 let filePath = `./results/${new Date().toISOString()}.csv`;
 
-fs.writeFile(filePath, CSV_COLUMN, function (err: any) {
-    if (err) throw err;
-});
+// fs.writeFile(filePath, CSV_COLUMN, function (err: any) {
+//     if (err) throw err;
+// });
 
 let servient = new Servient();
 servient.addClientFactory(new HttpClientFactory());
@@ -57,10 +57,10 @@ let wotClient: WoT.WoT;
 let wotHelper = new Helpers(servient);
 
 function writeToCsv(data: CsvData) {
-    let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsedSetup};${data.elapsedSolve}${data.error}\n`;
-    fs.appendFile(filePath, row, function (err: any) {
-        if (err) throw err;
-    })
+    // let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsedSetup};${data.elapsedSolve}${data.error}\n`;
+    // fs.appendFile(filePath, row, function (err: any) {
+    //     if (err) throw err;
+    // })
 }
 
 async function addPhyng(caseThing: WoT.ConsumedThing, name: string,
@@ -73,11 +73,11 @@ async function addPhyng(caseThing: WoT.ConsumedThing, name: string,
     }
     phyProps.location = location;
     if ('locationIn' in data.phyProperties) {
-        let increase = location[0] - data.phyProperties.location[0];
+        let increase = Math.round(location[0] - data.phyProperties.location[0] * 100) / 100;
         let locationIn = [...data.phyProperties.locationIn];
         let locationOut = [...data.phyProperties.locationOut];
-        locationIn[0] = Math.round((locationIn[0] + increase) * 100) / 100;
-        locationOut[0] = Math.round((locationOut[0] + increase) * 100) / 100;
+        locationIn[0] = Math.round((locationIn[0]) * 100) / 100 + increase;
+        locationOut[0] = Math.round((locationOut[0]) * 100) / 100 + increase;
         phyProps.locationIn = locationIn;
         phyProps.locationOut = locationOut;
     }
