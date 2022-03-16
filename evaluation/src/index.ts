@@ -71,6 +71,7 @@ async function addPhyng(caseThing: WoT.ConsumedThing, name: string,
     for (const key in data.phyProperties) {
         phyProps[key] = data.phyProperties[key];
     }
+    location[0] = Math.round(location[0] * 100) / 100;
     phyProps.location = location;
     if ('locationIn' in data.phyProperties) {
         let increase = location[0] - data.phyProperties.location[0];
