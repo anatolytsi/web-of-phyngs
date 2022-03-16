@@ -67,15 +67,21 @@ async function addPhyng(caseThing: WoT.ConsumedThing, name: string,
                         location: Array<number>, data: any): Promise<WoT.ConsumedThing> {
     console.log(`Adding Phyng ${name} at the location ${location}`);
     data = {...data, 'title': name};
+    let phyProps: any = {};
+    for (const key in data.phyProperties) {
+        phyProps[key] = data.phyProperties[key];
+    }
+    phyProps.location = location;
     if ('locationIn' in data.phyProperties) {
         let increase = location[0] - data.phyProperties.location[0];
         let locationIn = [...data.phyProperties.locationIn];
         let locationOut = [...data.phyProperties.locationOut];
-        locationIn[0] += increase;
-        locationOut[0] += increase;
-        data.phyProperties = {...data.phyProperties, locationIn, locationOut};
+        locationIn[0] = Math.round((locationIn[0] + increase) * 100) / 100;
+        locationOut[0] = Math.round((locationOut[0] + increase) * 100) / 100;
+        phyProps.locationIn = locationIn;
+        phyProps.locationOut = locationOut;
     }
-    data.phyProperties = {...data.phyProperties, location};
+    data.phyProperties = phyProps;
     await caseThing.invokeAction('addPhyng', data);
     let caseName = caseThing.getThingDescription().title;
     let td = await wotHelper.fetch(`${BASE_URL}/${caseName}-${name}/`);
