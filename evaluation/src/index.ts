@@ -1,6 +1,7 @@
 import {Servient, Helpers} from '@node-wot/core';
 import {HttpClientFactory} from '@node-wot/binding-http';
 import dotenv from 'dotenv';
+import {NamedHrefs} from './interfaces';
 
 const path = require('path');
 const fs = require('fs');
@@ -54,14 +55,6 @@ servient.addClientFactory(new HttpClientFactory());
 
 let wotClient: WoT.WoT;
 let wotHelper = new Helpers(servient);
-
-let usedCases: Array<string> = [];
-
-// Start servient
-servient.start()
-    .then((WoT) => {
-        wotClient = WoT;
-    })
 
 function writeToCsv(data: CsvData) {
     let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsedSetup};${data.elapsedSolve}${data.error}\n`;
@@ -290,9 +283,10 @@ async function evaluateCases(simulator: WoT.ConsumedThing, meshStep: number,
 async function main() {
     let simulatorTd = await wotHelper.fetch(SIMULATOR_URL);
     let simulator = await wotClient.consume(simulatorTd);
+    let usedCases: Array<NamedHrefs> = await simulator.readProperty('cases');
     for (let i = 0; i < NUM_OF_TIMES; i++) {
         for (const simCase of usedCases) {
-            await simulator.invokeAction('deleteCase', simCase);
+            await simulator.invokeAction('deleteCase', simCase.name);
         }
         await evaluateCases(
             simulator,
@@ -308,7 +302,12 @@ async function main() {
 }
 
 (async () => {
-    await main();
+    // Start servient
+    servient.start()
+        .then(async (WoT) => {
+            wotClient = WoT;
+            await main();
+        })
 })().catch(e => {
     console.error(e);
 })
