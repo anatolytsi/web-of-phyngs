@@ -59,7 +59,7 @@ let wotClient: WoT.WoT;
 let wotHelper = new Helpers(servient);
 
 function writeToCsv(data: CsvData) {
-    let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsedSetup};${data.elapsedSolve}${data.error}\n`;
+    let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsedSetup};${data.elapsedSolve};${data.error};\n`;
     fs.appendFile(filePath, row, function (err: any) {
         if (err) throw err;
     })
