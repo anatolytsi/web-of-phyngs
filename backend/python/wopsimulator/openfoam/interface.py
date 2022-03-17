@@ -15,7 +15,7 @@ from .common.filehandling import remove_iterable_dirs, remove_dirs_with_pattern,
     force_remove_dir, remove_files_in_dir_with_pattern, copy_tree, get_latest_time, get_latest_time_parallel
 from .constant.material_properties import MaterialProperties
 from .probes.probes import ProbeParser, Probe
-from .pyfoam_runner import PyFoamCmd, PyFoamSolver
+from .pyfoam_runner import PyFoamCmd, PyFoamSolver, check_runner_errors
 from .system.blockmesh import BlockMeshDict
 from .system.controldict import ControlDict
 from .system.decomposepar import DecomposeParDict
@@ -477,6 +477,7 @@ class OpenFoamInterface(ABC):
         if self.blocking:
             self._solver_lock.acquire()
             self._solver_lock.release()
+            check_runner_errors(self._solver_type, self._solver_thread.solver)
         logger.info('Stopped solving the case')
 
     def stop(self, stop_solver=True, **kwargs):

@@ -51,7 +51,7 @@ def run_error_catcher(func):
     return wrapper
 
 
-def _check_runner_errors(command, solver):
+def check_runner_errors(command, solver):
     """Check if errors appeared after running command"""
     if not solver.runOK():
         if solver.fatalError:
@@ -103,7 +103,7 @@ class PyFoamCmd(BasicRunnerWrapper):
     def start(self):
         """Starts executing command"""
         super(PyFoamCmd, self).start()
-        _check_runner_errors(self.logname, self)
+        check_runner_errors(self.logname, self)
 
 
 class PyFoamSolver(Thread):
@@ -117,7 +117,7 @@ class PyFoamSolver(Thread):
         self._lock = lock
         self._parallel = is_parallel
         self._solver_type = solver_type
-        self._solver = BasicRunnerWrapper(argv=argv, silent=silent, logname=solver_type, lam=lam, **kwargs)
+        self.solver = BasicRunnerWrapper(argv=argv, silent=silent, logname=solver_type, lam=lam, **kwargs)
         super(PyFoamSolver, self).__init__(daemon=True)
 
     @run_error_catcher
@@ -126,19 +126,19 @@ class PyFoamSolver(Thread):
         with self._lock:
             logger.debug('Entering solver thread')
             try:
-                self._solver.start()
+                self.solver.start()
             except Exception:
                 pass
-            _check_runner_errors(self._solver_type, self._solver)
+            check_runner_errors(self._solver_type, self.solver)
             logger.debug('Quiting solver thread')
-            self._solver = None
+            self.solver = None
 
     def stop(self, signal):
         """Stops solving"""
         try:
-            if not self._solver:
+            if not self.solver:
                 return
-            pid = self._solver.run.run.pid
+            pid = self.solver.run.run.pid
             process = psutil.Process(pid)
             process.children()[0].send_signal(signal)
             process.send_signal(signal)
@@ -153,13 +153,13 @@ class PyFoamSolver(Thread):
     def kill(self):
         """Kill solving thread"""
         try:
-            pid = self._solver.run.run.pid
+            pid = self.solver.run.run.pid
             process = psutil.Process(pid)
             process.send_signal(SIGINT)
             process.children()[0].send_signal(SIGINT)
         except psutil.NoSuchProcess:
             pass
-        self._solver = None
+        self.solver = None
         acquired = self._lock.acquire(timeout=10)
         self._lock.release()
         if not acquired:
