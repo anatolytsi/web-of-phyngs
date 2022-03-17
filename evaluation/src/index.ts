@@ -23,8 +23,10 @@ dotenv.config({path: path.resolve(__dirname, '../.env')});
 const BASE_URL = process.env.HOST;
 const NUM_OF_TIMES = parseInt(process.env.NUM_OF_TIMES || "", 10) || 100;
 const MESH_STEP = parseInt(process.env.MESH_STEP || "", 10) || 10;
+const START_MESH = parseInt(process.env.START_MESH || "", 10) || MESH_STEP;
 const MAX_CORES = parseInt(process.env.MAX_CORES || "", 10) || 8;
 const CORES_STEP = parseInt(process.env.CORES_STEP || "", 10) || 2;
+const START_CORES = parseInt(process.env.START_CORES || "", 10) || 0;
 const HEATERS = process.env.HEATERS === '1';
 const ACS = process.env.ACS === '1';
 const WINDOWS = process.env.WINDOWS === '1';
@@ -226,16 +228,17 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
     }
 }
 
-async function evaluateCases(simulator: WoT.ConsumedThing, meshStep: number,
-                             maxCores: number, coresStep: number,
+async function evaluateCases(simulator: WoT.ConsumedThing,
+                             meshStep: number, startMesh: number,
+                             maxCores: number, coresStep: number, startCores: number,
                              heaters: boolean, acs: boolean,
                              windows: boolean, doors: boolean) {
     if (!(heaters || acs || windows || doors)) throw Error('Specify at least one evaluation Phyng');
     let maxMeshIter = 100 / meshStep + 1;
-    maxCores = maxCores / coresStep + 1;
-    for (let meshIter = 1; meshIter < maxMeshIter; meshIter++) {
+    let curMaxCores = maxCores / coresStep + 1;
+    for (let meshIter = startMesh / meshStep; meshIter < maxMeshIter; meshIter++) {
         let meshQuality = meshStep * meshIter;
-        for (let coreIter = 0; coreIter < maxCores; coreIter++) {
+        for (let coreIter = startCores / coresStep; coreIter < curMaxCores; coreIter++) {
             let cores = (coresStep * coreIter) || 1;
             // First - evaluate individual Phyng types
             if (heaters) {
@@ -297,8 +300,10 @@ async function main() {
         await evaluateCases(
             simulator,
             MESH_STEP,
+            START_MESH,
             MAX_CORES,
             CORES_STEP,
+            START_CORES,
             HEATERS,
             ACS,
             WINDOWS,
