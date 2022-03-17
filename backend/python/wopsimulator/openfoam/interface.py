@@ -51,7 +51,7 @@ class OpenFoamInterface(ABC):
         """
         self.path = path
         self.control_dict = ControlDict(self.path, solver_type)
-        self.decompose_dict = DecomposeParDict(self.path, cores, 'simple')
+        self.decompose_dict = DecomposeParDict(self.path, cores, 'hierarchial')
         self.blockmesh_dict = BlockMeshDict(self.path)
         self.snappy_dict = SnappyHexMeshDict(self.path)
         self.material_props = MaterialProperties(self.path)
