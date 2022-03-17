@@ -125,7 +125,10 @@ class PyFoamSolver(Thread):
         """Solving thread"""
         with self._lock:
             logger.debug('Entering solver thread')
-            self._solver.start()
+            try:
+                self._solver.start()
+            except Exception:
+                pass
             _check_runner_errors(self._solver_type, self._solver)
             logger.debug('Quiting solver thread')
             self._solver = None
