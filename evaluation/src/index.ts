@@ -134,9 +134,9 @@ async function setupCase(caseThing: WoT.ConsumedThing, numOfRetries: number = 0,
         let error = '';
         let start = Date.now();
         let result = await caseThing.invokeAction('setup');
-        if (result) {
-            console.log(result);
-            error = result;
+        if (result && result.data) {
+            console.log(result.data);
+            error = result.data;
             return [0, error];
         }
         return [Date.now() - start, error];
@@ -154,9 +154,9 @@ async function solveCase(caseThing: WoT.ConsumedThing): Promise<[number, any]> {
     let start = Date.now();
     let result = await caseThing.invokeAction('run');
     let elapsedSolve = Date.now() - start;
-    if (result) {
-        console.log(result);
-        error = result;
+    if (result && result.data) {
+        console.log(result.data);
+        error = result.data;
         return [0, error];
     }
     return [elapsedSolve, error];
