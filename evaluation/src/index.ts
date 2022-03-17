@@ -258,33 +258,33 @@ async function evaluateCases(simulator: WoT.ConsumedThing,
                 await phyngEvaluation(simulator, meshQuality, cores, 'doors', {...DOOR_DATA});
             }
 
-            // Evaluate all phyngs at once
-            let caseName = `evalmesh${meshQuality}cores${cores}phyngsall`
-            let caseThing = await addCase(simulator, caseName, meshQuality, cores);
-            await addPhyng(caseThing, `walls`, WALLS_DATA.phyProperties.location, WALLS_DATA);
-            let maxPhyngs = 0;
-            console.log(`Evaluating all phyngs with ${meshQuality} mesh, ${cores} cores`);
-            if (heaters) {
-                await phyngEvaluation(simulator, meshQuality, cores, 'heaters', {...HEATER_DATA},
-                    caseThing, false);
-                maxPhyngs += getMaxPhyngs(HEATER_DATA);
-            }
-            if (acs) {
-                await phyngEvaluation(simulator, meshQuality, cores, 'acs', {...AC_DATA},
-                    caseThing, false);
-                maxPhyngs += getMaxPhyngs(AC_DATA);
-            }
-            if (windows) {
-                await phyngEvaluation(simulator, meshQuality, cores, 'windows', {...WINDOW_DATA},
-                    caseThing, false);
-                maxPhyngs += getMaxPhyngs(WINDOW_DATA);
-            }
-            if (doors) {
-                await phyngEvaluation(simulator, meshQuality, cores, 'doors', {...DOOR_DATA},
-                    caseThing, false);
-                maxPhyngs += getMaxPhyngs(DOOR_DATA);
-            }
-            await runCase(caseThing, meshQuality, cores, "all", maxPhyngs);
+            // // Evaluate all phyngs at once
+            // let caseName = `evalmesh${meshQuality}cores${cores}phyngsall`
+            // let caseThing = await addCase(simulator, caseName, meshQuality, cores);
+            // await addPhyng(caseThing, `walls`, WALLS_DATA.phyProperties.location, WALLS_DATA);
+            // let maxPhyngs = 0;
+            // console.log(`Evaluating all phyngs with ${meshQuality} mesh, ${cores} cores`);
+            // if (heaters) {
+            //     await phyngEvaluation(simulator, meshQuality, cores, 'heaters', {...HEATER_DATA},
+            //         caseThing, false);
+            //     maxPhyngs += getMaxPhyngs(HEATER_DATA);
+            // }
+            // if (acs) {
+            //     await phyngEvaluation(simulator, meshQuality, cores, 'acs', {...AC_DATA},
+            //         caseThing, false);
+            //     maxPhyngs += getMaxPhyngs(AC_DATA);
+            // }
+            // if (windows) {
+            //     await phyngEvaluation(simulator, meshQuality, cores, 'windows', {...WINDOW_DATA},
+            //         caseThing, false);
+            //     maxPhyngs += getMaxPhyngs(WINDOW_DATA);
+            // }
+            // if (doors) {
+            //     await phyngEvaluation(simulator, meshQuality, cores, 'doors', {...DOOR_DATA},
+            //         caseThing, false);
+            //     maxPhyngs += getMaxPhyngs(DOOR_DATA);
+            // }
+            // await runCase(caseThing, meshQuality, cores, "all", maxPhyngs);
         }
     }
 }
