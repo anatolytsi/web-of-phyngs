@@ -137,6 +137,7 @@ async function setupCase(caseThing: WoT.ConsumedThing, numOfRetries: number = 0,
         if (result) {
             console.log(result);
             error = result;
+            return [0, error];
         }
         return [Date.now() - start, error];
     } catch (e: any) {
@@ -156,6 +157,7 @@ async function solveCase(caseThing: WoT.ConsumedThing): Promise<[number, any]> {
     if (result) {
         console.log(result);
         error = result;
+        return [0, error];
     }
     return [elapsedSolve, error];
 }
