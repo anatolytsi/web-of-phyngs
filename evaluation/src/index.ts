@@ -224,7 +224,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
                                origNumOfRetries: number = 2) {
     let caseProvided = !!caseThing;
     let caseName = '';
-    let numOfPhyngs = getMaxPhyngs(data) + 1;
+    let numOfPhyngs = getMaxPhyngs(data);
     curPhyng = TAKE_MOST ? numOfPhyngs - 1 : curPhyng;
     for (let phyngIter = curPhyng; phyngIter < numOfPhyngs; phyngIter++) {
         if (!caseThing) {
