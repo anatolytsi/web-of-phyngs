@@ -31,6 +31,7 @@ const HEATERS = process.env.HEATERS === '1';
 const ACS = process.env.ACS === '1';
 const WINDOWS = process.env.WINDOWS === '1';
 const DOORS = process.env.DOORS === '1';
+const TAKE_MOST = process.env.TAKE_MOST === '1';
 const SERVER_NAME = process.env.SERVER_NAME;
 
 console.log(`Simulating for ${NUM_OF_TIMES}, Mesh step ${MESH_STEP}, cores ${MAX_CORES} with step ${CORES_STEP}`);
@@ -219,6 +220,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
     let caseProvided = !!caseThing;
     let caseName = '';
     let numOfPhyngs = getMaxPhyngs(data) + 1;
+    curPhyng = TAKE_MOST ? numOfPhyngs - 1 : curPhyng;
     for (let phyngIter = curPhyng; phyngIter < numOfPhyngs; phyngIter++) {
         if (!caseThing) {
             caseName = `m${meshQuality}c${cores}ph${type[0]}${phyngIter + 1}`
