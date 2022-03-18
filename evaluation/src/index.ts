@@ -59,7 +59,7 @@ let wotClient: WoT.WoT;
 let wotHelper = new Helpers(servient);
 
 function writeToCsv(data: CsvData) {
-    let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsedSetup};${data.elapsedSolve};${data.error};\n`;
+    let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsedSetup};${data.elapsedSolve};${data.error}\n`;
     fs.appendFile(filePath, row, function (err: any) {
         if (err) throw err;
     })
@@ -136,30 +136,41 @@ async function setupCase(caseThing: WoT.ConsumedThing, numOfRetries: number = 0,
         let result = await caseThing.invokeAction('setup');
         if (result && result.data) {
             console.log(result.data);
-            error = result.data;
+            if (numOfRetries) {
+                await delay(500);
+                return setupCase(caseThing, numOfRetries - 1, true)
+            }
+            error = `Setup: ${result.data}`;
             return [0, error];
         }
         return [Date.now() - start, error];
     } catch (e: any) {
         if (numOfRetries) {
-            await delay(1000);
+            await delay(500);
             return setupCase(caseThing, numOfRetries - 1, true)
         }
-        throw Error(e);
+        let error = `Setup: ${e}`;
+        return [0, error];
     }
 }
 
 async function solveCase(caseThing: WoT.ConsumedThing): Promise<[number, any]> {
-    let error = '';
-    let start = Date.now();
-    let result = await caseThing.invokeAction('run');
-    let elapsedSolve = Date.now() - start;
-    if (result && result.data) {
-        console.log(result.data);
-        error = result.data;
+    try {
+        let error = '';
+        let start = Date.now();
+        let result = await caseThing.invokeAction('run');
+        let elapsedSolve = Date.now() - start;
+        if (result && result.data) {
+            console.log(result.data);
+            error = `Solver: ${result.data}`;
+            return [0, error];
+        }
+        return [elapsedSolve, error];
+    } catch (e) {
+        console.error(e);
+        let error = `Solver: ${e}`;
         return [0, error];
     }
-    return [elapsedSolve, error];
 }
 
 async function runCase(caseThing: WoT.ConsumedThing,
@@ -172,9 +183,12 @@ async function runCase(caseThing: WoT.ConsumedThing,
     try {
         [elapsedSetup, errorSetup] = await setupCase(caseThing, 2);
         await delay(1000);
-        [elapsedSolve, errorSolve] = await solveCase(caseThing);
-        let errorPres = (elapsedSolve || errorSolve) !== '';
-        error = `${errorSetup}${errorPres ? '\t' : ''}${errorSolve}`
+        if (!errorSetup) {
+            [elapsedSolve, errorSolve] = await solveCase(caseThing);
+            error = errorSolve;
+        } else {
+            error = errorSetup;
+        }
         await caseThing.invokeAction('stop');
     } catch (e: any) {
         error = e;
