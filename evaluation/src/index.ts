@@ -33,6 +33,7 @@ const WINDOWS = process.env.WINDOWS === '1';
 const DOORS = process.env.DOORS === '1';
 const TAKE_MOST = process.env.TAKE_MOST === '1';
 const SERVER_NAME = process.env.SERVER_NAME;
+const FILENAME = process.env.FILENAME;
 
 console.log(`Simulating for ${NUM_OF_TIMES}, Mesh step ${MESH_STEP}, cores ${MAX_CORES} with step ${CORES_STEP}`);
 
@@ -55,6 +56,10 @@ if (!fs.existsSync(dirPath)){
 }
 
 let filePath = `${dirPath}${new Date().toISOString()}.csv`;
+
+if (FILENAME) {
+    filePath = `${dirPath}${FILENAME}.csv`
+}
 
 fs.writeFile(filePath, CSV_COLUMN, function (err: any) {
     if (err) throw err;
