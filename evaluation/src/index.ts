@@ -31,6 +31,7 @@ const HEATERS = process.env.HEATERS === '1';
 const ACS = process.env.ACS === '1';
 const WINDOWS = process.env.WINDOWS === '1';
 const DOORS = process.env.DOORS === '1';
+const SERVER_NAME = process.env.SERVER_NAME;
 
 console.log(`Simulating for ${NUM_OF_TIMES}, Mesh step ${MESH_STEP}, cores ${MAX_CORES} with step ${CORES_STEP}`);
 
@@ -46,7 +47,13 @@ const CSV_COLUMN = 'Case Name;Cores;Mesh Quality;Phyngs Type;Phyngs Amount;Setup
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-let filePath = `./results/${new Date().toISOString()}.csv`;
+let dirPath = `./results/${SERVER_NAME ? SERVER_NAME + '/' : ''}`;
+
+if (!fs.existsSync(dirPath)){
+    fs.mkdirSync(dirPath);
+}
+
+let filePath = `${dirPath}${new Date().toISOString()}.csv`;
 
 fs.writeFile(filePath, CSV_COLUMN, function (err: any) {
     if (err) throw err;
