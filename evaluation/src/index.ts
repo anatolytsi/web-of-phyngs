@@ -273,10 +273,12 @@ async function evaluateCases(simulator: WoT.ConsumedThing,
                              heaters: boolean, acs: boolean,
                              windows: boolean, doors: boolean) {
     if (!(heaters || acs || windows || doors)) throw Error('Specify at least one evaluation Phyng');
+    let remainder = startMesh % meshStep;
+    let startIter = Math.floor(startMesh / meshStep);
     let maxMeshIter = 100 / meshStep + 1;
     let curMaxCores = maxCores / coresStep + 1;
     for (let meshIter = startMesh / meshStep; meshIter < maxMeshIter; meshIter++) {
-        let meshQuality = meshStep * meshIter;
+        let meshQuality = (meshIter === startIter && remainder) ? startMesh : meshIter * meshStep;
         for (let coreIter = startCores / coresStep; coreIter < curMaxCores; coreIter++) {
             let cores = (coresStep * coreIter) || 1;
             // First - evaluate individual Phyng types
