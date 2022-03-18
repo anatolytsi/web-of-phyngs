@@ -177,7 +177,7 @@ async function solveCase(caseThing: WoT.ConsumedThing): Promise<[number, any]> {
 async function runCase(caseThing: WoT.ConsumedThing,
                        meshQuality: number, cores: number,
                        type: PhyngsType, phyngAmount: number,
-                       numOfRetries: number = 0, retried: boolean = false) {
+                       numOfRetries: number = 0, retried: boolean = false): Promise<[number, number, any]> {
     console.log(`Setting up the case with ${meshQuality} mesh, ${cores} cores`);
     let error, errorSetup, errorSolve = '';
     let elapsedSetup: number = 0;
@@ -187,11 +187,6 @@ async function runCase(caseThing: WoT.ConsumedThing,
         await delay(1000);
         if (!errorSetup) {
             [elapsedSolve, errorSolve] = await solveCase(caseThing);
-            if (errorSolve && numOfRetries) {
-                console.log(`Retrying to run the case ${caseThing.getThingDescription().title} from scratch`);
-                await runCase(caseThing, meshQuality, cores, type, phyngAmount, numOfRetries - 1, true);
-                return;
-            }
             error = errorSolve;
         } else {
             error = errorSetup;
@@ -200,18 +195,7 @@ async function runCase(caseThing: WoT.ConsumedThing,
     } catch (e: any) {
         error = e;
     }
-    let data: CsvData = {
-        caseName: caseThing.getThingDescription().title,
-        cores,
-        meshQuality,
-        type,
-        phyngAmount,
-        elapsedSetup,
-        elapsedSolve,
-        error
-    }
-    writeToCsv(data);
-    await delay(5000);
+    return [elapsedSetup, elapsedSolve, error];
 }
 
 function getMaxPhyngs(data: any) {
@@ -222,11 +206,14 @@ function getMaxPhyngs(data: any) {
 async function phyngEvaluation(simulator: WoT.ConsumedThing,
                                meshQuality: number, cores: number,
                                type: PhyngsType, data: any,
-                               caseThing: any = undefined, solve: boolean = true) {
+                               caseThing: any = undefined, solve: boolean = true,
+                               numOfRetries: number = 2) {
+    let caseProvided = !!caseThing;
+    let caseName = '';
     let numOfPhyngs = getMaxPhyngs(data) + 1;
     for (let phyngIter = 0; phyngIter < numOfPhyngs; phyngIter++) {
         if (!caseThing) {
-            let caseName = `m${meshQuality}c${cores}ph${type[0]}${phyngIter + 1}`
+            caseName = `m${meshQuality}c${cores}ph${type[0]}${phyngIter + 1}`
             caseThing = await addCase(simulator, caseName, meshQuality, cores);
             await delay(500);
             await addPhyng(caseThing, `walls`, WALLS_DATA.phyProperties.location, {...WALLS_DATA});
@@ -245,7 +232,26 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             await delay(100);
         }
         if (solve) {
-            await runCase(caseThing, meshQuality, cores, type, phyngIter + 1, 2);
+            let phyngAmount = phyngIter + 1;
+            const [elapsedSetup, elapsedSolve, error] = await runCase(caseThing, meshQuality, cores, type, phyngAmount, 2);
+            if (error && !caseProvided && numOfRetries) {
+                await simulator.invokeAction('deleteCase', caseName);
+                await delay(1000);
+                await phyngEvaluation(simulator, meshQuality, cores, type, data,
+                    undefined, true, numOfRetries - 1);
+            }
+            let csvData: CsvData = {
+                caseName: caseThing.getThingDescription().title,
+                cores,
+                meshQuality,
+                type,
+                phyngAmount,
+                elapsedSetup,
+                elapsedSolve,
+                error
+            }
+            writeToCsv(csvData);
+            await delay(5000);
             caseThing = undefined;
         }
     }
