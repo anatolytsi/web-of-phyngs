@@ -147,6 +147,7 @@ async function setupCase(caseThing: WoT.ConsumedThing, numOfRetries: number = 0,
     } catch (e: any) {
         if (numOfRetries) {
             await delay(500);
+                console.log(`Retrying to setup the case ${caseThing.getThingDescription().title}`);
             return setupCase(caseThing, numOfRetries - 1, true)
         }
         let error = `Setup: ${e}`;
@@ -187,6 +188,7 @@ async function runCase(caseThing: WoT.ConsumedThing,
         if (!errorSetup) {
             [elapsedSolve, errorSolve] = await solveCase(caseThing);
             if (errorSolve && numOfRetries) {
+                console.log(`Retrying to run the case ${caseThing.getThingDescription().title} from scratch`);
                 await runCase(caseThing, meshQuality, cores, type, phyngAmount, numOfRetries - 1, true);
                 return;
             }
