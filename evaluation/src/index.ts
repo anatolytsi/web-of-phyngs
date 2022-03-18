@@ -175,16 +175,21 @@ async function solveCase(caseThing: WoT.ConsumedThing): Promise<[number, any]> {
 
 async function runCase(caseThing: WoT.ConsumedThing,
                        meshQuality: number, cores: number,
-                       type: PhyngsType, phyngAmount: number) {
+                       type: PhyngsType, phyngAmount: number,
+                       numOfRetries: number = 0, retried: boolean = false) {
     console.log(`Setting up the case with ${meshQuality} mesh, ${cores} cores`);
     let error, errorSetup, errorSolve = '';
     let elapsedSetup: number = 0;
     let elapsedSolve: number = 0;
     try {
-        [elapsedSetup, errorSetup] = await setupCase(caseThing, 2);
+        [elapsedSetup, errorSetup] = await setupCase(caseThing, 2, retried);
         await delay(1000);
         if (!errorSetup) {
             [elapsedSolve, errorSolve] = await solveCase(caseThing);
+            if (errorSolve) {
+                await runCase(caseThing, meshQuality, cores, type, phyngAmount, numOfRetries - 1, true);
+                return;
+            }
             error = errorSolve;
         } else {
             error = errorSetup;
@@ -238,7 +243,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             await delay(100);
         }
         if (solve) {
-            await runCase(caseThing, meshQuality, cores, type, phyngIter + 1);
+            await runCase(caseThing, meshQuality, cores, type, phyngIter + 1, 2);
             caseThing = undefined;
         }
     }
