@@ -249,7 +249,7 @@ def plot_time_vs_all(df: pd.DataFrame):
 
 def get_args() -> dict:
     parser = argparse.ArgumentParser(description='Web of Phyngs evaluation results plotter')
-    parser.add_argument('-h', '--host',
+    parser.add_argument('-hn', '--host-name',
                         help='Host name, same as in the results folder',
                         required=False)
     parser.add_argument('-p', '--phyngs',
@@ -258,6 +258,7 @@ def get_args() -> dict:
                         required=False)
     parser.add_argument('-c', '--cores',
                         help='Plot data from cores',
+                        action='store_true',
                         required=False)
     parser.add_argument('-m', '--meshes',
                         help='Plot data from meshes',
@@ -275,7 +276,7 @@ def main():
     path = RES_STORAGE
     args = get_args()
 
-    if host_name := args['host']:
+    if host_name := args['host_name']:
         path = f'{path}/{host_name}'
         if not os.path.exists(path):
             raise Exception(f'Path for host {host_name} does not exist')
