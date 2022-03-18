@@ -1,4 +1,6 @@
+import argparse
 import glob
+import os.path
 import re
 from pathlib import Path
 
@@ -6,7 +8,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-FIG_STORAGE = '.'
+RES_STORAGE = '../results'
 
 CASE_NAME = 'Case Name'
 CORES = 'Cores'
@@ -55,8 +57,10 @@ def form_phyng_df_dict(df: pd.DataFrame):
 def get_phyngs_data(df: pd.DataFrame) -> dict:
     # Get only the best mesh and the most cores
     mesh_quality = max(df[MSH_QUAL])
+    mesh_quality = 25
     best_df = df.loc[df[MSH_QUAL] == mesh_quality]
-    cores = max(best_df[CORES])
+    # cores = max(best_df[CORES])
+    cores = 1
     best_df = best_df.loc[best_df[CORES] == cores]
 
     # Separate DFs according to phyng types
@@ -97,7 +101,8 @@ def get_phyngs_data(df: pd.DataFrame) -> dict:
 
 def get_mesh_data(df: pd.DataFrame) -> dict:
     # Get only the most cores
-    cores = max(df[CORES])
+    # cores = max(df[CORES])
+    cores = 4
     best_df = df.loc[df[CORES] == cores]
 
     # Separate DFs according to phyng types
@@ -107,7 +112,7 @@ def get_mesh_data(df: pd.DataFrame) -> dict:
 
     # Iterate through each phyng type and DFs
     for phyng_type, phyng_df in phyngs_df.items():
-        max_phyngs = max(phyng_df[PHYNGS_NUM]) - 1
+        max_phyngs = max(phyng_df[PHYNGS_NUM])
         mesh_qualities = sorted(set(phyng_df[MSH_QUAL].values))
         mesh_results[phyng_type] = {
             TITLE_SETUP_K: f'{max_phyngs} {phyng_type} {SETUP_K} - {cores} cores',
@@ -140,7 +145,8 @@ def get_mesh_data(df: pd.DataFrame) -> dict:
 
 def get_cores_data(df: pd.DataFrame) -> dict:
     # Get only the most cores
-    mesh_quality = max(df[MSH_QUAL])
+    # mesh_quality = max(df[MSH_QUAL])
+    mesh_quality = 25
     best_df = df.loc[df[MSH_QUAL] == mesh_quality]
 
     # Separate DFs according to phyng types
@@ -150,7 +156,7 @@ def get_cores_data(df: pd.DataFrame) -> dict:
 
     # Iterate through each phyng type and DFs
     for phyng_type, phyng_df in phyngs_df.items():
-        max_phyngs = max(phyng_df[PHYNGS_NUM]) - 1
+        max_phyngs = max(phyng_df[PHYNGS_NUM])
         cores = sorted(set(phyng_df[CORES].values))
         cores_result[phyng_type] = {
             TITLE_SETUP_K: f'{max_phyngs} {phyng_type} {SETUP_K} - {mesh_quality} % mesh quality',
@@ -190,10 +196,10 @@ def draw_lines_plot(x, y, xlabel='', ylabel='', title='', yspan=None):
     if yspan:
         ax.axhspan(yspan[0], yspan[1], alpha=0.5, color='red')
         ax.set_ylim([None, yspan[1]])
-    Path(f'{FIG_STORAGE}/pdfs').mkdir(exist_ok=True)
-    Path(f'{FIG_STORAGE}/pngs').mkdir(exist_ok=True)
-    plt.savefig(f'{FIG_STORAGE}/pdfs/{title}.pdf')
-    plt.savefig(f'{FIG_STORAGE}/pngs/{title}.png')
+    Path(f'{RES_STORAGE}/pdfs').mkdir(exist_ok=True)
+    Path(f'{RES_STORAGE}/pngs').mkdir(exist_ok=True)
+    plt.savefig(f'{RES_STORAGE}/pdfs/{title}.pdf')
+    plt.savefig(f'{RES_STORAGE}/pngs/{title}.png')
     # plt.show()
     plt.close()
 
@@ -239,17 +245,77 @@ def plot_time_vs_cores(df: pd.DataFrame):
                         NUM_OF_CORES_K, AVG_SOLVE_TIME_K, res[TITLE_SOLVE_K],
                         yspan=yspan)
 
+def plot_time_vs_all(df: pd.DataFrame):
+    plot_time_vs_phyngs(df)
+    plot_time_vs_cores(df)
+    plot_time_vs_mesh_quality(df)
+
+
+def get_args() -> dict:
+    parser = argparse.ArgumentParser(description='Web of Phyngs evaluation results plotter')
+    parser.add_argument('-h', '--host',
+                        help='Host name, same as in the results folder',
+                        required=False)
+    parser.add_argument('-p', '--phyngs',
+                        help='Plot data from phyngs',
+                        action='store_true',
+                        required=False)
+    parser.add_argument('-c', '--cores',
+                        help='Plot data from cores',
+                        required=False)
+    parser.add_argument('-m', '--meshes',
+                        help='Plot data from meshes',
+                        action='store_true',
+                        required=False)
+    parser.add_argument('-a', '--all',
+                        help='Plot data from all CSVs',
+                        action='store_true',
+                        required=False)
+    return vars(parser.parse_args())
+
 
 def main():
-    file = glob.glob('../results/*.csv')[-1]
-    name = re.search(r'\/.+\/(.+)\.csv', file).group(1)
-    FIG_STORAGE = f'../results/{name}/'
-    Path(FIG_STORAGE).mkdir(exist_ok=True)
-    df = pd.read_csv(file, index_col=0, sep=';')
-    plot_time_vs_phyngs(df)
-    plot_time_vs_mesh_quality(df)
-    plot_time_vs_cores(df)
-    print(1)
+    global RES_STORAGE
+    path = RES_STORAGE
+    args = get_args()
+
+    if host_name := args['host']:
+        path = f'{path}/{host_name}'
+        if not os.path.exists(path):
+            raise Exception(f'Path for host {host_name} does not exist')
+        RES_STORAGE = path
+
+    if args['phyngs']:
+        name = 'phyngs'
+        func = plot_time_vs_phyngs
+    elif args['cores']:
+        name = 'cores'
+        func = plot_time_vs_cores
+    elif args['meshes']:
+        name = 'meshes'
+        func = plot_time_vs_mesh_quality
+    elif args['all']:
+        name = 'all'
+        func = plot_time_vs_all
+    else:
+        filepath = glob.glob(f'{path}/*.csv')[-1]
+        if not filepath:
+            raise Exception(f'No CSVs in the result folder')
+        name = re.search(r'\/.+\/(.+)\.csv', filepath).group(1)
+        RES_STORAGE = f'../results/{name}'
+        Path(RES_STORAGE).mkdir(exist_ok=True)
+        df = pd.read_csv(filepath, index_col=0, sep=';')
+        plot_time_vs_phyngs(df)
+        plot_time_vs_mesh_quality(df)
+        plot_time_vs_cores(df)
+        return
+    filepath = f'{path}/{name}.csv'
+    if not os.path.exists(filepath):
+        raise Exception(f'Path for host {host_name} {name} does not exist')
+    RES_STORAGE += f'/{name}'
+    Path(RES_STORAGE).mkdir(exist_ok=True)
+    df = pd.read_csv(filepath, index_col=0, sep=';')
+    func(df)
 
 
 if __name__ == '__main__':
