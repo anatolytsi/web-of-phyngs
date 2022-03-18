@@ -241,6 +241,7 @@ def plot_time_vs_cores(df: pd.DataFrame):
                         NUM_OF_CORES_K, AVG_SOLVE_TIME_K, res[TITLE_SOLVE_K],
                         yspan=yspan)
 
+
 def plot_time_vs_all(df: pd.DataFrame):
     plot_time_vs_phyngs(df)
     plot_time_vs_cores(df)
