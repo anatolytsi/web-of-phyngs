@@ -207,11 +207,12 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
                                meshQuality: number, cores: number,
                                type: PhyngsType, data: any,
                                caseThing: any = undefined, solve: boolean = true,
-                               numOfRetries: number = 2) {
+                               numOfRetries: number = 2, curPhyng: number = 0,
+                               origNumOfRetries: number = 2) {
     let caseProvided = !!caseThing;
     let caseName = '';
     let numOfPhyngs = getMaxPhyngs(data) + 1;
-    for (let phyngIter = 0; phyngIter < numOfPhyngs; phyngIter++) {
+    for (let phyngIter = curPhyng; phyngIter < numOfPhyngs; phyngIter++) {
         if (!caseThing) {
             caseName = `m${meshQuality}c${cores}ph${type[0]}${phyngIter + 1}`
             caseThing = await addCase(simulator, caseName, meshQuality, cores);
@@ -238,7 +239,8 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
                 await simulator.invokeAction('deleteCase', caseName);
                 await delay(1000);
                 await phyngEvaluation(simulator, meshQuality, cores, type, data,
-                    undefined, true, numOfRetries - 1);
+                    undefined, true, numOfRetries - 1, phyngIter, numOfRetries);
+                return
             }
             let csvData: CsvData = {
                 caseName: caseThing.getThingDescription().title,
@@ -253,6 +255,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             writeToCsv(csvData);
             await delay(5000);
             caseThing = undefined;
+            numOfRetries = origNumOfRetries;
         }
     }
 }
