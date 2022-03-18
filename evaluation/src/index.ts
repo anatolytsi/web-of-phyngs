@@ -186,7 +186,7 @@ async function runCase(caseThing: WoT.ConsumedThing,
         await delay(1000);
         if (!errorSetup) {
             [elapsedSolve, errorSolve] = await solveCase(caseThing);
-            if (errorSolve) {
+            if (errorSolve && numOfRetries) {
                 await runCase(caseThing, meshQuality, cores, type, phyngAmount, numOfRetries - 1, true);
                 return;
             }
