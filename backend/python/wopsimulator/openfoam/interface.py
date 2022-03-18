@@ -477,7 +477,7 @@ class OpenFoamInterface(ABC):
         if self.blocking:
             self._solver_lock.acquire()
             self._solver_lock.release()
-            if self._solver_thread:
+            if self._solver_thread.solver:
                 check_runner_errors(self._solver_type, self._solver_thread.solver)
         logger.info('Stopped solving the case')
 
