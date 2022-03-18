@@ -190,6 +190,8 @@ def draw_lines_plot(x, y, xlabel='', ylabel='', title='', yspan=None):
     if yspan:
         ax.axhspan(yspan[0], yspan[1], alpha=0.5, color='red')
         ax.set_ylim([None, yspan[1]])
+    Path(f'{FIG_STORAGE}/pdfs').mkdir(exist_ok=True)
+    Path(f'{FIG_STORAGE}/pngs').mkdir(exist_ok=True)
     plt.savefig(f'{FIG_STORAGE}/pdfs/{title}.pdf')
     plt.savefig(f'{FIG_STORAGE}/pngs/{title}.png')
     # plt.show()
@@ -240,7 +242,7 @@ def plot_time_vs_cores(df: pd.DataFrame):
 
 def main():
     file = glob.glob('../results/*.csv')[-1]
-    name = re.search(r'\/.+\/([^\.]+)\.csv', file).group(1)
+    name = re.search(r'\/.+\/(.+)\.csv', file).group(1)
     FIG_STORAGE = f'../results/{name}/'
     Path(FIG_STORAGE).mkdir(exist_ok=True)
     df = pd.read_csv(file, index_col=0, sep=';')
