@@ -57,10 +57,8 @@ def form_phyng_df_dict(df: pd.DataFrame):
 def get_phyngs_data(df: pd.DataFrame) -> dict:
     # Get only the best mesh and the most cores
     mesh_quality = max(df[MSH_QUAL])
-    mesh_quality = 25
     best_df = df.loc[df[MSH_QUAL] == mesh_quality]
-    # cores = max(best_df[CORES])
-    cores = 1
+    cores = max(best_df[CORES])
     best_df = best_df.loc[best_df[CORES] == cores]
 
     # Separate DFs according to phyng types
@@ -101,8 +99,7 @@ def get_phyngs_data(df: pd.DataFrame) -> dict:
 
 def get_mesh_data(df: pd.DataFrame) -> dict:
     # Get only the most cores
-    # cores = max(df[CORES])
-    cores = 4
+    cores = max(df[CORES])
     best_df = df.loc[df[CORES] == cores]
 
     # Separate DFs according to phyng types
@@ -145,8 +142,7 @@ def get_mesh_data(df: pd.DataFrame) -> dict:
 
 def get_cores_data(df: pd.DataFrame) -> dict:
     # Get only the most cores
-    # mesh_quality = max(df[MSH_QUAL])
-    mesh_quality = 25
+    mesh_quality = max(df[MSH_QUAL])
     best_df = df.loc[df[MSH_QUAL] == mesh_quality]
 
     # Separate DFs according to phyng types
