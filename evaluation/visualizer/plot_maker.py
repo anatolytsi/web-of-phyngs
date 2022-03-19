@@ -54,6 +54,10 @@ def func_log(x, a, b):
     return a + b * np.log(x)
 
 
+def func_hyperbolic(x, a, b):
+    return a + np.divide(b, x)
+
+
 def func_power(x, a, b):
     return a * np.power(x, -b)
 
@@ -83,6 +87,8 @@ def get_fit_title(func):
         return 'exp fit'
     elif func == func_log:
         return 'logarithmic fit'
+    elif func == func_hyperbolic:
+        return 'hyperbolic fit'
     elif func == func_power:
         return 'power fit'
     elif func == func1:
@@ -221,6 +227,23 @@ def get_cores_data(df: pd.DataFrame) -> dict:
     return cores_result
 
 
+def find_best_fit(x_coords, y_coords, fit_funcs):
+    sel_idx = 0
+    avg_err = 1e10
+    popt = 0
+    for idx, func in enumerate(fit_funcs):
+        popt_new, pcov = curve_fit(func, x_coords, y_coords)
+        y_errors = []
+        for x_idx, x in enumerate(x_coords):
+            y_errors.append(abs(y_coords[x_idx] - func(x, *popt_new)))
+        new_avg_err = np.average(y_errors)
+        if avg_err > new_avg_err:
+            avg_err = new_avg_err
+            sel_idx = idx
+            popt = popt_new
+    return sel_idx, popt
+
+
 def draw_lines_plot(x, y, xlabel='', ylabel='', title='',
                     xspan=None, yspan=None, fit=True, fit_func=func3):
     fig, ax = plt.subplots()
@@ -229,13 +252,33 @@ def draw_lines_plot(x, y, xlabel='', ylabel='', title='',
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     if xspan:
-        ax.axvspan(xspan[0], xspan[1], alpha=0.5, color='red')
+        ax.axvspan(xspan[0], xspan[1], alpha=0.3, color='red', linestyle='None')
         ax.set_xlim([xspan[0], None])
+        x_min, _ = ax.get_xlim()
+        x_max = xspan[1]
+        x_range = x_max - x_min
+        y_min, y_max = ax.get_ylim()
+        y_range = y_max - y_min
+        text_x = x_min + x_range / 2 - x_range / 8
+        text_y = y_min + y_range / 2 - y_range / 4
+        plt.text(text_x, text_y, 'Mesh is to coarse', rotation=90, fontsize=16)
     if yspan:
-        ax.axhspan(yspan[0], yspan[1], alpha=0.5, color='red')
+        ax.axhspan(yspan[0], yspan[1], alpha=0.3, color='red', linestyle='None')
         ax.set_ylim([None, yspan[1]])
+        x_min, x_max = ax.get_xlim()
+        x_range = x_max - x_min
+        _, y_max = ax.get_ylim()
+        y_min = yspan[0]
+        y_range = y_max - y_min
+        text_x = x_min + x_range / 2 - x_range / 8
+        text_y = y_min + y_range / 2
+        plt.text(text_x, text_y, 'No real-time', fontsize=16)
     if fit:
-        popt, pcov = curve_fit(fit_func, x, y)
+        if isinstance(fit_func, list):
+            sel_idx, popt = find_best_fit(x, y, fit_func)
+            fit_func = fit_func[sel_idx]
+        else:
+            popt, pcov = curve_fit(fit_func, x, y)
         x_fit = np.linspace(x[0], x[-1], 50)
         l2, = ax.plot(x_fit, fit_func(x_fit, *popt), color='orange', alpha=0.5)
         ax.legend([l1, l2], ['original', get_fit_title(fit_func)])
@@ -253,9 +296,9 @@ def plot_time_vs_phyngs(df: pd.DataFrame):
         draw_lines_plot(res[NUM_OF_PHYNGS_K], res[AVG_SETUP_TIME_K],
                         NUM_OF_PHYNGS_K, AVG_SETUP_TIME_K, res[TITLE_SETUP_K])
         yspan = None
-        max_span = max(res[AVG_SOLVE_TIME_K]) + 10000
-        if max_span > 60000:
-            yspan = [60000, max_span]
+        max_span = max(res[AVG_SOLVE_TIME_K]) + 10
+        if max_span > 60:
+            yspan = [60, max_span]
         draw_lines_plot(res[NUM_OF_PHYNGS_K], res[AVG_SOLVE_TIME_K],
                         NUM_OF_PHYNGS_K, AVG_SOLVE_TIME_K, res[TITLE_SOLVE_K],
                         yspan=yspan)
@@ -281,12 +324,13 @@ def plot_time_vs_cores(df: pd.DataFrame):
     cores_result = get_cores_data(df)
     for res in cores_result.values():
         yspan = None
-        max_span = max(res[AVG_SOLVE_TIME_K]) + 10000
-        if max_span > 60000:
-            yspan = [60000, max_span]
+        max_span = max(res[AVG_SOLVE_TIME_K]) + 10
+        if max_span > 60:
+            yspan = [60, max_span]
         draw_lines_plot(res[NUM_OF_CORES_K], res[AVG_SOLVE_TIME_K],
                         NUM_OF_CORES_K, AVG_SOLVE_TIME_K, res[TITLE_SOLVE_K],
-                        yspan=yspan, fit_func=func_power)
+                        yspan=yspan,
+                        fit_func=[func_power, func_exp, func_hyperbolic, func_log])
 
 
 def plot_time_vs_all(df: pd.DataFrame):
