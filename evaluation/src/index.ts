@@ -24,6 +24,7 @@ const BASE_URL = process.env.HOST;
 const NUM_OF_TIMES = parseInt(process.env.NUM_OF_TIMES || "", 10) || 100;
 const MESH_STEP = parseInt(process.env.MESH_STEP || "", 10) || 10;
 const START_MESH = parseInt(process.env.START_MESH || "", 10) || MESH_STEP;
+const MAX_MESH = parseInt(process.env.MAX_MESH || "", 10) || 100;
 const MAX_CORES = parseInt(process.env.MAX_CORES || "", 10) || 8;
 const CORES_STEP = parseInt(process.env.CORES_STEP || "", 10) || 2;
 const START_CORES = parseInt(process.env.START_CORES || "", 10) || 0;
@@ -282,7 +283,7 @@ async function evaluateCases(simulator: WoT.ConsumedThing,
     if (!(heaters || acs || windows || doors)) throw Error('Specify at least one evaluation Phyng');
     let remainder = startMesh % meshStep;
     let startIter = Math.floor(startMesh / meshStep);
-    let maxMeshIter = 100 / meshStep + 1;
+    let maxMeshIter = MAX_MESH / meshStep + 1;
     let curMaxCores = maxCores / coresStep + 1;
     for (let meshIter = startMesh / meshStep; meshIter < maxMeshIter; meshIter++) {
         let meshQuality = (meshIter === startIter && remainder) ? startMesh : meshIter * meshStep;
