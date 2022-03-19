@@ -244,10 +244,11 @@ def find_best_fit(x_coords, y_coords, fit_funcs):
     return sel_idx, popt
 
 
-def draw_lines_plot(x, y, xlabel='', ylabel='', title='',
-                    xspan=None, yspan=None, fit=True, fit_func=func3):
+def draw_lines_plot(x, y, xlabel='', ylabel='', title='', color=None, legend='original',
+                    xspan=None, yspan=None, fit=True, fit_func=func3, fit_color=None):
+    color = (0, 101, 189) if not color else color
     fig, ax = plt.subplots()
-    l1, = ax.plot(x, y)
+    l1, = ax.plot(x, y, 'o', color=[c / 255 for c in color])
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -274,14 +275,15 @@ def draw_lines_plot(x, y, xlabel='', ylabel='', title='',
         text_y = y_min + y_range / 2
         plt.text(text_x, text_y, 'No real-time', fontsize=16)
     if fit:
+        fit_color = (227, 114, 34) if not fit_color else fit_color
         if isinstance(fit_func, list):
             sel_idx, popt = find_best_fit(x, y, fit_func)
             fit_func = fit_func[sel_idx]
         else:
             popt, pcov = curve_fit(fit_func, x, y)
         x_fit = np.linspace(x[0], x[-1], 50)
-        l2, = ax.plot(x_fit, fit_func(x_fit, *popt), color='orange', alpha=0.5)
-        ax.legend([l1, l2], ['original', get_fit_title(fit_func)])
+        l2, = ax.plot(x_fit, fit_func(x_fit, *popt), color=[c / 255 for c in fit_color])
+        ax.legend([l1, l2], [legend, f'{legend}: {get_fit_title(fit_func)}'])
     Path(f'{RES_STORAGE}/pdfs').mkdir(exist_ok=True)
     Path(f'{RES_STORAGE}/pngs').mkdir(exist_ok=True)
     plt.savefig(f'{RES_STORAGE}/pdfs/{title}.pdf')
