@@ -47,7 +47,19 @@ TITLE_SOLVE_K = f'{TITLE_K} {SOLVE_K}'
 
 
 def func_exp(x, a, b, c):
-    return a * np.exp(np.multiply(x, b)) + c
+    return a * np.exp(np.multiply(x, -b)) + c
+
+
+def func_log(x, a, b):
+    return a + b * np.log(x)
+
+
+def func_power(x, a, b):
+    return a * np.power(x, -b)
+
+
+def func1(x, a, b):
+    return np.multiply(x, a) + b
 
 
 def func2(x, a, b, c):
@@ -69,6 +81,12 @@ def func5(x, a, b, c, d, e, f):
 def get_fit_title(func):
     if func == func_exp:
         return 'exp fit'
+    elif func == func_log:
+        return 'logarithmic fit'
+    elif func == func_power:
+        return 'power fit'
+    elif func == func1:
+        return 'linear fit'
     elif func == func2:
         return 'quadratic fit'
     elif func == func3:
@@ -251,9 +269,9 @@ def plot_time_vs_mesh_quality(df: pd.DataFrame):
                         MESH_QUALITY_K, AVG_SETUP_TIME_K, res[TITLE_SETUP_K],
                         xspan=xspan, fit_func=func5)
         yspan = None
-        max_span = max(res[AVG_SOLVE_TIME_K]) + 10000
-        if max_span > 60000:
-            yspan = [60000, max_span]
+        max_span = max(res[AVG_SOLVE_TIME_K]) + 10
+        if max_span > 60:
+            yspan = [60, max_span]
         draw_lines_plot(res[MESH_QUALITY_K], res[AVG_SOLVE_TIME_K],
                         MESH_QUALITY_K, AVG_SOLVE_TIME_K, res[TITLE_SOLVE_K],
                         xspan=xspan, yspan=yspan, fit_func=func5)
@@ -262,15 +280,13 @@ def plot_time_vs_mesh_quality(df: pd.DataFrame):
 def plot_time_vs_cores(df: pd.DataFrame):
     cores_result = get_cores_data(df)
     for res in cores_result.values():
-        draw_lines_plot(res[NUM_OF_CORES_K], res[AVG_SETUP_TIME_K],
-                        NUM_OF_CORES_K, AVG_SETUP_TIME_K, res[TITLE_SETUP_K])
         yspan = None
         max_span = max(res[AVG_SOLVE_TIME_K]) + 10000
         if max_span > 60000:
             yspan = [60000, max_span]
         draw_lines_plot(res[NUM_OF_CORES_K], res[AVG_SOLVE_TIME_K],
                         NUM_OF_CORES_K, AVG_SOLVE_TIME_K, res[TITLE_SOLVE_K],
-                        yspan=yspan)
+                        yspan=yspan, fit_func=func_power)
 
 
 def plot_time_vs_all(df: pd.DataFrame):
