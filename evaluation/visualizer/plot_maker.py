@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 import numpy as np
+from scipy.optimize import curve_fit
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -33,16 +34,49 @@ PHYNG_TYPES = ['heaters', 'acs', 'doors', 'windows']
 MESH_QUALITY_K = 'Mesh Quality, %'
 NUM_OF_CORES_K = 'Num of Cores'
 NUM_OF_PHYNGS_K = 'Num of Phyngs'
-AVG_SETUP_TIME_K = 'Average Setup Time, ms'
-AVG_SOLVE_TIME_K = 'Average Solving Time, ms'
-SETUP_TIME_K = 'Setup Time, ms'
-SOLVE_TIME_K = 'Solving Time, ms'
+AVG_SETUP_TIME_K = 'Average Setup Time, s'
+AVG_SOLVE_TIME_K = 'Average Solving Time, s'
+SETUP_TIME_K = 'Setup Time, s'
+SOLVE_TIME_K = 'Solving Time, s'
 WHISKER_K = 'whisker'
 TITLE_K = 'title'
 SETUP_K = 'setup'
 SOLVE_K = 'solving'
 TITLE_SETUP_K = f'{TITLE_K} {SETUP_K}'
 TITLE_SOLVE_K = f'{TITLE_K} {SOLVE_K}'
+
+
+def func_exp(x, a, b, c):
+    return a * np.exp(np.multiply(x, b)) + c
+
+
+def func2(x, a, b, c):
+    return a * np.power(x, 2) + np.multiply(x, b) + c
+
+
+def func3(x, a, b, c, d):
+    return a * np.power(x, 3) + b * np.power(x, 2) + np.multiply(x, c) + d
+
+
+def func4(x, a, b, c, d, e):
+    return a * np.power(x, 4) + b * np.power(x, 3) + c * np.power(x, 2) + np.multiply(x, d) + e
+
+
+def func5(x, a, b, c, d, e, f):
+    return a * np.power(x, 5) + b * np.power(x, 4) + c * np.power(x, 3) + d * np.power(x, 2) + np.multiply(x, e) + f
+
+
+def get_fit_title(func):
+    if func == func_exp:
+        return 'exp fit'
+    elif func == func2:
+        return 'quadratic fit'
+    elif func == func3:
+        return 'cubic fit'
+    elif func == func4:
+        return 'quartic fit'
+    elif func == func5:
+        return 'quintic fit'
 
 
 def form_phyng_df_dict(df: pd.DataFrame):
@@ -52,6 +86,19 @@ def form_phyng_df_dict(df: pd.DataFrame):
         if not phyng_df.empty:
             phyngs_df[phyng_type] = phyng_df
     return phyngs_df
+
+
+def get_data_for_timing(result: dict, df: pd.DataFrame):
+    # For Whisker plot
+    setup_times = df[SETUP_TIME].values / 1000
+    solve_times = df[SOLVE_TIME].values / 1000
+    result[SETUP_TIME_K].append(setup_times)
+    result[SOLVE_TIME_K].append(solve_times)
+    result[WHISKER_K] = setup_times.shape[0] > 1
+
+    # For regular averaged plot
+    result[AVG_SETUP_TIME_K].append(np.average(setup_times))
+    result[AVG_SOLVE_TIME_K].append(np.average(solve_times))
 
 
 def get_phyngs_data(df: pd.DataFrame) -> dict:
@@ -83,16 +130,7 @@ def get_phyngs_data(df: pd.DataFrame) -> dict:
             phyng_amount_df = phyng_df.loc[phyng_df[PHYNGS_NUM] == amount]
             phyng_results[phyng_type][NUM_OF_PHYNGS_K].append(amount)
 
-            # For Whisker plot
-            setup_times = phyng_amount_df[SETUP_TIME].values
-            solve_times = phyng_amount_df[SOLVE_TIME].values
-            phyng_results[phyng_type][SETUP_TIME_K].append(setup_times)
-            phyng_results[phyng_type][SOLVE_TIME_K].append(solve_times)
-            phyng_results[phyng_type][WHISKER_K] = setup_times.shape[0] > 1
-
-            # For regular averaged plot
-            phyng_results[phyng_type][AVG_SETUP_TIME_K].append(np.average(setup_times))
-            phyng_results[phyng_type][AVG_SOLVE_TIME_K].append(np.average(solve_times))
+            get_data_for_timing(phyng_results[phyng_type], phyng_amount_df)
 
     return phyng_results
 
@@ -126,16 +164,7 @@ def get_mesh_data(df: pd.DataFrame) -> dict:
             mesh_quality_df = max_phyngs_df.loc[max_phyngs_df[MSH_QUAL] == mesh_quality]
             mesh_results[phyng_type][MESH_QUALITY_K].append(mesh_quality)
 
-            # For Whisker plot
-            setup_times = mesh_quality_df[SETUP_TIME].values
-            solve_times = mesh_quality_df[SOLVE_TIME].values
-            mesh_results[phyng_type][SETUP_TIME_K].append(setup_times)
-            mesh_results[phyng_type][SOLVE_TIME_K].append(solve_times)
-            mesh_results[phyng_type][WHISKER_K] = setup_times.shape[0] > 1
-
-            # For regular averaged plot
-            mesh_results[phyng_type][AVG_SETUP_TIME_K].append(np.average(setup_times))
-            mesh_results[phyng_type][AVG_SOLVE_TIME_K].append(np.average(solve_times))
+            get_data_for_timing(mesh_results[phyng_type], mesh_quality_df)
 
     return mesh_results
 
@@ -169,29 +198,29 @@ def get_cores_data(df: pd.DataFrame) -> dict:
             core_df = max_phyngs_df.loc[max_phyngs_df[CORES] == core]
             cores_result[phyng_type][NUM_OF_CORES_K].append(core)
 
-            # For Whisker plot
-            setup_times = core_df[SETUP_TIME].values
-            solve_times = core_df[SOLVE_TIME].values
-            cores_result[phyng_type][SETUP_TIME_K].append(setup_times)
-            cores_result[phyng_type][SOLVE_TIME_K].append(solve_times)
-            cores_result[phyng_type][WHISKER_K] = setup_times.shape[0] > 1
-
-            # For regular averaged plot
-            cores_result[phyng_type][AVG_SETUP_TIME_K].append(np.average(setup_times))
-            cores_result[phyng_type][AVG_SOLVE_TIME_K].append(np.average(solve_times))
+            get_data_for_timing(cores_result[phyng_type], core_df)
 
     return cores_result
 
 
-def draw_lines_plot(x, y, xlabel='', ylabel='', title='', yspan=None):
+def draw_lines_plot(x, y, xlabel='', ylabel='', title='',
+                    xspan=None, yspan=None, fit=True, fit_func=func3):
     fig, ax = plt.subplots()
-    ax.plot(x, y)
+    l1, = ax.plot(x, y)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+    if xspan:
+        ax.axvspan(xspan[0], xspan[1], alpha=0.5, color='red')
+        ax.set_xlim([xspan[0], None])
     if yspan:
         ax.axhspan(yspan[0], yspan[1], alpha=0.5, color='red')
         ax.set_ylim([None, yspan[1]])
+    if fit:
+        popt, pcov = curve_fit(fit_func, x, y)
+        x_fit = np.linspace(x[0], x[-1], 50)
+        l2, = ax.plot(x_fit, fit_func(x_fit, *popt), color='orange', alpha=0.5)
+        ax.legend([l1, l2], ['original', get_fit_title(fit_func)])
     Path(f'{RES_STORAGE}/pdfs').mkdir(exist_ok=True)
     Path(f'{RES_STORAGE}/pngs').mkdir(exist_ok=True)
     plt.savefig(f'{RES_STORAGE}/pdfs/{title}.pdf')
@@ -216,16 +245,18 @@ def plot_time_vs_phyngs(df: pd.DataFrame):
 
 def plot_time_vs_mesh_quality(df: pd.DataFrame):
     mesh_results = get_mesh_data(df)
+    xspan = [40, 50]
     for res in mesh_results.values():
         draw_lines_plot(res[MESH_QUALITY_K], res[AVG_SETUP_TIME_K],
-                        MESH_QUALITY_K, AVG_SETUP_TIME_K, res[TITLE_SETUP_K])
+                        MESH_QUALITY_K, AVG_SETUP_TIME_K, res[TITLE_SETUP_K],
+                        xspan=xspan, fit_func=func5)
         yspan = None
         max_span = max(res[AVG_SOLVE_TIME_K]) + 10000
         if max_span > 60000:
             yspan = [60000, max_span]
         draw_lines_plot(res[MESH_QUALITY_K], res[AVG_SOLVE_TIME_K],
                         MESH_QUALITY_K, AVG_SOLVE_TIME_K, res[TITLE_SOLVE_K],
-                        yspan=yspan)
+                        xspan=xspan, yspan=yspan, fit_func=func5)
 
 
 def plot_time_vs_cores(df: pd.DataFrame):
