@@ -362,7 +362,6 @@ def plot_time_vs_phyngs(df: Union[pd.DataFrame, List[pd.DataFrame]],
     plot_solve_vs_data(results, solve_handler, NUM_OF_PHYNGS_K, f'{RES_STORAGE}/phyngs', hosts, colors, yspan_start=60)
 
 
-
 def plot_time_vs_mesh_quality(df: Union[pd.DataFrame, List[pd.DataFrame]],
                               hosts: Union[str, List[str]]):
     xspan = [40, 50]
@@ -387,11 +386,12 @@ def plot_time_vs_mesh_quality(df: Union[pd.DataFrame, List[pd.DataFrame]],
 
 
 def plot_time_vs_cores(df: Union[pd.DataFrame, List[pd.DataFrame]],
-                              hosts: Union[str, List[str]]):
+                       hosts: Union[str, List[str]]):
     solve_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[NUM_OF_CORES_K],
                                                                    res[AVG_SOLVE_TIME_K],
                                                                    legend=legend,
-                                                                   fit_func=[func_power, func_exp, func_hyperbolic, func_log],
+                                                                   fit_func=[func_power, func_exp, func_hyperbolic,
+                                                                             func_log],
                                                                    color=color, fit_color=color)
     results = []
     colors = [(0, 101, 189), (153, 153, 153)]
