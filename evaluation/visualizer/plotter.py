@@ -5,7 +5,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 
-from acquisitor import TITLE_SETUP_K, TITLE_SOLVE_K, AVG_SOLVE_TIME_K
+from acquisitor import TITLE_SETUP_K, TITLE_SOLVE_K, AVG_SOLVE_TIME_K, MAE_K
 
 
 def func_exp(x, a, b, c):
@@ -84,10 +84,12 @@ def find_best_fit(x_coords, y_coords, fit_funcs):
 
 def draw_lines_plot(ax, x: List[int], y: List[int], color: List[int] = None, legend: str = 'original',
                     fit: bool = True, fit_func: Union[Callable, List[Callable]] = func3,
-                    fit_color: List[int] = None):
+                    fit_color: List[int] = None,
+                    mae: float = None):
     color = (0, 101, 189) if not color else color
+    legend_mae = f'{legend}, {MAE_K}: {mae}' if mae else legend
     l1, = ax.plot(x, y, 'o', color=[c / 255 for c in color],
-                  label=legend, markersize=3)
+                  label=legend_mae, markersize=3)
     if fit:
         fit_color = (0, 101, 189) if not fit_color else fit_color
         if isinstance(fit_func, list):

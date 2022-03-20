@@ -11,12 +11,12 @@ def plot_time_vs_phyngs(df: Union[pd.DataFrame, List[pd.DataFrame]],
                         hosts: Union[str, List[str]]):
     setup_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[NUM_OF_PHYNGS_K],
                                                                    res[AVG_SETUP_TIME_K],
-                                                                   legend=legend,
+                                                                   legend=legend, mae=res[MAE_SETUP_K],
                                                                    fit_func=[func1, func3],
                                                                    color=color, fit_color=color)
     solve_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[NUM_OF_PHYNGS_K],
                                                                    res[AVG_SOLVE_TIME_K],
-                                                                   legend=legend,
+                                                                   legend=legend, mae=res[MAE_SOLVE_K],
                                                                    fit_func=[func1, func3],
                                                                    color=color, fit_color=color)
     results = []
@@ -34,12 +34,12 @@ def plot_time_vs_mesh_quality(df: Union[pd.DataFrame, List[pd.DataFrame]],
                               hosts: Union[str, List[str]]):
     xspan = [40, 50]
     setup_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[MESH_QUALITY_K], res[AVG_SOLVE_TIME_K],
-                                                                   legend=legend,
+                                                                   legend=legend, mae=res[MAE_SETUP_K],
                                                                    fit_func=func5,
                                                                    color=color, fit_color=color)
     solve_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[MESH_QUALITY_K],
                                                                    res[AVG_SOLVE_TIME_K],
-                                                                   legend=legend,
+                                                                   legend=legend, mae=res[MAE_SOLVE_K],
                                                                    fit_func=func5,
                                                                    color=color, fit_color=color)
     results = []
@@ -56,7 +56,7 @@ def plot_time_vs_mesh_quality(df: Union[pd.DataFrame, List[pd.DataFrame]],
 def plot_time_vs_cores(df: Union[pd.DataFrame, List[pd.DataFrame]],
                        hosts: Union[str, List[str]]):
     solve_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[NUM_OF_CORES_K],
-                                                                   res[AVG_SOLVE_TIME_K],
+                                                                   res[AVG_SOLVE_TIME_K], mae=res[MAE_SOLVE_K],
                                                                    legend=legend,
                                                                    fit_func=[func_power, func_exp, func_hyperbolic,
                                                                              func_log],

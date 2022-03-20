@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy.stats import sem
 
 RES_STORAGE = '../results'
 
@@ -30,6 +31,9 @@ AVG_SETUP_TIME_K = 'Average Setup Time, s'
 AVG_SOLVE_TIME_K = 'Average Solving Time, s'
 SETUP_TIME_K = 'Setup Time, s'
 SOLVE_TIME_K = 'Solving Time, s'
+MAE_K = 'MAE'
+MAE_SETUP_K = 'MAE setup, s'
+MAE_SOLVE_K = 'MAE solve, s'
 WHISKER_K = 'whisker'
 TITLE_K = 'title'
 SETUP_K = 'setup'
@@ -54,6 +58,8 @@ def get_data_for_timing(result: dict, df: pd.DataFrame):
     result[SETUP_TIME_K].append(setup_times)
     result[SOLVE_TIME_K].append(solve_times)
     result[WHISKER_K] = setup_times.shape[0] > 1
+    result[MAE_SETUP_K].append(sem(setup_times))
+    result[MAE_SOLVE_K].append(sem(solve_times))
 
     # For regular averaged plot
     result[AVG_SETUP_TIME_K].append(np.average(setup_times))
@@ -83,6 +89,8 @@ def get_phyngs_data(df: pd.DataFrame) -> dict:
             AVG_SOLVE_TIME_K: [],
             SETUP_TIME_K: [],
             SOLVE_TIME_K: [],
+            MAE_SETUP_K: [],
+            MAE_SOLVE_K: [],
         }
         # Iterate through each amount of phyngs
         for amount in phyng_amounts:
@@ -90,6 +98,8 @@ def get_phyngs_data(df: pd.DataFrame) -> dict:
             phyng_results[phyng_type][NUM_OF_PHYNGS_K].append(amount)
 
             get_data_for_timing(phyng_results[phyng_type], phyng_amount_df)
+        phyng_results[phyng_type][MAE_SETUP_K] = np.round(np.average(phyng_results[phyng_type][MAE_SETUP_K]), 3)
+        phyng_results[phyng_type][MAE_SOLVE_K] = np.round(np.average(phyng_results[phyng_type][MAE_SOLVE_K]), 3)
 
     return phyng_results
 
@@ -116,6 +126,8 @@ def get_mesh_data(df: pd.DataFrame) -> dict:
             AVG_SOLVE_TIME_K: [],
             SETUP_TIME_K: [],
             SOLVE_TIME_K: [],
+            MAE_SETUP_K: [],
+            MAE_SOLVE_K: [],
         }
         max_phyngs_df = phyng_df.loc[phyng_df[PHYNGS_NUM] == max_phyngs]
         # Iterate through each mesh quality
@@ -124,6 +136,8 @@ def get_mesh_data(df: pd.DataFrame) -> dict:
             mesh_results[phyng_type][MESH_QUALITY_K].append(mesh_quality)
 
             get_data_for_timing(mesh_results[phyng_type], mesh_quality_df)
+        mesh_results[phyng_type][MAE_SETUP_K] = np.round(np.average(mesh_results[phyng_type][MAE_SETUP_K]), 3)
+        mesh_results[phyng_type][MAE_SOLVE_K] = np.round(np.average(mesh_results[phyng_type][MAE_SOLVE_K]), 3)
 
     return mesh_results
 
@@ -150,6 +164,8 @@ def get_cores_data(df: pd.DataFrame) -> dict:
             AVG_SOLVE_TIME_K: [],
             SETUP_TIME_K: [],
             SOLVE_TIME_K: [],
+            MAE_SETUP_K: [],
+            MAE_SOLVE_K: [],
         }
         max_phyngs_df = phyng_df.loc[phyng_df[PHYNGS_NUM] == max_phyngs]
         # Iterate through each core
@@ -158,5 +174,7 @@ def get_cores_data(df: pd.DataFrame) -> dict:
             cores_result[phyng_type][NUM_OF_CORES_K].append(core)
 
             get_data_for_timing(cores_result[phyng_type], core_df)
+        cores_result[phyng_type][MAE_SETUP_K] = np.round(np.average(cores_result[phyng_type][MAE_SETUP_K]), 3)
+        cores_result[phyng_type][MAE_SOLVE_K] = np.round(np.average(cores_result[phyng_type][MAE_SOLVE_K]), 3)
 
     return cores_result
