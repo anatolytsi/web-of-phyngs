@@ -370,7 +370,9 @@ def main():
     path = RES_STORAGE
     args = get_args()
 
-    if host_name := args['host_name']:
+    host_name = args['host_name']
+
+    if host_name:
         path = f'{path}/{host_name}'
         if not os.path.exists(path):
             raise Exception(f'Path for host {host_name} does not exist')
