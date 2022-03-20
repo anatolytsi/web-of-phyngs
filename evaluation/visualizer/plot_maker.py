@@ -3,10 +3,12 @@ import glob
 import os.path
 import re
 from pathlib import Path
+from typing import Union, List, Callable
 
 import numpy as np
 from scipy.optimize import curve_fit
 import pandas as pd
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 RES_STORAGE = '../results'
@@ -244,36 +246,12 @@ def find_best_fit(x_coords, y_coords, fit_funcs):
     return sel_idx, popt
 
 
-def draw_lines_plot(x, y, xlabel='', ylabel='', title='', color=None, legend='original',
-                    xspan=None, yspan=None, fit=True, fit_func=func3, fit_color=None):
+def draw_lines_plot(ax, x: List[int], y: List[int], color: List[int] = None, legend: str = 'original',
+                    fit: bool = True, fit_func: Union[Callable, List[Callable]] = func3,
+                    fit_color: List[int] = None):
     color = (0, 101, 189) if not color else color
-    fig, ax = plt.subplots()
-    l1, = ax.plot(x, y, 'o', color=[c / 255 for c in color])
-    plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    if xspan:
-        ax.axvspan(xspan[0], xspan[1], alpha=0.3, color='red', linestyle='None')
-        ax.set_xlim([xspan[0], None])
-        x_min, _ = ax.get_xlim()
-        x_max = xspan[1]
-        x_range = x_max - x_min
-        y_min, y_max = ax.get_ylim()
-        y_range = y_max - y_min
-        text_x = x_min + x_range / 2 - x_range / 8
-        text_y = y_min + y_range / 2 - y_range / 4
-        plt.text(text_x, text_y, 'Mesh is to coarse', rotation=90, fontsize=16)
-    if yspan:
-        ax.axhspan(yspan[0], yspan[1], alpha=0.3, color='red', linestyle='None')
-        ax.set_ylim([None, yspan[1]])
-        x_min, x_max = ax.get_xlim()
-        x_range = x_max - x_min
-        _, y_max = ax.get_ylim()
-        y_min = yspan[0]
-        y_range = y_max - y_min
-        text_x = x_min + x_range / 2 - x_range / 8
-        text_y = y_min + y_range / 2
-        plt.text(text_x, text_y, 'No real-time', fontsize=16)
+    l1, = ax.plot(x, y, 'o', color=[c / 255 for c in color],
+                  label=legend, markersize=3)
     if fit:
         fit_color = (0, 101, 189) if not fit_color else fit_color
         if isinstance(fit_func, list):
@@ -282,69 +260,161 @@ def draw_lines_plot(x, y, xlabel='', ylabel='', title='', color=None, legend='or
         else:
             popt, pcov = curve_fit(fit_func, x, y)
         x_fit = np.linspace(x[0], x[-1], 50)
-        l2, = ax.plot(x_fit, fit_func(x_fit, *popt), color=[c / 255 for c in fit_color])
-        ax.legend([l1, l2], [legend, f'{legend}: {get_fit_title(fit_func)}'])
-    Path(f'{RES_STORAGE}/pdfs').mkdir(exist_ok=True)
-    Path(f'{RES_STORAGE}/pngs').mkdir(exist_ok=True)
-    plt.savefig(f'{RES_STORAGE}/pdfs/{title}.pdf')
-    plt.savefig(f'{RES_STORAGE}/pngs/{title}.png')
-    # plt.show()
-    plt.close()
+        l2, = ax.plot(x_fit, fit_func(x_fit, *popt), color=[c / 255 for c in fit_color],
+                      label=f'{legend}: {get_fit_title(fit_func)}')
+        ax.legend()
 
 
-def plot_time_vs_phyngs(df: pd.DataFrame):
-    phyng_results = get_phyngs_data(df)
-    for res in phyng_results.values():
-        draw_lines_plot(res[NUM_OF_PHYNGS_K], res[AVG_SETUP_TIME_K],
-                        NUM_OF_PHYNGS_K, AVG_SETUP_TIME_K, res[TITLE_SETUP_K])
-        yspan = None
-        max_span = max(res[AVG_SOLVE_TIME_K]) + 10
-        if max_span > 60:
-            yspan = [60, max_span]
-        draw_lines_plot(res[NUM_OF_PHYNGS_K], res[AVG_SOLVE_TIME_K],
-                        NUM_OF_PHYNGS_K, AVG_SOLVE_TIME_K, res[TITLE_SOLVE_K],
-                        yspan=yspan)
+def plot_setup_vs_data(results, handler, xlabel, path, legends, colors, xspan=None):
+    Path(f'{path}/pdfs').mkdir(exist_ok=True)
+    Path(f'{path}/pngs').mkdir(exist_ok=True)
+
+    for res_key in results[0].keys():
+        fig, ax = plt.subplots()
+        title = results[0][res_key][TITLE_SETUP_K]
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(AVG_SOLVE_TIME_K)
+        for result, legend, color in zip(results, legends, colors):
+            res = result[res_key]
+            handler(ax, res, legend, color)
+        if xspan:
+            ax.axvspan(xspan[0], xspan[1], alpha=0.3, color='red', linestyle='None')
+            ax.set_xlim([xspan[0], None])
+            x_min, _ = ax.get_xlim()
+            x_max = xspan[1]
+            x_range = x_max - x_min
+            y_min, y_max = ax.get_ylim()
+            y_range = y_max - y_min
+            text_x = x_min + x_range / 2 - x_range / 8
+            text_y = y_min + y_range / 2 - y_range / 4
+            plt.text(text_x, text_y, 'Mesh is to coarse', rotation=90, fontsize=16)
+
+        plt.savefig(f'{path}/pdfs/{title}.pdf')
+        plt.savefig(f'{path}/pngs/{title}.png')
+        plt.close()
 
 
-def plot_time_vs_mesh_quality(df: pd.DataFrame):
-    mesh_results = get_mesh_data(df)
+def plot_solve_vs_data(results, handler, xlabel, path, legends, colors, xspan=None, yspan_start=None):
+    Path(f'{path}/pdfs').mkdir(exist_ok=True)
+    Path(f'{path}/pngs').mkdir(exist_ok=True)
+
+    for res_key in results[0].keys():
+        fig, ax = plt.subplots()
+        title = results[0][res_key][TITLE_SOLVE_K]
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(AVG_SOLVE_TIME_K)
+        for result, legend, color in zip(results, legends, colors):
+            res = result[res_key]
+            handler(ax, res, legend, color)
+
+        if xspan:
+            ax.axvspan(xspan[0], xspan[1], alpha=0.3, color='red', linestyle='None')
+            ax.set_xlim([xspan[0], None])
+            x_min, _ = ax.get_xlim()
+            x_max = xspan[1]
+            x_range = x_max - x_min
+            y_min, y_max = ax.get_ylim()
+            y_range = y_max - y_min
+            text_x = x_min + x_range / 2 - x_range / 8
+            text_y = y_min + y_range / 2 - y_range / 4
+            plt.text(text_x, text_y, 'Mesh is to coarse', rotation=90, fontsize=16)
+
+        if yspan_start:
+            _, y_max = ax.get_ylim()
+            y_min = yspan_start
+            y_max += 10
+            ax.axhspan(y_min, y_max, alpha=0.3, color='red', linestyle='None')
+            ax.set_ylim([None, y_max])
+            x_min, x_max = ax.get_xlim()
+            x_range = x_max - x_min
+            y_range = y_max - y_min
+            text_x = x_min + x_range / 2 - x_range / 8
+            text_y = y_min + y_range / 2
+            plt.text(text_x, text_y, 'No real-time', fontsize=16)
+
+        plt.savefig(f'{path}/pdfs/{title}.pdf')
+        plt.savefig(f'{path}/pngs/{title}.png')
+        plt.close()
+
+
+def plot_time_vs_phyngs(df: Union[pd.DataFrame, List[pd.DataFrame]],
+                        hosts: Union[str, List[str]]):
+    setup_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[NUM_OF_PHYNGS_K],
+                                                                   res[AVG_SETUP_TIME_K],
+                                                                   legend=legend,
+                                                                   fit_func=[func1, func3],
+                                                                   color=color, fit_color=color)
+    solve_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[NUM_OF_PHYNGS_K],
+                                                                   res[AVG_SOLVE_TIME_K],
+                                                                   legend=legend,
+                                                                   fit_func=[func1, func3],
+                                                                   color=color, fit_color=color)
+    results = []
+    colors = [(0, 101, 189), (153, 153, 153)]
+    if isinstance(df, list):
+        for dataframe in df:
+            results.append(get_phyngs_data(dataframe))
+    else:
+        results = [get_phyngs_data(df)]
+    plot_setup_vs_data(results, setup_handler, NUM_OF_PHYNGS_K, f'{RES_STORAGE}/phyngs', hosts, colors)
+    plot_solve_vs_data(results, solve_handler, NUM_OF_PHYNGS_K, f'{RES_STORAGE}/phyngs', hosts, colors, yspan_start=60)
+
+
+
+def plot_time_vs_mesh_quality(df: Union[pd.DataFrame, List[pd.DataFrame]],
+                              hosts: Union[str, List[str]]):
     xspan = [40, 50]
-    for res in mesh_results.values():
-        draw_lines_plot(res[MESH_QUALITY_K], res[AVG_SETUP_TIME_K],
-                        MESH_QUALITY_K, AVG_SETUP_TIME_K, res[TITLE_SETUP_K],
-                        xspan=xspan, fit_func=func5)
-        yspan = None
-        max_span = max(res[AVG_SOLVE_TIME_K]) + 10
-        if max_span > 60:
-            yspan = [60, max_span]
-        draw_lines_plot(res[MESH_QUALITY_K], res[AVG_SOLVE_TIME_K],
-                        MESH_QUALITY_K, AVG_SOLVE_TIME_K, res[TITLE_SOLVE_K],
-                        xspan=xspan, yspan=yspan, fit_func=func5)
+    setup_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[MESH_QUALITY_K], res[AVG_SOLVE_TIME_K],
+                                                                   legend=legend,
+                                                                   fit_func=func5,
+                                                                   color=color, fit_color=color)
+    solve_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[MESH_QUALITY_K],
+                                                                   res[AVG_SOLVE_TIME_K],
+                                                                   legend=legend,
+                                                                   fit_func=func5,
+                                                                   color=color, fit_color=color)
+    results = []
+    colors = [(0, 101, 189), (153, 153, 153)]
+    if isinstance(df, list):
+        for dataframe in df:
+            results.append(get_mesh_data(dataframe))
+    else:
+        results = [get_mesh_data(df)]
+    plot_setup_vs_data(results, setup_handler, MESH_QUALITY_K, f'{RES_STORAGE}/meshes', hosts, colors, xspan)
+    plot_solve_vs_data(results, solve_handler, MESH_QUALITY_K, f'{RES_STORAGE}/meshes', hosts, colors, xspan, 60)
 
 
-def plot_time_vs_cores(df: pd.DataFrame):
-    cores_result = get_cores_data(df)
-    for res in cores_result.values():
-        yspan = None
-        max_span = max(res[AVG_SOLVE_TIME_K]) + 10
-        if max_span > 60:
-            yspan = [60, max_span]
-        draw_lines_plot(res[NUM_OF_CORES_K], res[AVG_SOLVE_TIME_K],
-                        NUM_OF_CORES_K, AVG_SOLVE_TIME_K, res[TITLE_SOLVE_K],
-                        yspan=yspan,
-                        fit_func=[func_power, func_exp, func_hyperbolic, func_log])
+def plot_time_vs_cores(df: Union[pd.DataFrame, List[pd.DataFrame]],
+                              hosts: Union[str, List[str]]):
+    solve_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[NUM_OF_CORES_K],
+                                                                   res[AVG_SOLVE_TIME_K],
+                                                                   legend=legend,
+                                                                   fit_func=[func_power, func_exp, func_hyperbolic, func_log],
+                                                                   color=color, fit_color=color)
+    results = []
+    colors = [(0, 101, 189), (153, 153, 153)]
+    if isinstance(df, list):
+        for dataframe in df:
+            results.append(get_cores_data(dataframe))
+    else:
+        results = [get_cores_data(df)]
+    plot_solve_vs_data(results, solve_handler, NUM_OF_CORES_K, f'{RES_STORAGE}/cores', hosts, colors, yspan_start=60)
 
 
-def plot_time_vs_all(df: pd.DataFrame):
-    plot_time_vs_phyngs(df)
-    plot_time_vs_cores(df)
-    plot_time_vs_mesh_quality(df)
+def plot_time_vs_all(df: Union[pd.DataFrame, List[pd.DataFrame]],
+                     hosts: Union[str, List[str]]):
+    plot_time_vs_phyngs(df, hosts)
+    plot_time_vs_cores(df, hosts)
+    plot_time_vs_mesh_quality(df, hosts)
 
 
 def get_args() -> dict:
     parser = argparse.ArgumentParser(description='Web of Phyngs evaluation results plotter')
-    parser.add_argument('-hn', '--host-name',
+    parser.add_argument('-hn', '--host-names',
                         help='Host name, same as in the results folder',
+                        nargs='+',
                         required=False)
     parser.add_argument('-p', '--phyngs',
                         help='Plot data from phyngs',
@@ -366,17 +436,15 @@ def get_args() -> dict:
 
 
 def main():
-    global RES_STORAGE
-    path = RES_STORAGE
     args = get_args()
 
-    host_name = args['host_name']
+    host_names = args['host_names']
 
-    if host_name:
-        path = f'{path}/{host_name}'
-        if not os.path.exists(path):
-            raise Exception(f'Path for host {host_name} does not exist')
-        RES_STORAGE = path
+    if host_names:
+        for host_name in host_names:
+            path = f'{RES_STORAGE}/{host_name}'
+            if not os.path.exists(path):
+                raise Exception(f'Path for host {host_name} does not exist')
 
     if args['phyngs']:
         name = 'phyngs'
@@ -395,20 +463,22 @@ def main():
         if not filepath:
             raise Exception(f'No CSVs in the result folder')
         name = re.search(r'\/.+\/(.+)\.csv', filepath).group(1)
-        RES_STORAGE = f'../results/{name}'
+        # RES_STORAGE = f'../results/{name}'
         Path(RES_STORAGE).mkdir(exist_ok=True)
         df = pd.read_csv(filepath, index_col=0, sep=';')
         plot_time_vs_phyngs(df)
         plot_time_vs_mesh_quality(df)
         plot_time_vs_cores(df)
         return
-    filepath = f'{path}/{name}.csv'
-    if not os.path.exists(filepath):
-        raise Exception(f'Path for host {host_name} {name} does not exist')
-    RES_STORAGE += f'/{name}'
-    Path(RES_STORAGE).mkdir(exist_ok=True)
-    df = pd.read_csv(filepath, index_col=0, sep=';')
-    func(df)
+    df = []
+    for host_name in host_names:
+        filepath = f'{RES_STORAGE}/{host_name}/{name}.csv'
+        if not os.path.exists(filepath):
+            raise Exception(f'Path for host {host_name} {name} does not exist')
+        path = f'{RES_STORAGE}/{name}'
+        Path(path).mkdir(exist_ok=True)
+        df.append(pd.read_csv(filepath, index_col=0, sep=';'))
+    func(df, host_names)
 
 
 if __name__ == '__main__':
