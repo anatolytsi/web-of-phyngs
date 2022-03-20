@@ -275,7 +275,7 @@ def draw_lines_plot(x, y, xlabel='', ylabel='', title='', color=None, legend='or
         text_y = y_min + y_range / 2
         plt.text(text_x, text_y, 'No real-time', fontsize=16)
     if fit:
-        fit_color = (227, 114, 34) if not fit_color else fit_color
+        fit_color = (0, 101, 189) if not fit_color else fit_color
         if isinstance(fit_func, list):
             sel_idx, popt = find_best_fit(x, y, fit_func)
             fit_func = fit_func[sel_idx]
