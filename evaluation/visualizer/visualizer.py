@@ -127,16 +127,15 @@ def main():
         name = 'all'
         func = plot_time_vs_all
     else:
-        filepath = glob.glob(f'{path}/*.csv')[-1]
+        filepath = glob.glob(f'{RES_STORAGE}/*.csv')[-1]
         if not filepath:
             raise Exception(f'No CSVs in the result folder')
         name = re.search(r'\/.+\/(.+)\.csv', filepath).group(1)
-        # RES_STORAGE = f'../results/{name}'
         Path(RES_STORAGE).mkdir(exist_ok=True)
         df = pd.read_csv(filepath, index_col=0, sep=';')
-        plot_time_vs_phyngs(df)
-        plot_time_vs_mesh_quality(df)
-        plot_time_vs_cores(df)
+        plot_time_vs_phyngs([df], [name])
+        plot_time_vs_mesh_quality([df], [name])
+        plot_time_vs_cores([df], [name])
         return
     df = []
     for host_name in host_names:
