@@ -126,7 +126,7 @@ def plot_setup_vs_data(results, handler, xlabel, path, legends, colors, xspan=No
             y_range = y_max - y_min
             text_x = x_min + x_range / 2 - x_range / 8
             text_y = y_min + y_range / 2 - y_range / 4
-            plt.text(text_x, text_y, 'Mesh is to coarse', rotation=90, fontsize=16)
+            plt.text(text_x, text_y, 'Mesh is too coarse', rotation=90, fontsize=16)
 
         plt.savefig(f'{path}/pdfs/{title}.pdf')
         plt.savefig(f'{path}/pngs/{title}.png')
