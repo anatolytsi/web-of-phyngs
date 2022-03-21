@@ -25,8 +25,8 @@ DF_COLUMNS = [
 PHYNG_TYPES = ['heaters', 'acs', 'doors', 'windows']
 
 MESH_QUALITY_K = 'Mesh Quality, %'
-NUM_OF_CORES_K = 'Num of Cores'
-NUM_OF_PHYNGS_K = 'Num of Phyngs'
+NUM_OF_CORES_K = 'Number of Cores'
+NUM_OF_PHYNGS_K = 'Number of Phyngs'
 AVG_SETUP_TIME_K = 'Average Setup Time, s'
 AVG_SOLVE_TIME_K = 'Average Solving Time, s'
 SETUP_TIME_K = 'Setup Time, s'
