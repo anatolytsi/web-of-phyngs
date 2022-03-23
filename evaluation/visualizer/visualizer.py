@@ -20,7 +20,7 @@ def plot_time_vs_phyngs(df: Union[pd.DataFrame, List[pd.DataFrame]],
                                                                    fit_func=[func1, func3],
                                                                    color=color, fit_color=color)
     results = []
-    colors = [(0, 101, 189), (153, 153, 153)]
+    colors = TUM_COLORS
     if isinstance(df, list):
         for dataframe in df:
             results.append(get_phyngs_data(dataframe))
@@ -43,7 +43,7 @@ def plot_time_vs_mesh_quality(df: Union[pd.DataFrame, List[pd.DataFrame]],
                                                                    fit_func=func5,
                                                                    color=color, fit_color=color)
     results = []
-    colors = [(0, 101, 189), (153, 153, 153)]
+    colors = TUM_COLORS
     if isinstance(df, list):
         for dataframe in df:
             results.append(get_mesh_data(dataframe))
@@ -62,7 +62,7 @@ def plot_time_vs_cores(df: Union[pd.DataFrame, List[pd.DataFrame]],
                                                                              func_log],
                                                                    color=color, fit_color=color)
     results = []
-    colors = [(0, 101, 189), (153, 153, 153)]
+    colors = TUM_COLORS
     if isinstance(df, list):
         for dataframe in df:
             results.append(get_cores_data(dataframe))

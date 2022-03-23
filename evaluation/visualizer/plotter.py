@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 from acquisitor import *
 
 
+TUM_COLORS = [(0, 101, 189), (100, 160, 200), (153, 153, 153), (218, 215, 203)]
+
+
 def func_exp(x, a, b, c):
     return a * np.exp(np.multiply(x, -b)) + c
 
@@ -201,7 +204,7 @@ def plot_setup_vs_data(results, handler, xlabel, path, legends, colors, xspan=No
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(AVG_SETUP_TIME_K)
-        for result, legend, color in zip(results, legends, colors):
+        for result, legend, color in zip(results, legends, colors[:len(results)]):
             res = result[res_key]
             handler(ax, res, legend, color)
         if xspan:
@@ -231,7 +234,7 @@ def plot_solve_vs_data(results, handler, xlabel, path, legends, colors, xspan=No
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(AVG_SOLVE_TIME_K)
-        for result, legend, color in zip(results, legends, colors):
+        for result, legend, color in zip(results, legends, colors[:len(results)]):
             res = result[res_key]
             handler(ax, res, legend, color)
 
