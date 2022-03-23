@@ -33,6 +33,7 @@ const ACS = process.env.ACS === '1';
 const WINDOWS = process.env.WINDOWS === '1';
 const DOORS = process.env.DOORS === '1';
 const TAKE_MOST = process.env.TAKE_MOST === '1';
+const TAKE_LEAST = process.env.TAKE_LEAST === '1';
 const SERVER_NAME = process.env.SERVER_NAME;
 const FILENAME = process.env.FILENAME;
 
@@ -225,7 +226,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
                                origNumOfRetries: number = 2) {
     let caseProvided = !!caseThing;
     let caseName = '';
-    let numOfPhyngs = getMaxPhyngs(data);
+    let numOfPhyngs = TAKE_LEAST ? 1 : getMaxPhyngs(data);
     curPhyng = TAKE_MOST ? numOfPhyngs - 1 : curPhyng;
     for (let phyngIter = curPhyng; phyngIter < numOfPhyngs; phyngIter++) {
         if (!caseThing) {
