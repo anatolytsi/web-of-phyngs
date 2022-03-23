@@ -225,7 +225,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             phyngs.push(await addPhyng(caseThing, `${type}${phyngNum + 1}`, location, data));
             await delay(100);
         }
-        let error;
+        let error = '';
         [elapsedSetup, errorSetup] = await setupCase(caseThing, 2);
         if (errorSetup) {
             error = errorSetup;
@@ -241,6 +241,9 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             let phyngAmount = phyngIter + 1;
             if (!error) {
                 [elapsedSolve, errorSolve] = await solveCase(caseThing);
+                if (errorSolve) {
+                    error = errorSolve;
+                }
             }
             if (error && !caseProvided && numOfRetries) {
                 await simulator.invokeAction('deleteCase', caseName);
