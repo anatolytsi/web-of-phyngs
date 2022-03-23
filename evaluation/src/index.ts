@@ -229,7 +229,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
     let numOfPhyngs = Math.floor((TAKE_LEAST ? 1 : getMaxPhyngs(data, type)) / phyngStep);
     curPhyng = TAKE_MOST ? numOfPhyngs - 1 : curPhyng;
     for (let phyngIter = curPhyng; phyngIter < numOfPhyngs; phyngIter++) {
-        let phyngAmount = phyngIter * phyngStep || 1;
+        let phyngAmount = (phyngIter * phyngStep) || 1;
         if (!caseThing) {
             caseName = `m${meshQuality}c${cores}ph${type[0]}${phyngAmount}`
             caseThing = await addCase(simulator, caseName, meshQuality, cores);
