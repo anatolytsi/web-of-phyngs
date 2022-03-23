@@ -189,30 +189,6 @@ async function solveCase(caseThing: WoT.ConsumedThing): Promise<[number, any]> {
     }
 }
 
-async function runCase(caseThing: WoT.ConsumedThing,
-                       meshQuality: number, cores: number,
-                       type: PhyngsType, phyngAmount: number,
-                       numOfRetries: number = 0, retried: boolean = false): Promise<[number, number, any]> {
-    console.log(`Setting up the case with ${meshQuality} mesh, ${cores} cores`);
-    let error, errorSetup, errorSolve = '';
-    let elapsedSetup: number = 0;
-    let elapsedSolve: number = 0;
-    try {
-        [elapsedSetup, errorSetup] = await setupCase(caseThing, 2, retried);
-        await delay(1000);
-        if (!errorSetup) {
-            [elapsedSolve, errorSolve] = await solveCase(caseThing);
-            error = errorSolve;
-        } else {
-            error = errorSetup;
-        }
-        await caseThing.invokeAction('stop');
-    } catch (e: any) {
-        error = e;
-    }
-    return [elapsedSetup, elapsedSolve, error];
-}
-
 function getMaxPhyngs(data: any) {
     return Math.round(WALLS_DATA.phyProperties.dimensions[0] / (data.phyProperties.dimensions[0] +
         data.phyProperties.location[0]));
@@ -224,6 +200,8 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
                                caseThing: any = undefined, solve: boolean = true,
                                numOfRetries: number = 2, curPhyng: number = 0,
                                origNumOfRetries: number = 2) {
+    let elapsedSetup, elapsedSolve = 0;
+    let errorSetup, errorSolve = '';
     let caseProvided = !!caseThing;
     let caseName = '';
     let numOfPhyngs = TAKE_LEAST ? 1 : getMaxPhyngs(data);
@@ -240,17 +218,30 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
                 await delay(100);
             }
         }
+        let phyngs: Array<WoT.ConsumedThing> = [];
         for (let phyngNum = 0; phyngNum < (phyngIter + 1); phyngNum++) {
             let location = [...data.phyProperties.location];
             location[0] += phyngNum * (data.phyProperties.dimensions[0] + data.phyProperties.location[0]);
-            let phyng = await addPhyng(caseThing, `${type}${phyngNum + 1}`, location, data);
-            await delay(100);
-            await setPhyng(phyng, type);
+            phyngs.push(await addPhyng(caseThing, `${type}${phyngNum + 1}`, location, data));
             await delay(100);
         }
+        let error;
+        [elapsedSetup, errorSetup] = await setupCase(caseThing, 2);
+        if (errorSetup) {
+            error = errorSetup;
+        }
+        await delay(1000);
+
+        for (let phyngNum = 0; phyngNum < (phyngIter + 1); phyngNum++) {
+            await setPhyng(phyngs[phyngNum], type);
+            await delay(100);
+        }
+
         if (solve) {
             let phyngAmount = phyngIter + 1;
-            const [elapsedSetup, elapsedSolve, error] = await runCase(caseThing, meshQuality, cores, type, phyngAmount, 2);
+            if (!error) {
+                [elapsedSolve, errorSolve] = await solveCase(caseThing);
+            }
             if (error && !caseProvided && numOfRetries) {
                 await simulator.invokeAction('deleteCase', caseName);
                 await delay(1000);
