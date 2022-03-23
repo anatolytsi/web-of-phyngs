@@ -29,9 +29,13 @@ const MAX_CORES = parseInt(process.env.MAX_CORES || "", 10) || 8;
 const CORES_STEP = parseInt(process.env.CORES_STEP || "", 10) || 2;
 const START_CORES = parseInt(process.env.START_CORES || "", 10) || 0;
 const HEATERS = parseInt(process.env.HEATERS || "", 10) || 0;
+const HEATERS_STEP = parseInt(process.env.HEATERS_STEP || "", 10) || 1;
 const ACS = parseInt(process.env.ACS || "", 10) || 0;
+const ACS_STEP = parseInt(process.env.ACS_STEP || "", 10) || 1;
 const WINDOWS = parseInt(process.env.WINDOWS || "", 10) || 0;
+const WINDOWS_STEP = parseInt(process.env.WINDOWS_STEP || "", 10) || 1;
 const DOORS = parseInt(process.env.DOORS || "", 10) || 0;
+const DOORS_STEP = parseInt(process.env.DOORS_STEP || "", 10) || 1;
 const TAKE_MOST = process.env.TAKE_MOST === '1';
 const TAKE_LEAST = process.env.TAKE_LEAST === '1';
 const SERVER_NAME = process.env.SERVER_NAME;
@@ -201,6 +205,16 @@ function getMaxPhyngs(data: any, type: PhyngsType) {
     return 0;
 }
 
+function getPhyngStep(type: PhyngsType) {
+    switch (type) {
+        case "heaters": return HEATERS_STEP;
+        case "acs": return ACS_STEP;
+        case "windows": return WINDOWS_STEP;
+        case "doors": return DOORS_STEP;
+    }
+    return 0;
+}
+
 async function phyngEvaluation(simulator: WoT.ConsumedThing,
                                meshQuality: number, cores: number,
                                type: PhyngsType, data: any,
@@ -211,11 +225,13 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
     let errorSetup, errorSolve = '';
     let caseProvided = !!caseThing;
     let caseName = '';
-    let numOfPhyngs = TAKE_LEAST ? 1 : getMaxPhyngs(data, type);
+    let phyngStep = getPhyngStep(type);
+    let numOfPhyngs = Math.floor((TAKE_LEAST ? 1 : getMaxPhyngs(data, type)) / phyngStep);
     curPhyng = TAKE_MOST ? numOfPhyngs - 1 : curPhyng;
     for (let phyngIter = curPhyng; phyngIter < numOfPhyngs; phyngIter++) {
+        let phyngAmount = phyngIter * phyngStep || 1;
         if (!caseThing) {
-            caseName = `m${meshQuality}c${cores}ph${type[0]}${phyngIter + 1}`
+            caseName = `m${meshQuality}c${cores}ph${type[0]}${phyngAmount}`
             caseThing = await addCase(simulator, caseName, meshQuality, cores);
             await delay(500);
             await addPhyng(caseThing, `walls`, WALLS_DATA.phyProperties.location, {...WALLS_DATA});
@@ -226,7 +242,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             }
         }
         let phyngs: Array<WoT.ConsumedThing> = [];
-        for (let phyngNum = 0; phyngNum < (phyngIter + 1); phyngNum++) {
+        for (let phyngNum = 0; phyngNum < phyngAmount; phyngNum++) {
             let location = [...data.phyProperties.location];
             location[0] += phyngNum * (data.phyProperties.dimensions[0] + data.phyProperties.location[0]);
             phyngs.push(await addPhyng(caseThing, `${type}${phyngNum + 1}`, location, data));
@@ -239,13 +255,12 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
         }
         await delay(1000);
 
-        for (let phyngNum = 0; phyngNum < (phyngIter + 1); phyngNum++) {
+        for (let phyngNum = 0; phyngNum < phyngAmount; phyngNum++) {
             await setPhyng(phyngs[phyngNum], type);
             await delay(100);
         }
 
         if (solve) {
-            let phyngAmount = phyngIter + 1;
             if (!error) {
                 [elapsedSolve, errorSolve] = await solveCase(caseThing);
                 if (errorSolve) {
