@@ -28,10 +28,10 @@ const MAX_MESH = parseInt(process.env.MAX_MESH || "", 10) || 100;
 const MAX_CORES = parseInt(process.env.MAX_CORES || "", 10) || 8;
 const CORES_STEP = parseInt(process.env.CORES_STEP || "", 10) || 2;
 const START_CORES = parseInt(process.env.START_CORES || "", 10) || 0;
-const HEATERS = process.env.HEATERS === '1';
-const ACS = process.env.ACS === '1';
-const WINDOWS = process.env.WINDOWS === '1';
-const DOORS = process.env.DOORS === '1';
+const HEATERS = parseInt(process.env.HEATERS || "", 10) || 0;
+const ACS = parseInt(process.env.ACS || "", 10) || 0;
+const WINDOWS = parseInt(process.env.WINDOWS || "", 10) || 0;
+const DOORS = parseInt(process.env.DOORS || "", 10) || 0;
 const TAKE_MOST = process.env.TAKE_MOST === '1';
 const TAKE_LEAST = process.env.TAKE_LEAST === '1';
 const SERVER_NAME = process.env.SERVER_NAME;
@@ -189,9 +189,16 @@ async function solveCase(caseThing: WoT.ConsumedThing): Promise<[number, any]> {
     }
 }
 
-function getMaxPhyngs(data: any) {
-    return Math.round(WALLS_DATA.phyProperties.dimensions[0] / (data.phyProperties.dimensions[0] +
+function getMaxPhyngs(data: any, type: PhyngsType) {
+    let maxPhyngs = Math.round(WALLS_DATA.phyProperties.dimensions[0] / (data.phyProperties.dimensions[0] +
         data.phyProperties.location[0]));
+    switch (type) {
+        case "heaters": return HEATERS <= maxPhyngs ? HEATERS : maxPhyngs;
+        case "acs": return ACS <= maxPhyngs ? ACS : maxPhyngs;
+        case "windows": return WINDOWS <= maxPhyngs ? WINDOWS : maxPhyngs;
+        case "doors": return DOORS <= maxPhyngs ? DOORS : maxPhyngs;
+    }
+    return 0;
 }
 
 async function phyngEvaluation(simulator: WoT.ConsumedThing,
@@ -204,7 +211,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
     let errorSetup, errorSolve = '';
     let caseProvided = !!caseThing;
     let caseName = '';
-    let numOfPhyngs = TAKE_LEAST ? 1 : getMaxPhyngs(data);
+    let numOfPhyngs = TAKE_LEAST ? 1 : getMaxPhyngs(data, type);
     curPhyng = TAKE_MOST ? numOfPhyngs - 1 : curPhyng;
     for (let phyngIter = curPhyng; phyngIter < numOfPhyngs; phyngIter++) {
         if (!caseThing) {
@@ -273,8 +280,8 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
 async function evaluateCases(simulator: WoT.ConsumedThing,
                              meshStep: number, startMesh: number,
                              maxCores: number, coresStep: number, startCores: number,
-                             heaters: boolean, acs: boolean,
-                             windows: boolean, doors: boolean) {
+                             heaters: number, acs: number,
+                             windows: number, doors: number) {
     if (!(heaters || acs || windows || doors)) throw Error('Specify at least one evaluation Phyng');
     let remainder = startMesh % meshStep;
     let startIter = Math.floor(startMesh / meshStep);
@@ -286,49 +293,21 @@ async function evaluateCases(simulator: WoT.ConsumedThing,
             let cores = (coresStep * coreIter) || 1;
             // First - evaluate individual Phyng types
             if (heaters) {
-                console.log(`Evaluating heaters with ${meshQuality} mesh, ${cores} cores`);
+                console.log(`Evaluating ${heaters} heaters with ${meshQuality} mesh, ${cores} cores`);
                 await phyngEvaluation(simulator, meshQuality, cores, 'heaters', {...HEATER_DATA});
             }
             if (acs) {
-                console.log(`Evaluating acs with ${meshQuality} mesh, ${cores} cores`);
+                console.log(`Evaluating ${acs} acs with ${meshQuality} mesh, ${cores} cores`);
                 await phyngEvaluation(simulator, meshQuality, cores, 'acs', {...AC_DATA});
             }
             if (windows) {
-                console.log(`Evaluating windows with ${meshQuality} mesh, ${cores} cores`);
+                console.log(`Evaluating ${windows} windows with ${meshQuality} mesh, ${cores} cores`);
                 await phyngEvaluation(simulator, meshQuality, cores, 'windows', {...WINDOW_DATA});
             }
             if (doors) {
-                console.log(`Evaluating doors with ${meshQuality} mesh, ${cores} cores`);
+                console.log(`Evaluating ${doors} doors with ${meshQuality} mesh, ${cores} cores`);
                 await phyngEvaluation(simulator, meshQuality, cores, 'doors', {...DOOR_DATA});
             }
-
-            // // Evaluate all phyngs at once
-            // let caseName = `evalmesh${meshQuality}cores${cores}phyngsall`
-            // let caseThing = await addCase(simulator, caseName, meshQuality, cores);
-            // await addPhyng(caseThing, `walls`, WALLS_DATA.phyProperties.location, WALLS_DATA);
-            // let maxPhyngs = 0;
-            // console.log(`Evaluating all phyngs with ${meshQuality} mesh, ${cores} cores`);
-            // if (heaters) {
-            //     await phyngEvaluation(simulator, meshQuality, cores, 'heaters', {...HEATER_DATA},
-            //         caseThing, false);
-            //     maxPhyngs += getMaxPhyngs(HEATER_DATA);
-            // }
-            // if (acs) {
-            //     await phyngEvaluation(simulator, meshQuality, cores, 'acs', {...AC_DATA},
-            //         caseThing, false);
-            //     maxPhyngs += getMaxPhyngs(AC_DATA);
-            // }
-            // if (windows) {
-            //     await phyngEvaluation(simulator, meshQuality, cores, 'windows', {...WINDOW_DATA},
-            //         caseThing, false);
-            //     maxPhyngs += getMaxPhyngs(WINDOW_DATA);
-            // }
-            // if (doors) {
-            //     await phyngEvaluation(simulator, meshQuality, cores, 'doors', {...DOOR_DATA},
-            //         caseThing, false);
-            //     maxPhyngs += getMaxPhyngs(DOOR_DATA);
-            // }
-            // await runCase(caseThing, meshQuality, cores, "all", maxPhyngs);
         }
     }
 }
