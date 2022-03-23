@@ -178,3 +178,28 @@ def get_cores_data(df: pd.DataFrame) -> dict:
         cores_result[phyng_type][MAE_SOLVE_K] = np.round(np.average(cores_result[phyng_type][MAE_SOLVE_K]), 3)
 
     return cores_result
+
+
+def get_all_data(df: pd.DataFrame):
+    cases = list(dict.fromkeys(list(df.index)))
+    averaged_data = {
+        CASE_NAME: [],
+        NUM_OF_CORES_K: [],
+        MESH_QUALITY_K: [],
+        PHYNGS_TYPE: [],
+        NUM_OF_PHYNGS_K: [],
+        AVG_SETUP_TIME_K: [],
+        AVG_SOLVE_TIME_K: []
+    }
+    averaged_columns = list(averaged_data.keys())
+    for case in cases:
+        rows = df.loc[df.index == case]
+        averaged_data[CASE_NAME].append(case)
+        averaged_data[NUM_OF_CORES_K].append(np.average(rows[CORES]))
+        averaged_data[MESH_QUALITY_K].append(np.average(rows[MSH_QUAL]))
+        averaged_data[PHYNGS_TYPE].append(rows[PHYNGS_TYPE][0])
+        averaged_data[NUM_OF_PHYNGS_K].append(np.average(rows[PHYNGS_NUM]))
+        averaged_data[AVG_SETUP_TIME_K].append(np.average(rows[SETUP_TIME]) / 1000)
+        averaged_data[AVG_SOLVE_TIME_K].append(np.average(rows[SOLVE_TIME]) / 1000)
+    # return averaged_data
+    return pd.DataFrame(averaged_data, columns=averaged_columns)

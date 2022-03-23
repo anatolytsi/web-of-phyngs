@@ -2,10 +2,13 @@ from pathlib import Path
 from typing import Union, List, Callable
 
 import numpy as np
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from scipy.optimize import curve_fit
+from scipy.interpolate import griddata
+from matplotlib import cm
 import matplotlib.pyplot as plt
 
-from acquisitor import TITLE_SETUP_K, TITLE_SOLVE_K, AVG_SOLVE_TIME_K, MAE_K
+from acquisitor import *
 
 
 def func_exp(x, a, b, c):
@@ -70,7 +73,11 @@ def find_best_fit(x_coords, y_coords, fit_funcs):
     avg_err = 1e10
     popt = 0
     for idx, func in enumerate(fit_funcs):
-        popt_new, pcov = curve_fit(func, x_coords, y_coords)
+        try:
+            popt_new, pcov = curve_fit(func, x_coords, y_coords)
+        except Exception as e:
+            print(e)
+            continue
         y_errors = []
         for x_idx, x in enumerate(x_coords):
             y_errors.append(abs(y_coords[x_idx] - func(x, *popt_new)))
@@ -101,6 +108,87 @@ def draw_lines_plot(ax, x: List[int], y: List[int], color: List[int] = None, leg
         l2, = ax.plot(x_fit, fit_func(x_fit, *popt), color=[c / 255 for c in fit_color],
                       label=f'{legend}: {get_fit_title(fit_func)}')
         ax.legend()
+
+
+def plot_3d(df, path, x_name, y_name, z_name, fit_func, title='3dplot'):
+    Path(f'{path}/pdfs').mkdir(exist_ok=True)
+    Path(f'{path}/pngs').mkdir(exist_ok=True)
+    points = 100
+    x = []
+    y = []
+    z = []
+
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    
+    # Fit data
+    for y_unique in set(df[y_name]):
+        df_y = df.loc[df[y_name] == y_unique]
+        popt, pcov = curve_fit(fit_func, list(df_y[x_name]), list(df_y[z_name]))
+        x.extend(np.linspace(list(df_y[x_name])[0], list(df_y[x_name])[-1], points))
+        y.extend([y_unique for _ in range(points)])
+        z.extend(fit_func(x, *popt))
+    surf = ax.plot_trisurf(x, y, z, cmap=cm.coolwarm, linewidth=0.5, vmin=0, vmax=60)
+    ax.set_xlabel(x_name)
+    ax.set_ylabel(y_name)
+    ax.set_zlabel(z_name)
+    ax.set_title(title)
+
+    fig.colorbar(surf, shrink=0.5, aspect=10, location='right', pad=0.15)
+    plt.savefig(f'{path}/pdfs/{title}.pdf')
+    plt.savefig(f'{path}/pngs/{title}.png')
+    plt.close()
+
+
+def plot3d_const_mesh(df, path):
+    fit_funcs = [
+        func_hyperbolic,  # heaters
+        func_hyperbolic,  # acs
+        func_hyperbolic,  # doors
+        func_hyperbolic,  # windows
+    ]
+    for phyng_type, fit_func in zip(PHYNG_TYPES, fit_funcs):
+        phyng_df = df.loc[df[PHYNGS_TYPE] == phyng_type]
+        max_mesh = phyng_df[MESH_QUALITY_K].max()
+        max_mesh_df = phyng_df.loc[phyng_df[MESH_QUALITY_K] == max_mesh]
+        title_solve = f'{int(max_mesh)} % mesh, {phyng_type} {SOLVE_K}\n{get_fit_title(fit_func)} estimation'
+        plot_3d(max_mesh_df, path, NUM_OF_CORES_K, NUM_OF_PHYNGS_K, AVG_SOLVE_TIME_K, fit_func,
+                title=title_solve)
+
+
+def plot3d_const_cores(df, path):
+    fit_funcs = [
+        [func3, func3],  # heaters
+        [func3, func3],  # acs
+        [func3, func3],  # doors
+        [func3, func3],  # windows
+    ]
+    for phyng_type, fit_func in zip(PHYNG_TYPES, fit_funcs):
+        phyng_df = df.loc[df[PHYNGS_TYPE] == phyng_type]
+        max_cores = phyng_df[NUM_OF_CORES_K].max()
+        cores_df = phyng_df.loc[phyng_df[NUM_OF_CORES_K] == max_cores]
+        title_setup = f'{int(max_cores)} cores, {phyng_type} {SETUP_K}\n{get_fit_title(fit_func[0])} estimation'
+        title_solve = f'{int(max_cores)} cores, {phyng_type} {SOLVE_K}\n{get_fit_title(fit_func[1])} estimation'
+        plot_3d(cores_df, path, MESH_QUALITY_K, NUM_OF_PHYNGS_K, AVG_SETUP_TIME_K, fit_func[0],
+                title=title_setup)
+        plot_3d(cores_df, path, MESH_QUALITY_K, NUM_OF_PHYNGS_K, AVG_SOLVE_TIME_K, fit_func[1],
+                title=title_solve)
+
+
+def plot3d_const_phyngs(df, path):
+    fit_funcs = [
+        func_hyperbolic,  # heaters
+        func_hyperbolic,  # acs
+        func_hyperbolic,  # doors
+        func_hyperbolic,  # windows
+    ]
+    for phyng_type, fit_func in zip(PHYNG_TYPES, fit_funcs):
+        phyng_df = df.loc[df[PHYNGS_TYPE] == phyng_type]
+        max_phyng = phyng_df[NUM_OF_PHYNGS_K].max()
+        title_solve = f'{int(max_phyng)} {phyng_type} {SOLVE_K}\n{get_fit_title(fit_func)} estimation'
+        phyng_num_df = phyng_df.loc[phyng_df[NUM_OF_PHYNGS_K] == max_phyng]
+        plot_3d(phyng_num_df, path, NUM_OF_CORES_K, MESH_QUALITY_K, AVG_SOLVE_TIME_K, fit_func,
+                title=title_solve)
 
 
 def plot_setup_vs_data(results, handler, xlabel, path, legends, colors, xspan=None):

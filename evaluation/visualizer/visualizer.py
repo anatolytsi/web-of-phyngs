@@ -73,9 +73,20 @@ def plot_time_vs_cores(df: Union[pd.DataFrame, List[pd.DataFrame]],
 
 def plot_time_vs_all(df: Union[pd.DataFrame, List[pd.DataFrame]],
                      hosts: Union[str, List[str]]):
-    plot_time_vs_phyngs(df, hosts)
-    plot_time_vs_cores(df, hosts)
-    plot_time_vs_mesh_quality(df, hosts)
+    Path(f'{RES_STORAGE}/3d - constant phyngs').mkdir(exist_ok=True)
+    Path(f'{RES_STORAGE}/3d - constant cores').mkdir(exist_ok=True)
+    Path(f'{RES_STORAGE}/3d - constant mesh').mkdir(exist_ok=True)
+    if isinstance(df, list):
+        for dataframe, host in zip(df, hosts):
+            Path(f'{RES_STORAGE}/3d - constant phyngs/{host}').mkdir(exist_ok=True)
+            Path(f'{RES_STORAGE}/3d - constant cores/{host}').mkdir(exist_ok=True)
+            Path(f'{RES_STORAGE}/3d - constant mesh/{host}').mkdir(exist_ok=True)
+            data_df = get_all_data(dataframe)
+            plot3d_const_phyngs(data_df, f'{RES_STORAGE}/3d - constant phyngs/{host}')
+            plot3d_const_cores(data_df, f'{RES_STORAGE}/3d - constant cores/{host}')
+            plot3d_const_mesh(data_df, f'{RES_STORAGE}/3d - constant mesh/{host}')
+    else:
+        results = [get_cores_data(df)]
 
 
 def get_args() -> dict:
