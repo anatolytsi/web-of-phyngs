@@ -252,8 +252,8 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
                     error = errorSolve;
                 }
             }
+            await simulator.invokeAction('deleteCase', caseName);
             if (error && !caseProvided && numOfRetries) {
-                await simulator.invokeAction('deleteCase', caseName);
                 await delay(1000);
                 await phyngEvaluation(simulator, meshQuality, cores, type, data,
                     undefined, true, numOfRetries - 1, phyngIter, numOfRetries);
