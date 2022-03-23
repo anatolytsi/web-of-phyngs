@@ -200,7 +200,7 @@ def plot_setup_vs_data(results, handler, xlabel, path, legends, colors, xspan=No
         title = results[0][res_key][TITLE_SETUP_K]
         plt.title(title)
         plt.xlabel(xlabel)
-        plt.ylabel(AVG_SOLVE_TIME_K)
+        plt.ylabel(AVG_SETUP_TIME_K)
         for result, legend, color in zip(results, legends, colors):
             res = result[res_key]
             handler(ax, res, legend, color)
