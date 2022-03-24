@@ -254,6 +254,16 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             if (type !== 'heaters') {
                 await addPhyng(caseThing, `heater`, HEATER_DATA.phyProperties.location, {...HEATER_DATA});
                 await delay(100);
+                if (type === 'doors') {
+                    let window = await addPhyng(caseThing, `window`, WINDOW_DATA.phyProperties.location,
+                        {...WINDOW_DATA});
+                    await window.writeProperty('temperature', 303.15);
+                    await delay(100);
+                    await window.writeProperty('velocity', [-5, 0, 0]);
+                    await delay(100);
+                    await window.invokeAction('open');
+                    await delay(100);
+                }
             }
         }
         let phyngs: Array<WoT.ConsumedThing> = [];
