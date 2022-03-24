@@ -235,7 +235,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
     let caseName = '';
     let phyngStep = getPhyngStep(type);
     let maxPhyngs = getMaxPhyngs(data, type);
-    let numOfPhyngs = Math.ceil((TAKE_LEAST ? 1 : getMaxPhyngs(data, type)) / phyngStep);
+    let numOfPhyngs = Math.ceil((TAKE_LEAST ? 1 : (maxPhyngs / phyngStep + 1)));
 
     curPhyng = TAKE_MOST ? numOfPhyngs - 1 : curPhyng;
     for (let phyngIter = curPhyng; phyngIter < numOfPhyngs; phyngIter++) {
