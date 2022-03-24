@@ -271,7 +271,11 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
         await delay(1000);
 
         for (let phyngNum = 0; phyngNum < phyngAmount; phyngNum++) {
-            await setPhyng(phyngs[phyngNum], type);
+            try {
+                await setPhyng(phyngs[phyngNum], type);
+            } catch (e) {
+                error = 'Some surface was not produced'
+            }
             await delay(100);
         }
 
