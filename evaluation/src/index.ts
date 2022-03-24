@@ -36,6 +36,7 @@ const WINDOWS = parseInt(process.env.WINDOWS || "", 10) || 0;
 const WINDOWS_STEP = parseInt(process.env.WINDOWS_STEP || "", 10) || 1;
 const DOORS = parseInt(process.env.DOORS || "", 10) || 0;
 const DOORS_STEP = parseInt(process.env.DOORS_STEP || "", 10) || 1;
+const ONLY_RT = process.env.ONLY_RT === '1';
 const TAKE_MOST = process.env.TAKE_MOST === '1';
 const TAKE_LEAST = process.env.TAKE_LEAST === '1';
 const SERVER_NAME = process.env.SERVER_NAME;
@@ -242,7 +243,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
         let phyngAmount = phyngStep === 1 ? (phyngIter + 1) : ((phyngIter * phyngStep) || 1);
         phyngAmount = (phyngAmount > maxPhyngs) ? maxPhyngs : phyngAmount;
         // Do not evaluate any phyngs further
-        if (meshQuality in meshPhyngsLimit[type] && phyngAmount >= meshPhyngsLimit[type][meshQuality]) {
+        if (ONLY_RT && meshQuality in meshPhyngsLimit[type] && phyngAmount >= meshPhyngsLimit[type][meshQuality]) {
             return
         }
 
@@ -319,7 +320,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             caseThing = undefined;
             numOfRetries = origNumOfRetries;
 
-            if (elapsedSolve > 60000) {
+            if (ONLY_RT &&elapsedSolve > 60000) {
                 meshPhyngsLimit[type][meshQuality] = phyngAmount;
                 return;
             }
