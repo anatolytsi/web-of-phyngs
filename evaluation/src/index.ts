@@ -156,7 +156,7 @@ async function setupCase(caseThing: WoT.ConsumedThing, numOfRetries: number = 0,
     try {
         if (retried) {
             await caseThing.invokeAction('clean');
-            await delay(1000);
+            await delay(100);
         }
         let error = '';
         let start = Date.now();
@@ -278,7 +278,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
         if (errorSetup) {
             error = errorSetup;
         }
-        await delay(1000);
+        await delay(100);
 
         for (let phyngNum = 0; phyngNum < phyngAmount; phyngNum++) {
             try {
@@ -298,7 +298,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             }
             await simulator.invokeAction('deleteCase', caseName);
             if (error && !caseProvided && numOfRetries) {
-                await delay(1000);
+                await delay(100);
                 await phyngEvaluation(simulator, meshQuality, cores, type, data,
                     undefined, true, numOfRetries - 1, phyngIter, numOfRetries);
                 return
