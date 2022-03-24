@@ -77,6 +77,14 @@ servient.addClientFactory(new HttpClientFactory());
 let wotClient: WoT.WoT;
 let wotHelper = new Helpers(servient);
 
+let phyngsMeshLimit: any = {
+    'heaters': {},
+    'acs': {},
+    'windows': {},
+    'doors': {},
+    'all': {}
+}
+
 function writeToCsv(data: CsvData) {
     let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsedSetup};${data.elapsedSolve};${data.error}\n`;
     fs.appendFile(filePath, row, function (err: any) {
@@ -227,6 +235,12 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
     let caseName = '';
     let phyngStep = getPhyngStep(type);
     let numOfPhyngs = Math.floor((TAKE_LEAST ? 1 : getMaxPhyngs(data, type)) / phyngStep);
+
+    // Do not evaluate this case as it exceeds 60 seconds
+    if (numOfPhyngs in phyngsMeshLimit[type] && meshQuality === phyngsMeshLimit[type][numOfPhyngs]) {
+        return
+    }
+
     curPhyng = TAKE_MOST ? numOfPhyngs - 1 : curPhyng;
     for (let phyngIter = curPhyng; phyngIter < numOfPhyngs; phyngIter++) {
         let phyngAmount = phyngStep === 1 ? (phyngIter + 1) : ((phyngIter * phyngStep) || 1);
@@ -273,6 +287,9 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
                 await phyngEvaluation(simulator, meshQuality, cores, type, data,
                     undefined, true, numOfRetries - 1, phyngIter, numOfRetries);
                 return
+            }
+            if (elapsedSolve > 60000) {
+                phyngsMeshLimit[type][numOfPhyngs] = meshQuality;
             }
             let csvData: CsvData = {
                 caseName: caseThing.getThingDescription().title,
