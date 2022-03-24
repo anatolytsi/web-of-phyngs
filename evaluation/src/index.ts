@@ -300,7 +300,7 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             if (error && !caseProvided && numOfRetries) {
                 await delay(100);
                 await phyngEvaluation(simulator, meshQuality, cores, type, data,
-                    undefined, true, numOfRetries - 1, phyngIter - 1, numOfRetries);
+                    undefined, true, numOfRetries - 1, phyngIter, numOfRetries);
                 return
             }
             let csvData: CsvData = {
