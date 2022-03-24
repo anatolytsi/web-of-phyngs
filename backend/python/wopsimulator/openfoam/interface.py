@@ -345,7 +345,7 @@ class OpenFoamInterface(ABC):
         p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, err = p.communicate()
         p.wait()
-        if err or 'ERROR' in output:
+        if err or b'ERROR' in output:
             raise Exception(err)
         logger.debug('Value changed')
 
