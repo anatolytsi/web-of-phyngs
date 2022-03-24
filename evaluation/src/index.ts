@@ -77,13 +77,13 @@ servient.addClientFactory(new HttpClientFactory());
 let wotClient: WoT.WoT;
 let wotHelper = new Helpers(servient);
 
-// let meshPhyngsLimit: any = {
-//     'heaters': {},
-//     'acs': {},
-//     'windows': {},
-//     'doors': {},
-//     'all': {}
-// }
+let meshPhyngsLimit: any = {
+    'heaters': {},
+    'acs': {},
+    'windows': {},
+    'doors': {},
+    'all': {}
+}
 
 function writeToCsv(data: CsvData) {
     let row = `${data.caseName};${data.cores};${data.meshQuality};${data.type};${data.phyngAmount};${data.elapsedSetup};${data.elapsedSolve};${data.error}\n`;
@@ -242,9 +242,9 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
         let phyngAmount = phyngStep === 1 ? (phyngIter + 1) : ((phyngIter * phyngStep) || 1);
         phyngAmount = (phyngAmount > maxPhyngs) ? maxPhyngs : phyngAmount;
         // Do not evaluate any phyngs further
-        // if (meshQuality in meshPhyngsLimit[type] && phyngAmount >= meshPhyngsLimit[type][meshQuality]) {
-        //     return
-        // }
+        if (meshQuality in meshPhyngsLimit[type] && phyngAmount >= meshPhyngsLimit[type][meshQuality]) {
+            return
+        }
 
         if (!caseThing) {
             caseName = `m${meshQuality}c${cores}ph${type[0]}${phyngAmount}`
@@ -319,10 +319,10 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
             caseThing = undefined;
             numOfRetries = origNumOfRetries;
 
-            // if (elapsedSolve > 60000) {
-            //     meshPhyngsLimit[type][meshQuality] = phyngAmount;
-            //     return;
-            // }
+            if (elapsedSolve > 60000) {
+                meshPhyngsLimit[type][meshQuality] = phyngAmount;
+                return;
+            }
         }
     }
 }
