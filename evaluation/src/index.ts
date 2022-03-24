@@ -234,12 +234,13 @@ async function phyngEvaluation(simulator: WoT.ConsumedThing,
     let caseProvided = !!caseThing;
     let caseName = '';
     let phyngStep = getPhyngStep(type);
-    let numOfPhyngs = Math.ceil((TAKE_LEAST ? 1 : (getMaxPhyngs(data, type)) / phyngStep + 1));
+    let maxPhyngs = getMaxPhyngs(data, type);
+    let numOfPhyngs = Math.ceil((TAKE_LEAST ? 1 : getMaxPhyngs(data, type)) / phyngStep);
 
     curPhyng = TAKE_MOST ? numOfPhyngs - 1 : curPhyng;
     for (let phyngIter = curPhyng; phyngIter < numOfPhyngs; phyngIter++) {
         let phyngAmount = phyngStep === 1 ? (phyngIter + 1) : ((phyngIter * phyngStep) || 1);
-
+        phyngAmount = phyngAmount > maxPhyngs ? maxPhyngs : phyngAmount;
         // Do not evaluate any phyngs further
         if (meshQuality in meshPhyngsLimit[type] && phyngAmount >= meshPhyngsLimit[type][meshQuality]) {
             return
