@@ -96,28 +96,27 @@ def find_best_fit(x_coords, y_coords, fit_funcs):
     return sel_idx, popt
 
 
-def find_closest_idx(lst, value):
-    best_idx = 0
-    best_dif = 1000
-    for idx, v in enumerate(lst):
-        if (dif := abs(value - v)) < best_dif:
-            best_dif = dif
-            best_idx = idx
-    return best_idx
-
-
 def draw_lines_plot(ax, x_in: List[int], y_in: List[int], color: List[int] = None, legend: str = 'original',
                     fit: bool = True, fit_func: Union[Callable, List[Callable]] = func3,
                     fit_color: List[int] = None,
                     mae: float = None,
                     side_text: str = '',
                     prediction_max: int = 0):
+    _, y_max = ax.get_ylim()
     color = (0, 101, 189) if not color else color
     x, y = [], []
     for v_x, v_y in zip(x_in, y_in):
         if v_y:
             x.append(v_x)
             y.append(v_y)
+    if side_text:
+        y_text = y[-1]
+        for l in ax.lines:
+            y_m = l.get_data()[1][-1]
+            y_per = (y[-1] - y_m) / max([y[-1], y_m])
+            if y_per and (abs(y_per) < 0.05):
+                y_text *= (1 + 0.0005 / y_per)
+                break
     if legend:
         legend_mae = f'{legend}, {MAE_K}: {mae}' if mae else legend
         l1, = ax.plot(x, y, 'o', color=[c / 255 for c in color],
@@ -125,9 +124,8 @@ def draw_lines_plot(ax, x_in: List[int], y_in: List[int], color: List[int] = Non
     else:
         l1, = ax.plot(x, y, 'o', color=[c / 255 for c in color], markersize=3)
     if side_text:
-        best_idx = find_closest_idx(x, 40)
-        t = plt.text(x[best_idx] + 0.7, y[best_idx], side_text)
-        t.set_bbox({'facecolor': 'white', 'alpha': 0.5, 'edgecolor': 'white'})
+        t = plt.text(x[-1] * 1.01, y_text, side_text, color=[c / 255 for c in color])
+        # t.set_bbox({'facecolor': 'white', 'alpha': 0.5, 'edgecolor': 'white'})
     if fit:
         fit_color = (0, 101, 189) if not fit_color else fit_color
         if isinstance(fit_func, list):
