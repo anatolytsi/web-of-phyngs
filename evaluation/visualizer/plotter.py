@@ -12,6 +12,7 @@ from acquisitor import *
 
 
 TUM_COLORS = [(0, 101, 189), (100, 160, 200), (153, 153, 153), (218, 215, 203)]
+TUM_MARKERS = ['', '--', '-', '.', '..']
 
 
 def func_exp(x, a, b, c):
@@ -101,7 +102,8 @@ def draw_lines_plot(ax, x_in: List[int], y_in: List[int], color: List[int] = Non
                     fit_color: List[int] = None,
                     mae: float = None,
                     side_text: str = '',
-                    prediction_max: int = 0):
+                    prediction_max: int = 0,
+                    marker=''):
     _, y_max = ax.get_ylim()
     color = (0, 101, 189) if not color else color
     x, y = [], []
@@ -113,9 +115,10 @@ def draw_lines_plot(ax, x_in: List[int], y_in: List[int], color: List[int] = Non
         y_text = y[-1]
         for l in ax.lines:
             y_m = l.get_data()[1][-1]
-            y_per = (y[-1] - y_m) / max([y[-1], y_m])
-            if y_per and (abs(y_per) < 0.05):
-                y_text *= (1 + 0.0005 / y_per)
+            y_per = (y_text - y_m) / max([y_text, y_m])
+            if y_per and (abs(y_per) < 0.1):
+                y_text *= (1 + 0.003 / y_per)
+                # y_text += 10 * 0.03 / y_per
                 break
     if legend:
         legend_mae = f'{legend}, {MAE_K}: {mae}' if mae else legend
@@ -125,7 +128,6 @@ def draw_lines_plot(ax, x_in: List[int], y_in: List[int], color: List[int] = Non
         l1, = ax.plot(x, y, 'o', color=[c / 255 for c in color], markersize=3)
     if side_text:
         t = plt.text(x[-1] * 1.01, y_text, side_text, color=[c / 255 for c in color])
-        # t.set_bbox({'facecolor': 'white', 'alpha': 0.5, 'edgecolor': 'white'})
     if fit:
         fit_color = (0, 101, 189) if not fit_color else fit_color
         if isinstance(fit_func, list):
@@ -135,10 +137,10 @@ def draw_lines_plot(ax, x_in: List[int], y_in: List[int], color: List[int] = Non
             popt, pcov = curve_fit(fit_func, x, y)
         x_fit = np.linspace(x[0], x[-1], 50)
         if legend:
-            l2, = ax.plot(x_fit, fit_func(x_fit, *popt), color=[c / 255 for c in fit_color],
+            l2, = ax.plot(x_fit, fit_func(x_fit, *popt), marker, color=[c / 255 for c in fit_color],
                           label=f'{legend}: {get_fit_title(fit_func)}')
         else:
-            l2, = ax.plot(x_fit, fit_func(x_fit, *popt), color=[c / 255 for c in fit_color])
+            l2, = ax.plot(x_fit, fit_func(x_fit, *popt), marker, color=[c / 255 for c in fit_color])
 
         if prediction_max and x[-1] < prediction_max:
             x_fit = np.linspace(x[-1], prediction_max, 50)
@@ -232,7 +234,7 @@ def plot3d_const_phyngs(df, path):
                 title=title_solve)
 
 
-def plot_setup_vs_data(results, handler, xlabel, path, legends, colors, xspan=None, y_lim=0):
+def plot_setup_vs_data(results, handler, xlabel, path, legends, colors, markers, xspan=None, y_lim=0):
     Path(f'{path}/pdfs').mkdir(exist_ok=True)
     Path(f'{path}/pngs').mkdir(exist_ok=True)
 
@@ -242,19 +244,23 @@ def plot_setup_vs_data(results, handler, xlabel, path, legends, colors, xspan=No
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(AVG_SETUP_TIME_K)
-        for result, legend, color in zip(results, legends, colors[:len(results)]):
+        for result, legend, color, marker in zip(results, legends, colors[:len(results)], markers[:len(results)]):
             type_res = result[type_key]
             if AVG_SETUP_TIME_K in type_res:
-                handler(ax, type_res, legend, color)
+                handler(type_key, ax, type_res, legend, color, marker)
+                # handler(ax, type_res, legend, color)
             else:
                 for phyng_k, phyng_res in type_res.items():
                     if isinstance(phyng_res, dict):
-                        handler(ax, phyng_res, legend, color, side_text=f'#{phyng_k}')
+                        handler(type_key, ax, phyng_res, legend, color, marker, side_text=f'#{phyng_k}')
                         if legend:
                             legend = ''
 
         if y_lim and ax.get_ylim()[1] > y_lim:
             ax.set_ylim([None, y_lim])
+        else:
+            y_min = 0 if ax.get_ylim()[0] < 5 else None
+            ax.set_ylim([y_min, None])
 
         if xspan:
             ax.axvspan(xspan[0], xspan[1], alpha=0.3, color='red', linestyle='None')
@@ -276,7 +282,7 @@ def plot_setup_vs_data(results, handler, xlabel, path, legends, colors, xspan=No
         plt.close()
 
 
-def plot_solve_vs_data(results, handler, xlabel, path, legends, colors, xspan=None, yspan_start=None, y_lim=0):
+def plot_solve_vs_data(results, handler, xlabel, path, legends, colors, markers, xspan=None, yspan_start=None, y_lim=0):
     Path(f'{path}/pdfs').mkdir(exist_ok=True)
     Path(f'{path}/pngs').mkdir(exist_ok=True)
 
@@ -286,19 +292,22 @@ def plot_solve_vs_data(results, handler, xlabel, path, legends, colors, xspan=No
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(AVG_SOLVE_TIME_K)
-        for result, legend, color in zip(results, legends, colors[:len(results)]):
+        for result, legend, color, marker in zip(results, legends, colors[:len(results)], markers[:len(results)]):
             type_res = result[type_key]
             if AVG_SOLVE_TIME_K in type_res:
-                handler(ax, type_res, legend, color)
+                handler(type_key, ax, type_res, legend, color, marker)
             else:
                 for phyng_k, phyng_res in type_res.items():
                     if isinstance(phyng_res, dict):
-                        handler(ax, phyng_res, legend, color, side_text=f'#{phyng_k}')
+                        handler(type_key, ax, phyng_res, legend, color, marker, side_text=f'#{phyng_k}')
                         if legend:
                             legend = ''
 
+        y_min = 0 if ax.get_ylim()[0] < 5 else None
         if y_lim and ax.get_ylim()[1] > y_lim:
-            ax.set_ylim([None, y_lim])
+            ax.set_ylim([y_min, y_lim])
+        else:
+            ax.set_ylim([y_min, None])
 
         if xspan:
             ax.axvspan(xspan[0], xspan[1], alpha=0.3, color='red', linestyle='None')
@@ -312,8 +321,7 @@ def plot_solve_vs_data(results, handler, xlabel, path, legends, colors, xspan=No
             text_y = y_min + y_range / 2 - y_range / 4
             plt.text(text_x, text_y, 'Mesh is too coarse', rotation=90, fontsize=16)
 
-        if yspan_start:
-            _, y_max = ax.get_ylim()
+        if yspan_start and (y_max := ax.get_ylim()[1]) > 55:
             y_min = yspan_start
             y_max += 10
             ax.axhspan(y_min, y_max, alpha=0.3, color='red', linestyle='None')
@@ -331,3 +339,170 @@ def plot_solve_vs_data(results, handler, xlabel, path, legends, colors, xspan=No
         plt.savefig(f'{path}/pdfs/{title}.pdf')
         plt.savefig(f'{path}/pngs/{title}.png')
         plt.close()
+
+
+def plot_ac_mesh_setup(ax, res, legend, color, marker, side_text, fit_func=None):
+    draw_lines_plot(ax, res[MESH_QUALITY_K], res[AVG_SETUP_TIME_K], legend=legend,
+                    mae=res[MAE_SETUP_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    marker=marker,
+                    side_text=side_text)
+
+
+def plot_ac_mesh_solve(ax, res, legend, color, marker, side_text, fit_func=None):
+    draw_lines_plot(ax, res[MESH_QUALITY_K], res[AVG_SOLVE_TIME_K], legend=legend,
+                    mae=res[MAE_SOLVE_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    marker=marker,
+                    side_text=side_text)
+
+
+def plot_heater_mesh_setup(ax, res, legend, color, marker, side_text, fit_func=None):
+    draw_lines_plot(ax, res[MESH_QUALITY_K], res[AVG_SETUP_TIME_K], legend=legend,
+                    mae=res[MAE_SETUP_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    marker=marker,
+                    side_text=side_text)
+
+
+def plot_heater_mesh_solve(ax, res, legend, color, marker, side_text, fit_func=None):
+    draw_lines_plot(ax, res[MESH_QUALITY_K], res[AVG_SOLVE_TIME_K], legend=legend,
+                    mae=res[MAE_SOLVE_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    marker=marker,
+                    side_text=side_text)
+
+
+def plot_door_mesh_setup(ax, res, legend, color, marker, side_text, fit_func=None):
+    draw_lines_plot(ax, res[MESH_QUALITY_K], res[AVG_SETUP_TIME_K], legend=legend,
+                    mae=res[MAE_SETUP_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    marker=marker,
+                    side_text=side_text)
+
+
+def plot_door_mesh_solve(ax, res, legend, color, marker, side_text, fit_func=None):
+    draw_lines_plot(ax, res[MESH_QUALITY_K], res[AVG_SOLVE_TIME_K], legend=legend,
+                    mae=res[MAE_SOLVE_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    marker=marker,
+                    side_text=side_text)
+
+
+def plot_window_mesh_setup(ax, res, legend, color, marker, side_text, fit_func=None):
+    draw_lines_plot(ax, res[MESH_QUALITY_K], res[AVG_SETUP_TIME_K], legend=legend,
+                    mae=res[MAE_SETUP_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    marker=marker,
+                    side_text=side_text)
+
+
+def plot_window_mesh_solve(ax, res, legend, color, marker, side_text, fit_func=None):
+    draw_lines_plot(ax, res[MESH_QUALITY_K], res[AVG_SOLVE_TIME_K], legend=legend,
+                    mae=res[MAE_SOLVE_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    marker=marker,
+                    side_text=side_text)
+
+
+def mesh_setup_handler(ph_type, ax, res, legend, color, marker, side_text):
+    if ph_type == 'heaters':
+        fit_func = func3
+    elif ph_type == 'acs':
+        fit_func = func3
+    elif ph_type == 'doors':
+        fit_func = func3
+    elif ph_type == 'windows':
+        fit_func = func3
+    else:
+        raise Exception(f'Invalid phyng type {ph_type}')
+    draw_lines_plot(ax, res[MESH_QUALITY_K],
+                    res[AVG_SETUP_TIME_K],
+                    legend=legend, mae=res[MAE_SETUP_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    side_text=side_text,
+                    prediction_max=100)
+
+
+def mesh_solve_handler(ph_type, ax, res, legend, color, marker, side_text):
+    if ph_type == 'heaters':
+        fit_func = func3
+    elif ph_type == 'acs':
+        fit_func = func3
+    elif ph_type == 'doors':
+        fit_func = [func_power, func3]
+    elif ph_type == 'windows':
+        fit_func = func3
+    else:
+        raise Exception(f'Invalid phyng type {ph_type}')
+    draw_lines_plot(ax, res[MESH_QUALITY_K],
+                    res[AVG_SOLVE_TIME_K],
+                    legend=legend, mae=res[MAE_SOLVE_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    side_text=side_text,
+                    prediction_max=100)
+
+
+def core_solve_handler(ph_type, ax, res, legend, color, marker, side_text):
+    if ph_type == 'heaters':
+        fit_func = func_hyperbolic
+    elif ph_type == 'acs':
+        fit_func = func_hyperbolic
+    elif ph_type == 'doors':
+        fit_func = func_hyperbolic
+    elif ph_type == 'windows':
+        fit_func = func_hyperbolic
+    else:
+        raise Exception(f'Invalid phyng type {ph_type}')
+    draw_lines_plot(ax, res[NUM_OF_CORES_K], res[AVG_SOLVE_TIME_K], legend=legend,
+                    mae=res[MAE_SOLVE_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    marker=marker,
+                    side_text=side_text)
+
+
+def phyng_setup_handler(ph_type, ax, res, legend, color, marker):
+    if ph_type == 'heaters':
+        fit_func = func1
+    elif ph_type == 'acs':
+        fit_func = func1
+    elif ph_type == 'doors':
+        fit_func = func1
+    elif ph_type == 'windows':
+        fit_func = func1
+    else:
+        raise Exception(f'Invalid phyng type {ph_type}')
+    draw_lines_plot(ax, res[NUM_OF_PHYNGS_K], res[AVG_SETUP_TIME_K], legend=legend,
+                    mae=res[MAE_SETUP_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    marker=marker)
+
+
+def phyng_solve_handler(ph_type, ax, res, legend, color, marker):
+    if ph_type == 'heaters':
+        fit_func = [func1, func_power]
+    elif ph_type == 'acs':
+        fit_func = func1
+    elif ph_type == 'doors':
+        fit_func = func2
+    elif ph_type == 'windows':
+        fit_func = func2
+    else:
+        raise Exception(f'Invalid phyng type {ph_type}')
+    draw_lines_plot(ax, res[NUM_OF_PHYNGS_K], res[AVG_SOLVE_TIME_K], legend=legend,
+                    mae=res[MAE_SOLVE_K],
+                    fit_func=fit_func,
+                    color=color, fit_color=color,
+                    marker=marker)

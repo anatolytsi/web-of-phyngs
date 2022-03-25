@@ -21,6 +21,7 @@ def plot_time_vs_phyngs(df: Union[pd.DataFrame, List[pd.DataFrame]],
                                                                    color=color, fit_color=color)
     results = []
     colors = TUM_COLORS
+    markers = TUM_MARKERS
     path = f'{RES_STORAGE}/phyngs'
     if isinstance(df, list):
         for dataframe in df:
@@ -31,8 +32,8 @@ def plot_time_vs_phyngs(df: Union[pd.DataFrame, List[pd.DataFrame]],
             Path(f'{RES_STORAGE}/{hosts[0]}/phyngs').mkdir(exist_ok=True)
     else:
         results = [get_phyngs_data(df)]
-    plot_setup_vs_data(results, setup_handler, NUM_OF_PHYNGS_K, path, hosts, colors)
-    plot_solve_vs_data(results, solve_handler, NUM_OF_PHYNGS_K, path, hosts, colors, yspan_start=60)
+    plot_setup_vs_data(results, phyng_setup_handler, NUM_OF_PHYNGS_K, path, hosts, colors, markers)
+    plot_solve_vs_data(results, phyng_solve_handler, NUM_OF_PHYNGS_K, path, hosts, colors, markers, yspan_start=60)
 
 
 def plot_time_vs_mesh_quality(df: Union[pd.DataFrame, List[pd.DataFrame]],
@@ -54,6 +55,7 @@ def plot_time_vs_mesh_quality(df: Union[pd.DataFrame, List[pd.DataFrame]],
                                                                               prediction_max=100)
     results = []
     colors = TUM_COLORS
+    markers = TUM_MARKERS
     path = f'{RES_STORAGE}/meshes'
     if isinstance(df, list):
         for dataframe in df:
@@ -67,8 +69,8 @@ def plot_time_vs_mesh_quality(df: Union[pd.DataFrame, List[pd.DataFrame]],
             Path(f'{RES_STORAGE}/{hosts[0]}/meshes').mkdir(exist_ok=True)
     else:
         results = [get_mesh_data(df, phyngs='boundary middle')]
-    plot_setup_vs_data(results, setup_handler, MESH_QUALITY_K, path, hosts, colors, xspan, y_lim=100)
-    plot_solve_vs_data(results, solve_handler, MESH_QUALITY_K, path, hosts, colors, xspan, 60, y_lim=100)
+    plot_setup_vs_data(results, mesh_setup_handler, MESH_QUALITY_K, path, hosts, colors, markers, xspan, y_lim=100)
+    plot_solve_vs_data(results, mesh_solve_handler, MESH_QUALITY_K, path, hosts, colors, markers, xspan, 60, y_lim=100)
 
 
 def plot_time_vs_cores(df: Union[pd.DataFrame, List[pd.DataFrame]],
@@ -82,6 +84,7 @@ def plot_time_vs_cores(df: Union[pd.DataFrame, List[pd.DataFrame]],
                                                                               color=color, fit_color=color)
     results = []
     colors = TUM_COLORS
+    markers = TUM_MARKERS
     path = f'{RES_STORAGE}/cores'
     if isinstance(df, list):
         for dataframe, host in zip(df, hosts):
@@ -92,7 +95,7 @@ def plot_time_vs_cores(df: Union[pd.DataFrame, List[pd.DataFrame]],
             Path(f'{RES_STORAGE}/{hosts[0]}/cores').mkdir(exist_ok=True)
     else:
         results = [get_cores_data(df, phyngs='boundary')]
-    plot_solve_vs_data(results, solve_handler, NUM_OF_CORES_K, path, hosts, colors, yspan_start=60)
+    plot_solve_vs_data(results, core_solve_handler, NUM_OF_CORES_K, path, hosts, colors, markers, yspan_start=60)
 
 
 def plot_time_vs_all(df: Union[pd.DataFrame, List[pd.DataFrame]],
