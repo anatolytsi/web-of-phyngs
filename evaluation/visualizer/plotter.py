@@ -22,12 +22,16 @@ def func_log(x, a, b):
     return a + b * np.log(x)
 
 
-def func_hyperbolic(x, a, b):
-    return a + np.divide(b, x)
+def func_hyperbolic(x, a, b, c):
+    return a * np.divide(b, x) + c
 
 
-def func_power(x, a, b):
-    return a * np.power(x, -b)
+def func_power(x, a, b, c):
+    return a * np.power(x, b) + c
+
+
+def func_root(x, a, b, c):
+    return a * np.power(x, -b) + c
 
 
 def func1(x, a, b):
@@ -92,14 +96,38 @@ def find_best_fit(x_coords, y_coords, fit_funcs):
     return sel_idx, popt
 
 
-def draw_lines_plot(ax, x: List[int], y: List[int], color: List[int] = None, legend: str = 'original',
+def find_closest_idx(lst, value):
+    best_idx = 0
+    best_dif = 1000
+    for idx, v in enumerate(lst):
+        if (dif := abs(value - v)) < best_dif:
+            best_dif = dif
+            best_idx = idx
+    return best_idx
+
+
+def draw_lines_plot(ax, x_in: List[int], y_in: List[int], color: List[int] = None, legend: str = 'original',
                     fit: bool = True, fit_func: Union[Callable, List[Callable]] = func3,
                     fit_color: List[int] = None,
-                    mae: float = None):
+                    mae: float = None,
+                    side_text: str = '',
+                    prediction_max: int = 0):
     color = (0, 101, 189) if not color else color
-    legend_mae = f'{legend}, {MAE_K}: {mae}' if mae else legend
-    l1, = ax.plot(x, y, 'o', color=[c / 255 for c in color],
-                  label=legend_mae, markersize=3)
+    x, y = [], []
+    for v_x, v_y in zip(x_in, y_in):
+        if v_y:
+            x.append(v_x)
+            y.append(v_y)
+    if legend:
+        legend_mae = f'{legend}, {MAE_K}: {mae}' if mae else legend
+        l1, = ax.plot(x, y, 'o', color=[c / 255 for c in color],
+                      label=legend_mae, markersize=3)
+    else:
+        l1, = ax.plot(x, y, 'o', color=[c / 255 for c in color], markersize=3)
+    if side_text:
+        best_idx = find_closest_idx(x, 40)
+        t = plt.text(x[best_idx] + 0.7, y[best_idx], side_text)
+        t.set_bbox({'facecolor': 'white', 'alpha': 0.5, 'edgecolor': 'white'})
     if fit:
         fit_color = (0, 101, 189) if not fit_color else fit_color
         if isinstance(fit_func, list):
@@ -108,8 +136,20 @@ def draw_lines_plot(ax, x: List[int], y: List[int], color: List[int] = None, leg
         else:
             popt, pcov = curve_fit(fit_func, x, y)
         x_fit = np.linspace(x[0], x[-1], 50)
-        l2, = ax.plot(x_fit, fit_func(x_fit, *popt), color=[c / 255 for c in fit_color],
-                      label=f'{legend}: {get_fit_title(fit_func)}')
+        if legend:
+            l2, = ax.plot(x_fit, fit_func(x_fit, *popt), color=[c / 255 for c in fit_color],
+                          label=f'{legend}: {get_fit_title(fit_func)}')
+        else:
+            l2, = ax.plot(x_fit, fit_func(x_fit, *popt), color=[c / 255 for c in fit_color])
+
+        if prediction_max and x[-1] < prediction_max:
+            x_fit = np.linspace(x[-1], prediction_max, 50)
+            if legend:
+                l2, = ax.plot(x_fit, fit_func(x_fit, *popt), '--', color=[c / 255 for c in fit_color],
+                              label=f'{legend}: prediction')
+            else:
+                l2, = ax.plot(x_fit, fit_func(x_fit, *popt), '--', color=[c / 255 for c in fit_color])
+
         ax.legend()
 
 
@@ -194,19 +234,30 @@ def plot3d_const_phyngs(df, path):
                 title=title_solve)
 
 
-def plot_setup_vs_data(results, handler, xlabel, path, legends, colors, xspan=None):
+def plot_setup_vs_data(results, handler, xlabel, path, legends, colors, xspan=None, y_lim=0):
     Path(f'{path}/pdfs').mkdir(exist_ok=True)
     Path(f'{path}/pngs').mkdir(exist_ok=True)
 
-    for res_key in results[0].keys():
+    for type_key in results[0].keys():
         fig, ax = plt.subplots()
-        title = results[0][res_key][TITLE_SETUP_K]
+        title = results[0][type_key][TITLE_SETUP_K]
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(AVG_SETUP_TIME_K)
         for result, legend, color in zip(results, legends, colors[:len(results)]):
-            res = result[res_key]
-            handler(ax, res, legend, color)
+            type_res = result[type_key]
+            if AVG_SETUP_TIME_K in type_res:
+                handler(ax, type_res, legend, color)
+            else:
+                for phyng_k, phyng_res in type_res.items():
+                    if isinstance(phyng_res, dict):
+                        handler(ax, phyng_res, legend, color, side_text=f'#{phyng_k}')
+                        if legend:
+                            legend = ''
+
+        if y_lim and ax.get_ylim()[1] > y_lim:
+            ax.set_ylim([None, y_lim])
+
         if xspan:
             ax.axvspan(xspan[0], xspan[1], alpha=0.3, color='red', linestyle='None')
             ax.set_xlim([xspan[0], None])
@@ -219,24 +270,37 @@ def plot_setup_vs_data(results, handler, xlabel, path, legends, colors, xspan=No
             text_y = y_min + y_range / 2 - y_range / 4
             plt.text(text_x, text_y, 'Mesh is too coarse', rotation=90, fontsize=16)
 
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+
         plt.savefig(f'{path}/pdfs/{title}.pdf')
         plt.savefig(f'{path}/pngs/{title}.png')
         plt.close()
 
 
-def plot_solve_vs_data(results, handler, xlabel, path, legends, colors, xspan=None, yspan_start=None):
+def plot_solve_vs_data(results, handler, xlabel, path, legends, colors, xspan=None, yspan_start=None, y_lim=0):
     Path(f'{path}/pdfs').mkdir(exist_ok=True)
     Path(f'{path}/pngs').mkdir(exist_ok=True)
 
-    for res_key in results[0].keys():
+    for type_key in results[0].keys():
         fig, ax = plt.subplots()
-        title = results[0][res_key][TITLE_SOLVE_K]
+        title = results[0][type_key][TITLE_SOLVE_K]
         plt.title(title)
         plt.xlabel(xlabel)
         plt.ylabel(AVG_SOLVE_TIME_K)
         for result, legend, color in zip(results, legends, colors[:len(results)]):
-            res = result[res_key]
-            handler(ax, res, legend, color)
+            type_res = result[type_key]
+            if AVG_SOLVE_TIME_K in type_res:
+                handler(ax, type_res, legend, color)
+            else:
+                for phyng_k, phyng_res in type_res.items():
+                    if isinstance(phyng_res, dict):
+                        handler(ax, phyng_res, legend, color, side_text=f'#{phyng_k}')
+                        if legend:
+                            legend = ''
+
+        if y_lim and ax.get_ylim()[1] > y_lim:
+            ax.set_ylim([None, y_lim])
 
         if xspan:
             ax.axvspan(xspan[0], xspan[1], alpha=0.3, color='red', linestyle='None')
@@ -262,6 +326,9 @@ def plot_solve_vs_data(results, handler, xlabel, path, legends, colors, xspan=No
             text_x = x_min + x_range / 2 - x_range / 8
             text_y = y_min + y_range / 2
             plt.text(text_x, text_y, 'No real-time', fontsize=16)
+
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
 
         plt.savefig(f'{path}/pdfs/{title}.pdf')
         plt.savefig(f'{path}/pngs/{title}.png')

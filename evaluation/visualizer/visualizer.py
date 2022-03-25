@@ -21,54 +21,78 @@ def plot_time_vs_phyngs(df: Union[pd.DataFrame, List[pd.DataFrame]],
                                                                    color=color, fit_color=color)
     results = []
     colors = TUM_COLORS
+    path = f'{RES_STORAGE}/phyngs'
     if isinstance(df, list):
         for dataframe in df:
             results.append(get_phyngs_data(dataframe))
+        if len(df) == 1:
+            path = f'{RES_STORAGE}/{hosts[0]}/phyngs'
+            Path(f'{RES_STORAGE}/{hosts[0]}').mkdir(exist_ok=True)
+            Path(f'{RES_STORAGE}/{hosts[0]}/phyngs').mkdir(exist_ok=True)
     else:
         results = [get_phyngs_data(df)]
-    plot_setup_vs_data(results, setup_handler, NUM_OF_PHYNGS_K, f'{RES_STORAGE}/phyngs', hosts, colors)
-    plot_solve_vs_data(results, solve_handler, NUM_OF_PHYNGS_K, f'{RES_STORAGE}/phyngs', hosts, colors, yspan_start=60)
+    plot_setup_vs_data(results, setup_handler, NUM_OF_PHYNGS_K, path, hosts, colors)
+    plot_solve_vs_data(results, solve_handler, NUM_OF_PHYNGS_K, path, hosts, colors, yspan_start=60)
 
 
 def plot_time_vs_mesh_quality(df: Union[pd.DataFrame, List[pd.DataFrame]],
                               hosts: Union[str, List[str]]):
-    xspan = [40, 50]
-    setup_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[MESH_QUALITY_K], res[AVG_SETUP_TIME_K],
-                                                                   legend=legend, mae=res[MAE_SETUP_K],
-                                                                   fit_func=func5,
-                                                                   color=color, fit_color=color)
-    solve_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[MESH_QUALITY_K],
-                                                                   res[AVG_SOLVE_TIME_K],
-                                                                   legend=legend, mae=res[MAE_SOLVE_K],
-                                                                   fit_func=func5,
-                                                                   color=color, fit_color=color)
+    xspan = [0, 13]
+    setup_handler = lambda ax, res, legend, color, side_text: draw_lines_plot(ax, res[MESH_QUALITY_K],
+                                                                              res[AVG_SETUP_TIME_K],
+                                                                              legend=legend, mae=res[MAE_SETUP_K],
+                                                                              fit_func=func3,
+                                                                              color=color, fit_color=color,
+                                                                              side_text=side_text,
+                                                                              prediction_max=100)
+    solve_handler = lambda ax, res, legend, color, side_text: draw_lines_plot(ax, res[MESH_QUALITY_K],
+                                                                              res[AVG_SOLVE_TIME_K],
+                                                                              legend=legend, mae=res[MAE_SOLVE_K],
+                                                                              fit_func=func3,
+                                                                              color=color, fit_color=color,
+                                                                              side_text=side_text,
+                                                                              prediction_max=100)
     results = []
     colors = TUM_COLORS
+    path = f'{RES_STORAGE}/meshes'
     if isinstance(df, list):
         for dataframe in df:
-            results.append(get_mesh_data(dataframe))
+            results.append(get_mesh_data(dataframe, phyngs='boundary'))
+            # legends.append(f'{host} max')
+            # results.append(get_mesh_data(dataframe, max_phyngs_enabled=False))
+            # legends.append(f'{host} min')
+        if len(df) == 1:
+            path = f'{RES_STORAGE}/{hosts[0]}/meshes'
+            Path(f'{RES_STORAGE}/{hosts[0]}').mkdir(exist_ok=True)
+            Path(f'{RES_STORAGE}/{hosts[0]}/meshes').mkdir(exist_ok=True)
     else:
-        results = [get_mesh_data(df)]
-    plot_setup_vs_data(results, setup_handler, MESH_QUALITY_K, f'{RES_STORAGE}/meshes', hosts, colors, xspan)
-    plot_solve_vs_data(results, solve_handler, MESH_QUALITY_K, f'{RES_STORAGE}/meshes', hosts, colors, xspan, 60)
+        results = [get_mesh_data(df, phyngs='boundary middle')]
+    plot_setup_vs_data(results, setup_handler, MESH_QUALITY_K, path, hosts, colors, xspan, y_lim=100)
+    plot_solve_vs_data(results, solve_handler, MESH_QUALITY_K, path, hosts, colors, xspan, 60, y_lim=100)
 
 
 def plot_time_vs_cores(df: Union[pd.DataFrame, List[pd.DataFrame]],
                        hosts: Union[str, List[str]]):
-    solve_handler = lambda ax, res, legend, color: draw_lines_plot(ax, res[NUM_OF_CORES_K],
-                                                                   res[AVG_SOLVE_TIME_K], mae=res[MAE_SOLVE_K],
-                                                                   legend=legend,
-                                                                   fit_func=[func_power, func_exp, func_hyperbolic,
-                                                                             func_log],
-                                                                   color=color, fit_color=color)
+    solve_handler = lambda ax, res, legend, color, side_text: draw_lines_plot(ax, res[NUM_OF_CORES_K],
+                                                                              res[AVG_SOLVE_TIME_K],
+                                                                              mae=res[MAE_SOLVE_K],
+                                                                              legend=legend,
+                                                                              fit_func=func_hyperbolic,
+                                                                              side_text=side_text,
+                                                                              color=color, fit_color=color)
     results = []
     colors = TUM_COLORS
+    path = f'{RES_STORAGE}/cores'
     if isinstance(df, list):
-        for dataframe in df:
-            results.append(get_cores_data(dataframe))
+        for dataframe, host in zip(df, hosts):
+            results.append(get_cores_data(dataframe, phyngs='boundary'))
+        if len(df) == 1:
+            path = f'{RES_STORAGE}/{hosts[0]}/cores'
+            Path(f'{RES_STORAGE}/{hosts[0]}').mkdir(exist_ok=True)
+            Path(f'{RES_STORAGE}/{hosts[0]}/cores').mkdir(exist_ok=True)
     else:
-        results = [get_cores_data(df)]
-    plot_solve_vs_data(results, solve_handler, NUM_OF_CORES_K, f'{RES_STORAGE}/cores', hosts, colors, yspan_start=60)
+        results = [get_cores_data(df, phyngs='boundary')]
+    plot_solve_vs_data(results, solve_handler, NUM_OF_CORES_K, path, hosts, colors, yspan_start=60)
 
 
 def plot_time_vs_all(df: Union[pd.DataFrame, List[pd.DataFrame]],
