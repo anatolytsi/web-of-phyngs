@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import List, Union
 
@@ -39,6 +40,8 @@ SOLID_MATERIALS = [
 ]
 
 MATERIALS = FLUID_MATERIALS + SOLID_MATERIALS
+
+logger = logging.getLogger('openfoam')
 
 
 @dataclass
@@ -112,6 +115,7 @@ class MaterialProperties:
             self.materials.update({name: ObjectMaterial(name, m_type, material)})
         else:
             raise ValueError('Either material name, type material or materials must be provided')
+        logging.debug(f'Set {name} material to {material}')
 
     def save(self):
         """Saves materialProperties file to constant folder"""

@@ -1,20 +1,26 @@
+import logging
 import time
 from typing import List
 
-from .exceptions import WrongObjectType
+from .exceptions import WrongPhyngType
 from .openfoam.common.filehandling import get_latest_time
 from .openfoam.constant.material_properties import FLUID_MATERIALS
 from .case_base import OpenFoamCase
-from .objects.door import WopDoor
-from .objects.walls import WopWalls
-from .objects.window import WopWindow
-from .objects.heater import WopHeater
-from .objects.wopthings import WopSensor, WopObject
-from .variables import (CHT_ROOM_OBJ_TYPES, CONFIG_BACKGROUND_KEY, CONFIG_WALLS_KEY, CONFIG_NAME_KEY,
-                        CONFIG_HEATERS_KEY, CONFIG_WINDOWS_KEY, CONFIG_DOORS_KEY, CONFIG_SENSORS_KEY,
-                        CONFIG_OBJ_DIMENSIONS, CONFIG_OBJ_ROTATION, CONFIG_SNS_FIELD, CONFIG_LOCATION, CONFIG_TEMPLATE,
-                        CONFIG_CUSTOM, CONFIG_TEMPERATURE_KEY, CONFIG_VELOCITY_KEY, CONFIG_OBJ_MATERIAL,
-                        CONFIG_OBJ_NAME_KEY, CONFIG_URL)
+from .phyngs.door import DoorPhyng
+from .phyngs.walls import WallsPhyng
+from .phyngs.window import WindowPhyng
+from .phyngs.heater import HeaterPhyng
+from .phyngs.sensor import SensorPhyng
+from .phyngs.ac import AcPhyng
+from .phyngs.base import Phyng
+from .variables import (CHT_PHYNG_TYPES, CONFIG_BACKGROUND_K, CONFIG_WALLS_K, CONFIG_HEATERS_K, CONFIG_WINDOWS_K,
+                        CONFIG_DOORS_K, CONFIG_SENSORS_K, CONFIG_PHYNG_TEMPER_K, CONFIG_PHYNG_VEL_K, CONFIG_PHYNG_MAT_K,
+                        CONFIG_PHYNG_NAME_K, CASE_DIR_K, CONFIG_PHYNG_REGION_K, CONFIG_PHYNG_TYPE_K, OF_INTERFACE_K,
+                        BG_REGION_K, CONFIG_ACS_K, CONFIG_PHYNG_EN_K, CONFIG_PHYNG_ANGLE_K)
+
+
+logger = logging.getLogger('wop')
+logger.setLevel(logging.DEBUG)
 
 
 class ChtCase(OpenFoamCase):
@@ -30,6 +36,7 @@ class ChtCase(OpenFoamCase):
         self.heaters = {}
         self.windows = {}
         self.doors = {}
+        self.acs = {}
         self.furniture = {}
         self.walls = None
         self.background_name = 'fluid'
@@ -37,31 +44,31 @@ class ChtCase(OpenFoamCase):
         self.background = background
         super(ChtCase, self).__init__('chtMultiRegionFoam', *args, **kwargs)
 
+    def _setup_initialized_case(self, case_param: dict):
+        super(ChtCase, self)._setup_initialized_case(case_param)
+        self._add_time_probe('T', 'fluid')
+
     def _setup_uninitialized_case(self, case_param: dict):
         """
-        Setups the loaded uninitialized CHT case
+        Sets up the loaded uninitialized CHT case
         :param case_param: loaded case parameters
         """
         super(ChtCase, self)._setup_uninitialized_case(case_param)
         self.remove_initial_boundaries()
-        self.load_initial_objects(case_param)
-        self.set_initial_objects(case_param)
+        self.load_initial_phyngs(case_param)
+        self.set_initial_phyngs(case_param)
 
     def _get_model_param_set(self):
-        return super(ChtCase, self)._get_model_param_set() | {CONFIG_OBJ_MATERIAL}
+        return super(ChtCase, self)._get_model_param_set() | {CONFIG_PHYNG_MAT_K}
 
-    def _get_new_params(self, obj: WopObject, params: dict):
-        new_params = super(ChtCase, self)._get_new_params(obj, params)
-        if CONFIG_OBJ_MATERIAL in obj:
+    def _get_new_params(self, phyng: Phyng, params: dict):
+        new_params = super(ChtCase, self)._get_new_params(phyng, params)
+        if CONFIG_PHYNG_MAT_K in phyng:
             new_params.update({
-                CONFIG_OBJ_MATERIAL: params[CONFIG_OBJ_MATERIAL] if CONFIG_OBJ_MATERIAL in params and params[CONFIG_OBJ_MATERIAL] else obj.material
+                CONFIG_PHYNG_MAT_K: params[CONFIG_PHYNG_MAT_K]
+                if CONFIG_PHYNG_MAT_K in params and params[CONFIG_PHYNG_MAT_K] else phyng.material
             })
         return new_params
-
-    def _add_obj_from_parameters(self, object_name, params: dict, custom: bool):
-        self.add_object(params[CONFIG_OBJ_NAME_KEY], object_name, params[CONFIG_URL], custom, params[CONFIG_TEMPLATE],
-                        params[CONFIG_OBJ_DIMENSIONS], params[CONFIG_LOCATION], params[CONFIG_OBJ_ROTATION],
-                        params[CONFIG_OBJ_MATERIAL])
 
     def prepare_partitioned_mesh(self):
         super(ChtCase, self).prepare_partitioned_mesh()
@@ -84,152 +91,170 @@ class ChtCase(OpenFoamCase):
         :return: parameter dump dict
         """
         config = super(ChtCase, self).dump_case()
-        config[CONFIG_BACKGROUND_KEY] = self.background
-        config[CONFIG_HEATERS_KEY] = {}
-        config[CONFIG_WINDOWS_KEY] = {}
-        config[CONFIG_DOORS_KEY] = {}
-        config[CONFIG_SENSORS_KEY] = {}
-        config[CONFIG_WALLS_KEY] = {}
+        config[CONFIG_BACKGROUND_K] = self.background
+        config[CONFIG_HEATERS_K] = {}
+        config[CONFIG_WINDOWS_K] = {}
+        config[CONFIG_DOORS_K] = {}
+        config[CONFIG_SENSORS_K] = {}
+        config[CONFIG_WALLS_K] = {}
+        config[CONFIG_ACS_K] = {}
         if self.walls:
-            config[CONFIG_WALLS_KEY] = self.walls.dump_settings()
+            config[CONFIG_WALLS_K] = self.walls.dump_settings()
         for name, heater in self.heaters.items():
-            config[CONFIG_HEATERS_KEY].update(heater.dump_settings())
+            config[CONFIG_HEATERS_K].update(heater.dump_settings())
         for name, window in self.windows.items():
-            config[CONFIG_WINDOWS_KEY].update(window.dump_settings())
+            config[CONFIG_WINDOWS_K].update(window.dump_settings())
         for name, door in self.doors.items():
-            config[CONFIG_DOORS_KEY].update(door.dump_settings())
+            config[CONFIG_DOORS_K].update(door.dump_settings())
+        for name, ac in self.acs.items():
+            config[CONFIG_ACS_K].update(ac.dump_settings())
         for name, sensor in self.sensors.items():
-            config[CONFIG_SENSORS_KEY].update(sensor.dump_settings())
+            config[CONFIG_SENSORS_K].update(sensor.dump_settings())
         return config
 
-    def set_initial_objects(self, case_param: dict):
+    def set_initial_phyngs(self, case_param: dict):
         """
-        Sets CHT case objects parameters from case_param dict
+        Sets CHT case phyngs parameters from case_param dict
         :param case_param: loaded case parameters
         """
-        if CONFIG_HEATERS_KEY in case_param and case_param[CONFIG_HEATERS_KEY]:
-            for name, heater in case_param[CONFIG_HEATERS_KEY].items():
-                self.heaters[name].temperature = heater[CONFIG_TEMPERATURE_KEY]
-        if CONFIG_WINDOWS_KEY in case_param and case_param[CONFIG_WINDOWS_KEY]:
-            for name, window in case_param[CONFIG_WINDOWS_KEY].items():
-                self.windows[name].temperature = window[CONFIG_TEMPERATURE_KEY]
-                self.windows[name].is_open = any(window[CONFIG_VELOCITY_KEY])
-                self.windows[name].velocity = window[CONFIG_VELOCITY_KEY]
-        if CONFIG_DOORS_KEY in case_param and case_param[CONFIG_DOORS_KEY]:
-            for name, door in case_param[CONFIG_DOORS_KEY].items():
-                self.doors[name].temperature = door[CONFIG_TEMPERATURE_KEY]
-                self.doors[name].is_open = any(door[CONFIG_VELOCITY_KEY])
-                self.doors[name].velocity = door[CONFIG_VELOCITY_KEY]
+        if CONFIG_HEATERS_K in case_param and case_param[CONFIG_HEATERS_K]:
+            for name, heater in case_param[CONFIG_HEATERS_K].items():
+                self.heaters[name].temperature = heater[CONFIG_PHYNG_TEMPER_K]
+        if CONFIG_WINDOWS_K in case_param and case_param[CONFIG_WINDOWS_K]:
+            for name, window in case_param[CONFIG_WINDOWS_K].items():
+                self.windows[name].temperature = window[CONFIG_PHYNG_TEMPER_K]
+                self.windows[name].is_open = any(window[CONFIG_PHYNG_VEL_K])
+                self.windows[name].velocity = window[CONFIG_PHYNG_VEL_K]
+        if CONFIG_DOORS_K in case_param and case_param[CONFIG_DOORS_K]:
+            for name, door in case_param[CONFIG_DOORS_K].items():
+                self.doors[name].temperature = door[CONFIG_PHYNG_TEMPER_K]
+                self.doors[name].is_open = any(door[CONFIG_PHYNG_VEL_K])
+                self.doors[name].velocity = door[CONFIG_PHYNG_VEL_K]
+        if CONFIG_ACS_K in case_param and case_param[CONFIG_ACS_K]:
+            for name, ac in case_param[CONFIG_ACS_K].items():
+                self.acs[name].temperature = ac[CONFIG_PHYNG_TEMPER_K]
+                self.acs[name].enabled = ac[CONFIG_PHYNG_EN_K]
+                self.acs[name].velocity = ac[CONFIG_PHYNG_VEL_K]
+                self.acs[name].angle = ac[CONFIG_PHYNG_ANGLE_K]
 
-    def load_initial_objects(self, case_param: dict):
+    def load_initial_phyngs(self, case_param: dict):
         """
-        Loads CHT case objects parameters from case_param dict
+        Loads CHT case phyngs parameters from case_param dict
         :param case_param: loaded case parameters
         """
-        # self.background = case_param[CONFIG_BACKGROUND_KEY]
-        if CONFIG_WALLS_KEY in case_param and case_param[CONFIG_WALLS_KEY]:
-            walls = case_param[CONFIG_WALLS_KEY]
-            self.add_object(name=walls[CONFIG_NAME_KEY], custom=walls[CONFIG_CUSTOM], obj_type='walls',
-                            dimensions=walls[CONFIG_OBJ_DIMENSIONS], location=walls[CONFIG_LOCATION],
-                            template=walls[CONFIG_TEMPLATE])
-        if CONFIG_HEATERS_KEY in case_param and case_param[CONFIG_HEATERS_KEY]:
-            for name, heater in case_param[CONFIG_HEATERS_KEY].items():
-                self.add_object(name, 'heater', custom=heater[CONFIG_CUSTOM], dimensions=heater[CONFIG_OBJ_DIMENSIONS],
-                                location=heater[CONFIG_LOCATION], template=heater[CONFIG_TEMPLATE],
-                                material=heater[CONFIG_OBJ_MATERIAL])
-        if CONFIG_WINDOWS_KEY in case_param and case_param[CONFIG_WINDOWS_KEY]:
-            for name, window in case_param[CONFIG_WINDOWS_KEY].items():
-                self.add_object(name, 'window', custom=window[CONFIG_CUSTOM], dimensions=window[CONFIG_OBJ_DIMENSIONS],
-                                location=window[CONFIG_LOCATION], template=window[CONFIG_TEMPLATE])
-        if CONFIG_DOORS_KEY in case_param and case_param[CONFIG_DOORS_KEY]:
-            for name, door in case_param[CONFIG_DOORS_KEY].items():
-                self.add_object(name, 'door', custom=door[CONFIG_CUSTOM], dimensions=door[CONFIG_OBJ_DIMENSIONS],
-                                location=door[CONFIG_LOCATION], template=door[CONFIG_TEMPLATE])
-        if CONFIG_SENSORS_KEY in case_param and case_param[CONFIG_SENSORS_KEY]:
-            for name, sensor in case_param[CONFIG_SENSORS_KEY].items():
-                self.add_object(name, 'sensor', location=sensor[CONFIG_LOCATION],
-                                sns_field=sensor[CONFIG_SNS_FIELD])
+        logger.debug(f'Loading initial CHT case Phyngs')
+        # self.background = case_param[CONFIG_BACKGROUND_K]
+        if CONFIG_WALLS_K in case_param and case_param[CONFIG_WALLS_K]:
+            walls = case_param[CONFIG_WALLS_K]
+            params = {**walls, CONFIG_PHYNG_TYPE_K: WallsPhyng.type_name}
+            self.add_phyng(**params)
+        if CONFIG_HEATERS_K in case_param and case_param[CONFIG_HEATERS_K]:
+            for name, heater in case_param[CONFIG_HEATERS_K].items():
+                params = {**heater, CONFIG_PHYNG_NAME_K: name, CONFIG_PHYNG_TYPE_K: HeaterPhyng.type_name}
+                self.add_phyng(**params)
+        if CONFIG_WINDOWS_K in case_param and case_param[CONFIG_WINDOWS_K]:
+            for name, window in case_param[CONFIG_WINDOWS_K].items():
+                params = {**window, CONFIG_PHYNG_NAME_K: name, CONFIG_PHYNG_TYPE_K: WindowPhyng.type_name}
+                self.add_phyng(**params)
+        if CONFIG_DOORS_K in case_param and case_param[CONFIG_DOORS_K]:
+            for name, door in case_param[CONFIG_DOORS_K].items():
+                params = {**door, CONFIG_PHYNG_NAME_K: name, CONFIG_PHYNG_TYPE_K: DoorPhyng.type_name}
+                self.add_phyng(**params)
+        if CONFIG_SENSORS_K in case_param and case_param[CONFIG_SENSORS_K]:
+            for name, sensor in case_param[CONFIG_SENSORS_K].items():
+                params = {**sensor, CONFIG_PHYNG_NAME_K: name, CONFIG_PHYNG_TYPE_K: SensorPhyng.type_name}
+                self.add_phyng(**params)
+        if CONFIG_ACS_K in case_param and case_param[CONFIG_ACS_K]:
+            for name, ac in case_param[CONFIG_ACS_K].items():
+                params = {**ac, CONFIG_PHYNG_NAME_K: name, CONFIG_PHYNG_TYPE_K: AcPhyng.type_name}
+                self.add_phyng(**params)
 
     def setup(self):
         """Setups CHT case"""
+        logger.debug(f'Setting up CHT case')
         self.prepare_geometry()
         self.partition_mesh(self.background_name)
         self.prepare_partitioned_mesh()
         self.clean_case()
-        self.run_block_mesh()
-        self.run_snappy_hex_mesh()
-        self.run_split_mesh_regions(cell_zones_only=True)
-        self.run_setup_cht()
+        self.run_block_mesh(waiting=True)
+        self.run_snappy_hex_mesh(waiting=True)
+        self.run_split_mesh_regions(cell_zones_only=True, waiting=True)
+        self.run_setup_cht(waiting=True)
         self.extract_boundary_conditions()
+        self._add_time_probe('T', 'fluid')
         self.bind_boundary_conditions()
         self.initialized = True
 
-    def add_object(self, name: str, obj_type: str, url: str = '', custom=False, template: str = '',
-                   dimensions: List[float] = (0, 0, 0), location: List[float] = (0, 0, 0),
-                   rotation: List[float] = (0, 0, 0), material: str = None, sns_field: str = None):
+    def add_phyng(self, type: str, **kwargs):
         """
-        Adds WoP object/sensor to a CHT case
-        :param name: name of the object
-        :param obj_type: type of an object, one of: 'heater', 'walls', 'door', 'window'
-        :param url: object URL
-        :param custom: object was created from URL
-        :param template: object template
-        :param dimensions: object dimensions
-        :param location: object location
-        :param rotation: object rotation
+        Adds Phyng to a CHT case
+        :param name: name of the phyng
+        :param type: type of a phyng, one of: 'heater', 'walls', 'door', 'window'
+        :param url: phyng URL
+        :param custom: phyng was created from URL
+        :param template: phyng template
+        :param dimensions: phyng dimensions
+        :param location: phyng location
+        :param rotation: phyng rotation
         :param sns_field: field to monitor for sensor
-        :param material: material of an object
+        :param material: material of an phyng
         """
         # TODO: check if name contains spaces
-        if obj_type == WopHeater.type_name:
-            wop_object = WopHeater(name, self.path, self.background_name, url, custom, dimensions=dimensions,
-                                   location=location, rotation=rotation, template=template, of_interface=self,
-                                   material=material)
-            wop_object.bind_snappy(self.snappy_dict, 'cell_zone', refinement_level=2)
-            self.heaters.update({name: wop_object})
-        elif obj_type == WopWindow.type_name:
-            wop_object = WopWindow(name, self.path, self.background_name, url, custom, dimensions=dimensions,
-                                   location=location, rotation=rotation, template=template, of_interface=self)
-            wop_object.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
-            self.windows.update({wop_object.name: wop_object})
+        params = {
+            **kwargs,
+            OF_INTERFACE_K: self,
+            BG_REGION_K: self.background_name,
+            CASE_DIR_K: self.path,
+            CONFIG_PHYNG_REGION_K: self.background_name,
+        }
+        if type == HeaterPhyng.type_name:
+            phyng = HeaterPhyng(**params)
+            phyng.bind_snappy(self.snappy_dict, 'cell_zone', refinement_level=2)
+            self.heaters.update({phyng.name: phyng})
+        elif type == WindowPhyng.type_name:
+            phyng = WindowPhyng(**params)
+            phyng.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
+            self.windows.update({phyng.name: phyng})
             if self.walls:
-                self.walls.model.geometry.cut_surface(wop_object.model.geometry)
-        elif obj_type == WopDoor.type_name:
-            wop_object = WopDoor(name, self.path, self.background_name, url, custom, dimensions=dimensions,
-                                 location=location, rotation=rotation, template=template, of_interface=self)
-            wop_object.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
-            self.doors.update({wop_object.name: wop_object})
+                self.walls.model.geometry.cut_surface(phyng.model.geometry)
+        elif type == DoorPhyng.type_name:
+            phyng = DoorPhyng(**params)
+            phyng.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
+            self.doors.update({phyng.name: phyng})
             if self.walls:
-                self.walls.model.geometry.cut_surface(wop_object.model.geometry)
-        elif obj_type == WopWalls.type_name:
-            wop_object = WopWalls(name, self.path, self.background_name, url, custom, dimensions=dimensions,
-                                  location=location, rotation=rotation, template=template, of_interface=self)
-            wop_object.bind_snappy(self.snappy_dict, 'region', 'wall')
-            self.walls = wop_object
+                self.walls.model.geometry.cut_surface(phyng.model.geometry)
+        elif type == WallsPhyng.type_name:
+            phyng = WallsPhyng(**params)
+            phyng.bind_snappy(self.snappy_dict, 'region', 'wall')
+            self.walls = phyng
             for window in self.windows.values():
-                wop_object.model.geometry.cut_surface(window.model.geometry)
+                phyng.model.geometry.cut_surface(window.model.geometry)
             for door in self.windows.values():
-                wop_object.model.geometry.cut_surface(door.model.geometry)
-        elif obj_type == WopSensor.type_name:
-            sensor = WopSensor(name, self.path, sns_field, self.background_name, location)
+                phyng.model.geometry.cut_surface(door.model.geometry)
+        elif type == AcPhyng.type_name:
+            phyng = AcPhyng(**params)
+            phyng.bind_snappy(self.snappy_dict, 'region', 'wall', refinement_level=2)
+            self.acs.update({phyng.name: phyng})
+        elif type == SensorPhyng.type_name:
+            sensor = SensorPhyng(**params)
             self.sensors.update({sensor.name: sensor})
             self.initialized = False
             return
         else:
-            raise WrongObjectType(f'Wrong object type! Possible types are {CHT_ROOM_OBJ_TYPES}')
+            raise WrongPhyngType(f'Wrong phyng type {type}! Possible types are {CHT_PHYNG_TYPES}')
         self.initialized = False
-        self.objects.update({wop_object.name: wop_object})
+        self.phyngs.update({phyng.name: phyng})
 
-    def remove_object(self, object_name):
+    def remove_phyng(self, phyng_name):
         """
-        Removes an object with a specified name from case
-        :param object_name: object name to remove
+        Removes a phyng with a specified name from case
+        :param phyng_name: phyng name to remove
         """
-        type_name = self.get_object(object_name).type_name
-        super(ChtCase, self).remove_object(object_name)
+        type_name = self.get_phyng(phyng_name).type_name
+        super(ChtCase, self).remove_phyng(phyng_name)
         type_name = f'{type_name}s' if 's' not in type_name[-1] else type_name
         if type_name != 'sensors':
-            del self[type_name][object_name]
+            del self[type_name][phyng_name]
 
 
 def main():
@@ -252,11 +277,11 @@ def main():
     sensor_location = [1.5, 2, 1]
 
     room = ChtCase(case_dir, blocking=False, parallel=is_run_parallel, cores=4)
-    room.add_object(name='walls', obj_type='walls', dimensions=room_dimensions)
-    room.add_object('inlet', 'window', dimensions=window_dimension, location=window_location)
-    room.add_object('outlet', 'door', dimensions=door_dimension, location=door_location)
-    room.add_object('heater', 'heater', dimensions=heater_dimensions, location=heater_location)
-    room.add_object('temp_sensor', 'sensor', location=sensor_location, sns_field='T')
+    room.add_phyng(name='walls', phyng_type='walls', dimensions=room_dimensions)
+    room.add_phyng('inlet', 'window', dimensions=window_dimension, location=window_location)
+    room.add_phyng('outlet', 'door', dimensions=door_dimension, location=door_location)
+    room.add_phyng('heater', 'heater', dimensions=heater_dimensions, location=heater_location)
+    room.add_phyng('temp_sensor', 'sensor', location=sensor_location, sns_field='T')
 
     # room.get_boundary_conditions()
     # current_time = get_latest_time(room.case_dir)

@@ -2,12 +2,18 @@ version: '3.1'
 
 services:
   backend-python:
+    user: foam
+    privileged: true
     build:
       context: ./backend/python
     ports:
-      - 5000:5000
+      - 6000:5000
     command: "python3.8 server.py"
+    environment:
+      - CASES_STORAGE=/wop/cases
     container_name: wop_backend_python
+    volumes:
+      - cases_volume:/wop/cases
     networks:
       - wop-network
   backend-nodejs:
@@ -23,6 +29,31 @@ services:
     container_name: wop_backend_nodejs 
     networks:
       - wop-network
+  backend-paraview:
+    build:
+      context: ./backend/paraview
+    ports:
+      - 11111:11111
+    environment:
+      - CORES=8
+    container_name: wop_backend_paraview
+    volumes:
+      - cases_volume:/wop/cases
+  evaluation:
+    build:
+      context: ./evaluation
+    tty: true
+    networks:
+      - wop-network
+    depends_on:
+      - backend-nodejs
+    container_name: wop_evaluation
+    volumes:
+      - ./evaluation/results:/app/results
+
+volumes:
+  cases_volume:
+
 networks:
   wop-network:
     driver: bridge

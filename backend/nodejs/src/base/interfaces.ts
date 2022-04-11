@@ -36,25 +36,33 @@ export type Vector = FixedLengthArray<number, 3>;
 export type Size = FixedLengthArray<number, 3>;
 
 /**
- * Object properties base interface, used as a
+ * Phyng properties base interface, used as a
  * base for actuator base and sensor.
  */
-interface ObjectPropsBase {
+interface PhyngPropsBase {
     name: string
     type: string
-    /** Object location. */
+    /** Phyng location. */
     location?: Coordinates
+    /** Phyng in location. */
+    locationIn?: Coordinates
+    /** Phyng out location. */
+    locationOut?: Coordinates
 }
 
 /**
  * Actuator base properties, used as a base for
  * actuators created by geometry and template.
  */
-export interface ActuatorPropsBase extends ObjectPropsBase {
-    /** Custom actuator STL URL */
+export interface ActuatorPropsBase extends PhyngPropsBase {
+    /** Custom actuator STL URL TODO: remove this */
     url?: AnyUri
     /** Actuator geometry rotation. */
     rotation?: Vector
+    /** Actuator in geometry rotation. */
+    rotationIn?: Vector
+    /** Actuator out geometry rotation. */
+    rotationOut?: Vector
 }
 
 /**
@@ -64,27 +72,35 @@ export interface ActuatorPropsBase extends ObjectPropsBase {
 export interface ActuatorPropsCreated extends ActuatorPropsBase {
     /** Actuator geometry dimensions. */
     dimensions: Size
+    /** Actuator in geometry dimensions. */
+    dimensionsIn?: Size
+    /** Actuator out geometry dimensions. */
+    dimensionsOut?: Size
 }
 
 /**
  * Template actuator properties, used by
  * actuators created using template.
  */
-export interface ActuatorPropsTemplate extends ActuatorPropsBase {
-    /** Actuator template name. */
-    template: string
+export interface ActuatorPropsStl extends ActuatorPropsBase {
+    /** Actuator geometry STL name. */
+    stlName: string
+    /** Actuator in geometry STL name. */
+    stlNameIn?: string
+    /** Actuator out geometry STL name. */
+    stlNameOut?: string
 }
 
 /**
  * Type to combine various actuator
  * properties into a single type.
  */
-export type ActuatorProps = ActuatorPropsCreated | ActuatorPropsTemplate;
+export type ActuatorProps = ActuatorPropsCreated | ActuatorPropsStl;
 
 /**
  * Sensor properties.
  */
-export interface SensorProps extends ObjectPropsBase {
+export interface SensorProps extends PhyngPropsBase {
     /** Sensor field to monitor (e.g., "T"). */
     field: string
 }
@@ -93,7 +109,7 @@ export interface SensorProps extends ObjectPropsBase {
  * Type to combine actuator and sensor
  * properties into a single type.
  */
-export type ObjectProps = ActuatorProps | SensorProps;
+export type PhyngProps = ActuatorProps | SensorProps;
 
 /**
  * Basic case Web of Phyngs parameters.
@@ -107,6 +123,8 @@ export interface CaseParameters {
     meshQuality?: number
     /** Case result cleaning limit (0 - no cleaning). */
     cleanLimit?: number
+    /** Is case blocking. */
+    blocking?: boolean
     /** Is case running in parallel. */
     parallel?: boolean
     /** Amount of cores to run in parallel. */
@@ -114,7 +132,7 @@ export interface CaseParameters {
     /** Is case running in realtime. */
     realtime?: boolean
     /** Case simulation end time. */
-    endtime?: number
+    endTime?: number
 }
 
 /**
@@ -134,10 +152,10 @@ export interface CaseHrefs extends NamedHrefs {
 }
 
 /**
- * Object Hyperlink REFerences (HREFs).
+ * Phyng Hyperlink REFerences (HREFs).
  */
-export interface ObjectHrefs extends NamedHrefs {
-    /** Object type */
+export interface PhyngHrefs extends NamedHrefs {
+    /** Phyng type */
     type: string
 }
 
@@ -149,4 +167,14 @@ export interface SimulationErrors {
     texts: string[]
     /** Full error traces array. */
     traces: string[]
+}
+
+export interface SystemDescription extends WoT.ThingDescription {
+    '@type': string;
+    sysProperties: CaseParameters;
+}
+
+export interface PhysicalDescription extends WoT.ThingDescription {
+    '@type': string;
+    phyProperties: PhyngProps;
 }

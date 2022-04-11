@@ -49,13 +49,13 @@ class Vertex:
     """
     Vertex class with coordinates [x, y, z]
     """
-    _instances = []
-    _locations = []
-    _numbers = []
-    _current_number = -1
-    _inst_number = 0
+    _instances = {}
+    _locations = {}
+    _numbers = {}
+    _current_number = {}
+    _inst_number = {}
 
-    def __new__(cls, x: float = None, y: float = None, z: float = None, coords: List[float] = None):
+    def __new__(cls, case_dir: str, x: float = None, y: float = None, z: float = None, coords: List[float] = None):
         """
         Vertex class creator
         :param x: x coordinate, number
@@ -66,19 +66,25 @@ class Vertex:
         coords = coords if coords is not None else [x, y, z]
         if coords is None or None in coords:
             raise AttributeError('Wrong arguments were provided to class Vertex')
-        if coords in cls._locations:
-            idx = cls._locations.index(coords)
-            cls._inst_number = idx
-            return cls._instances[idx]
+        if case_dir not in cls._instances:
+            cls._instances[case_dir] = []
+            cls._locations[case_dir] = []
+            cls._numbers[case_dir] = []
+            cls._current_number[case_dir] = -1
+            cls._inst_number[case_dir] = 0
+        if coords in cls._locations[case_dir]:
+            idx = cls._locations[case_dir].index(coords)
+            cls._inst_number[case_dir] = idx
+            return cls._instances[case_dir][idx]
         instance = super(Vertex, cls).__new__(cls)
-        cls._instances.append(instance)
-        cls._locations.append(coords)
-        cls._current_number += 1
-        cls._numbers.append(cls._current_number)
-        cls._inst_number = cls._current_number
+        cls._instances[case_dir].append(instance)
+        cls._locations[case_dir].append(coords)
+        cls._current_number[case_dir] += 1
+        cls._numbers[case_dir].append(cls._current_number[case_dir])
+        cls._inst_number[case_dir] = cls._current_number[case_dir]
         return instance
 
-    def __init__(self, x: float = None, y: float = None, z: float = None, coords: List[float] = None):
+    def __init__(self, case_dir: str, x: float = None, y: float = None, z: float = None, coords: List[float] = None):
         """
         Vertex class initialization function, either x, y and z coordinates or array of coordinates must be provided
         :param x: x coordinate, number
@@ -86,25 +92,32 @@ class Vertex:
         :param z: z coordinate, number
         :param coords: coordinates array [x, y, z]
         """
-        self.coords = self._locations[self._inst_number]
+        self._case_dir = case_dir
+        self.coords = self._locations[case_dir][self._inst_number[case_dir]]
         self.x, self.y, self.z = self.coords
-        self.num = self._inst_number
+        self.num = self._inst_number[case_dir]
 
     def __str__(self):
         return f'( {" ".join([str(coord) for coord in self.coords])} )\n'
+
+    def remove(self):
+        del self.__class__._instances[self._case_dir]
+        del self.__class__._numbers[self._case_dir]
+        del self.__class__._current_number[self._case_dir]
+        del self.__class__._inst_number[self._case_dir]
 
 
 class Block:
     """
     Block class with vertices [v0, v1, ...]
     """
-    _instances = []
-    _vertices = []
-    _numbers = []
-    _current_number = -1
-    _inst_number = 0
+    _instances = {}
+    _vertices = {}
+    _numbers = {}
+    _current_number = {}
+    _inst_number = {}
 
-    def __new__(cls, vertices: List[Vertex] = None, cells_in_direction: List[int] = (10, 10, 10),
+    def __new__(cls, case_dir: str, vertices: List[Vertex] = None, cells_in_direction: List[int] = (10, 10, 10),
                 cell_expansion_ratios: List[int] = (1, 1, 1), name=None):
         """
         Block class creator
@@ -115,19 +128,25 @@ class Block:
         """
         if vertices is None or None in vertices:
             raise AttributeError('Wrong arguments were provided to class Block')
-        if vertices in cls._vertices:
-            idx = cls._vertices.index(vertices)
-            cls._inst_number = idx
-            return cls._instances[idx]
+        if case_dir not in cls._instances:
+            cls._instances[case_dir] = []
+            cls._vertices[case_dir] = []
+            cls._numbers[case_dir] = []
+            cls._current_number[case_dir] = -1
+            cls._inst_number[case_dir] = 0
+        if vertices in cls._vertices[case_dir]:
+            idx = cls._vertices[case_dir].index(vertices)
+            cls._inst_number[case_dir] = idx
+            return cls._instances[case_dir][idx]
         instance = super(Block, cls).__new__(cls)
-        cls._instances.append(instance)
-        cls._vertices.append(vertices)
-        cls._current_number += 1
-        cls._numbers.append(cls._current_number)
-        cls._inst_number = cls._current_number
+        cls._instances[case_dir].append(instance)
+        cls._vertices[case_dir].append(vertices)
+        cls._current_number[case_dir] += 1
+        cls._numbers[case_dir].append(cls._current_number)
+        cls._inst_number[case_dir] = cls._current_number
         return instance
 
-    def __init__(self, vertices: List[Vertex] = None, cells_in_direction: List[int] = (10, 10, 10),
+    def __init__(self, case_dir: str, vertices: List[Vertex] = None, cells_in_direction: List[int] = (10, 10, 10),
                  cell_expansion_ratios: List[int] = (1, 1, 1), name=None):
         """
         Block class initialization function. Order of vertices defines direction
@@ -136,8 +155,9 @@ class Block:
         :param cell_expansion_ratios: cell expansion ratios in directions [x, y, z]
         :param name: name of a block
         """
+        self._case_dir = case_dir
         self.vertices = vertices
-        self.num = self._inst_number
+        self.num = self._inst_number[case_dir]
         self.cells_in_direction = cells_in_direction
         self.cell_expansion_ratios = cell_expansion_ratios
         self.name = name
@@ -168,6 +188,13 @@ class Block:
             elif vertex.z > z_max:
                 z_max = vertex.z
         return x_max - x_min, y_max - y_min, z_max - z_min
+
+    def remove(self):
+        del self.__class__._instances[self._case_dir]
+        del self.__class__._vertices[self._case_dir]
+        del self.__class__._numbers[self._case_dir]
+        del self.__class__._current_number[self._case_dir]
+        del self.__class__._inst_number[self._case_dir]
 
 
 class Edge:
@@ -200,23 +227,13 @@ class BlockMeshDict:
         self._calculate_mesh_quality()
 
     def _calculate_quality_coefficients(self):
-        self._avg_block_size = (self._min_block_size + self._max_block_size) / 2
-        percents = [0, 50, 100]
-        values = [self._max_block_size, self._avg_block_size, self._min_block_size]
-        sum_of_mult = sum([x * y for x, y in zip(percents, values)])
-        percents_sq = [math.pow(perc, 2) for perc in percents]
-        percents_sq_sum = math.pow(sum(percents), 2)
-        percents_sum_sq = sum(percents_sq)
-        sum_percents = sum(percents)
-        sum_values = sum(values)
-        n = len(percents)
-        # Linear regression coefficients
-        self._quality_a = (sum_percents * sum_values - n * sum_of_mult) / (percents_sq_sum - n * percents_sum_sq)
-        self._quality_b = (sum_percents * sum_of_mult - percents_sum_sq * sum_values) / \
-                          (percents_sq_sum - n * percents_sum_sq)
+        y1, y2 = self._max_block_size, self._min_block_size
+        x1, x2 = 0, 100
+        scale = x2 - x1
+        self._quality_a = (y1 - y2) / -scale
+        self._quality_b = (x1 * y2 - x2 * y1) / -scale
 
     def _calculate_mesh_quality(self):
-        self._calculate_quality_coefficients()
         if 0 > self._mesh_quality or self._mesh_quality > 100:
             raise ValueError(f'Mesh quality is defined in percentage '
                              f'(0%-100%), but {self._mesh_quality} was provided')
@@ -258,16 +275,16 @@ class BlockMeshDict:
         """
         if min_coords is None and max_coords is None:
             raise ValueError(f'Max and min coords must be defined')
-        v0 = Vertex(min_coords[0], min_coords[1], min_coords[2])
-        v1 = Vertex(max_coords[0], min_coords[1], min_coords[2])
-        v2 = Vertex(max_coords[0], max_coords[1], min_coords[2])
-        v3 = Vertex(min_coords[0], max_coords[1], min_coords[2])
-        v4 = Vertex(min_coords[0], min_coords[1], max_coords[2])
-        v5 = Vertex(max_coords[0], min_coords[1], max_coords[2])
-        v6 = Vertex(max_coords[0], max_coords[1], max_coords[2])
-        v7 = Vertex(min_coords[0], max_coords[1], max_coords[2])
+        v0 = Vertex(self._case_dir, min_coords[0], min_coords[1], min_coords[2])
+        v1 = Vertex(self._case_dir, max_coords[0], min_coords[1], min_coords[2])
+        v2 = Vertex(self._case_dir, max_coords[0], max_coords[1], min_coords[2])
+        v3 = Vertex(self._case_dir, min_coords[0], max_coords[1], min_coords[2])
+        v4 = Vertex(self._case_dir, min_coords[0], min_coords[1], max_coords[2])
+        v5 = Vertex(self._case_dir, max_coords[0], min_coords[1], max_coords[2])
+        v6 = Vertex(self._case_dir, max_coords[0], max_coords[1], max_coords[2])
+        v7 = Vertex(self._case_dir, min_coords[0], max_coords[1], max_coords[2])
         vertices = [v0, v1, v2, v3, v4, v5, v6, v7]
-        block = Block(vertices, cells_in_direction, cell_expansion_ratios, name)
+        block = Block(self._case_dir, vertices, cells_in_direction, cell_expansion_ratios, name)
         if block not in self.blocks:
             self.vertices.extend(vertices)
             self.blocks.append(block)
@@ -286,6 +303,15 @@ class BlockMeshDict:
         file_output = BLOCKMESH_DICT_FILE_TEMPLATE % (self.scale, vertices_str, blocks_str, edges_str, boundaries_str)
         with open(f'{self._case_dir}/system/blockMeshDict', 'w') as f:
             f.writelines(file_output)
+
+    def remove(self):
+        try:
+            self.blocks[0].remove()
+            self.blocks = None
+            self.vertices[0].remove()
+            self.vertices = None
+        except Exception:
+            pass
 
 
 def main():

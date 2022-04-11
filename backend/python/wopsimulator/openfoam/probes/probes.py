@@ -163,9 +163,30 @@ class Probe:
         self.field = field
         self.region = region
         self._location = location
-        self.value = 0
-        self.time = 0
+        self._value = 0
+        self._time = 0
         self._add_probe_to_dict()
+        self._lock = Lock()
+
+    @property
+    def value(self):
+        with self._lock:
+            return self._value
+
+    @value.setter
+    def value(self, value):
+        with self._lock:
+            self._value = value
+
+    @property
+    def time(self):
+        with self._lock:
+            return self._time
+
+    @time.setter
+    def time(self, value):
+        with self._lock:
+            self._time = value
 
     @property
     def location(self):
@@ -309,7 +330,7 @@ class ProbeParser(Thread):
             try:
                 latest_result = get_latest_time(path_to_probes_data)
             except FileNotFoundError:
-                latest_result = 0
+                latest_result = '0'
             path_to_probes_field = f'{path_to_probes_data}/{latest_result}/{field}'
             if os.path.exists(path_to_probes_field):
                 field_probes = [[num, probe] for num, probe in region_probes if probe.field == field]
@@ -395,12 +416,10 @@ class ProbeParser(Thread):
         self.running = True
         self.remove_unused()
         self._mutex.acquire()
-        print('Starting probe parser thread')
         while self.running:
             for region in Probe.get_regions(self._case_dir):
                 self._parse_region(region)
             time.sleep(self.parsing_period)
-        print('Quiting probe parser thread')
         self._mutex.release()
 
     def start(self) -> None:

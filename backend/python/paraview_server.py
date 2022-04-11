@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import time
 from fcntl import fcntl, F_GETFL, F_SETFL
@@ -5,6 +6,10 @@ from os import O_NONBLOCK
 from threading import Thread, Lock
 
 import psutil
+
+
+logger = logging.getLogger('paraview')
+logger.setLevel(logging.DEBUG)
 
 
 class PvServer(Thread):
@@ -16,7 +21,7 @@ class PvServer(Thread):
         return cls._instance
 
     def __init__(self,
-                 hostname: str = 'localhost',
+                 hostname: str = '0.0.0.0',
                  server_port: int = 11111,
                  multi_clients: bool = True,
                  client_host: str = 'opt',
@@ -131,7 +136,7 @@ class PvServer(Thread):
         return variables
 
     def run(self) -> None:
-        argv = ['pvserver', ]
+        argv = ['/opt/paraviewopenfoam56/bin/pvserver', ]
         variables = self.dump()
         for var_name, var_val in variables.items():
             if not var_val or var_val == 'opt':
@@ -152,13 +157,19 @@ class PvServer(Thread):
         while True:
             with self._lock:
                 if line := self._process.stdout.readline():
-                    print(f'PV Server: {line.rstrip().decode()}')
+                    text = line.rstrip().decode()
+                    logger.info(text)
+                    if 'Exiting' in text:
+                        self.running = False
                 if line := self._process.stderr.readline():
-                    print(f'PV Server: {line.rstrip().decode()}')
+                    text = line.rstrip().decode()
+                    logger.error(text)
+                    if 'Broken pipe' in text:
+                        self.running = False
                 if not self.running:
                     break
             time.sleep(0.1)
-        print('PV Server exited')
+        logger.info('PV Server exited')
         self.running = False
 
     def start(self) -> None:

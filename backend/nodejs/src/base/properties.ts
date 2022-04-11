@@ -8,6 +8,16 @@
 import {AnyUri} from 'wot-thing-description-types';
 import {Vector} from './interfaces';
 import {reqGet, reqPost} from './axios-requests';
+import {responseIsUnsuccessful} from "./helpers";
+
+async function phyngValueSetter(url: string, value: any) {
+    value = JSON.stringify(value);
+    let response = await reqPost(url, {value});
+    if (responseIsUnsuccessful(response.status)) {
+        throw Error(response.data);
+    }
+    return response.data;
+}
 
 /**
  * Actuator heating properties.
@@ -33,8 +43,7 @@ export class HeatingProperties {
      * @return {Promise<any>} Server response.
      */
     public async setTemperature(couplingUrl: AnyUri, temperature: number): Promise<any> {
-        let response = await reqPost(`${couplingUrl}/temperature`, {value: temperature});
-        return response.data
+        return await phyngValueSetter(`${couplingUrl}/temperature`, temperature);
     }
 
     /**
@@ -86,8 +95,7 @@ export class VelocityProperties {
      * @return {Promise<any>} Server response.
      */
     public async setVelocity(couplingUrl: AnyUri, velocity: Vector): Promise<any> {
-        let response = await reqPost(`${couplingUrl}/velocity`, {value: velocity});
-        return response.data
+        return await phyngValueSetter(`${couplingUrl}/velocity`, velocity);
     }
 
     /**
@@ -139,8 +147,7 @@ export class OpenableProperties {
      * @return {Promise<any>} Server response.
      */
     public async setOpen(couplingUrl: AnyUri, open: boolean): Promise<any> {
-        let response = await reqPost(`${couplingUrl}/open`, {value: open});
-        return response.data
+        return await phyngValueSetter(`${couplingUrl}/open`, open);
     }
 
     /**
@@ -176,6 +183,122 @@ export class OpenableProperties {
     protected setCloseSetHandler(thing: WoT.ExposedThing, couplingUrl: AnyUri): void {
         thing.setActionHandler('close', async () => {
             await this.setOpen(couplingUrl, false);
+        });
+    }
+}
+
+/**
+ * Actuator enableable properties.
+ *
+ * This class can be extended by an Actuator class to inherit enableable properties.
+ * @class EnableableProperties
+ */
+export class EnableableProperties {
+    /**
+     * Get enabled state of an actuator.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @return {Promise<number>} Enabled state of an actuator.
+     */
+    public async getEnabled(couplingUrl: AnyUri): Promise<boolean> {
+        let response = await reqGet(`${couplingUrl}/enabled`);
+        return response.data;
+    }
+
+    /**
+     * Turn on/off an actuator.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @param {boolean} enable Flag to turn on/off an actuator.
+     * @return {Promise<any>} Server response.
+     */
+    public async setEnabled(couplingUrl: AnyUri, enable: boolean): Promise<any> {
+        return await phyngValueSetter(`${couplingUrl}/enabled`, enable);
+    }
+
+    /**
+     * Sets Web of Things actuator is enabled get handler.
+     * @param {WoT.ExposedThing} thing WoT exposed thing.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @protected
+     */
+    protected setEnabledGetHandler(thing: WoT.ExposedThing, couplingUrl: AnyUri): void {
+        thing.setPropertyReadHandler('enabled', async () => {
+            return await this.getEnabled(couplingUrl);
+        });
+    }
+
+    /**
+     * Sets Web of Things actuator turn on handler.
+     * @param {WoT.ExposedThing} thing WoT exposed thing.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @protected
+     */
+    protected setTurnOnHandler(thing: WoT.ExposedThing, couplingUrl: AnyUri): void {
+        thing.setActionHandler('turnOn', async () => {
+            await this.setEnabled(couplingUrl, true);
+        });
+    }
+
+    /**
+     * Sets Web of Things actuator turn off handler.
+     * @param {WoT.ExposedThing} thing WoT exposed thing.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @protected
+     */
+    protected setTurnOffHandler(thing: WoT.ExposedThing, couplingUrl: AnyUri): void {
+        thing.setActionHandler('turnOff', async () => {
+            await this.setEnabled(couplingUrl, false);
+        });
+    }
+}
+
+/**
+ * Actuator rotatable properties.
+ *
+ * This class can be extended by an Actuator class to inherit rotatable properties.
+ * @class RotatableProperties
+ */
+export class RotatableProperties {
+    /**
+     * Get angle state of an actuator.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @return {Promise<number>} Angle of an actuator.
+     */
+    public async getAngle(couplingUrl: AnyUri): Promise<boolean> {
+        let response = await reqGet(`${couplingUrl}/angle`);
+        return response.data;
+    }
+
+    /**
+     * Set angle of an actuator.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @param {number} angle actuator angle.
+     * @return {Promise<any>} Server response.
+     */
+    public async setOpen(couplingUrl: AnyUri, angle: number): Promise<any> {
+        return await phyngValueSetter(`${couplingUrl}/angle`, angle);
+    }
+
+    /**
+     * Sets Web of Things actuator angle get handler.
+     * @param {WoT.ExposedThing} thing WoT exposed thing.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @protected
+     */
+    protected setAngleGetHandler(thing: WoT.ExposedThing, couplingUrl: AnyUri): void {
+        thing.setPropertyReadHandler('angle', async () => {
+            return await this.getAngle(couplingUrl);
+        });
+    }
+
+    /**
+     * Sets Web of Things actuator angle write handler.
+     * @param {WoT.ExposedThing} thing WoT exposed thing.
+     * @param {AnyUri} couplingUrl URL of a Thing on a simulation server.
+     * @protected
+     */
+    protected setAngleSetHandler(thing: WoT.ExposedThing, couplingUrl: AnyUri): void {
+        thing.setPropertyWriteHandler('angle', async (angle) => {
+            await this.setOpen(couplingUrl, angle);
         });
     }
 }

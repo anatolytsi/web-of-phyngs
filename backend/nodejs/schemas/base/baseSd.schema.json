@@ -1,0 +1,44 @@
+{
+  "properties": {
+    "@type": {
+      "type": "string",
+      "enum": [
+        "cht"
+      ]
+    },
+    "sysProperties": {
+      "type": "object",
+      "properties": {
+        "meshQuality": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "cleanLimit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "blocking": {
+          "type": "boolean"
+        },
+        "parallel": {
+          "type": "boolean"
+        },
+        "cores": {
+          "type": "number",
+          "minimum": 1
+        },
+        "realtime": {
+          "type": "boolean"
+        },
+        "endTime": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "required": [
+    "sysProperties"
+  ]
+}

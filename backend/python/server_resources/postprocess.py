@@ -94,10 +94,11 @@ class Postprocess(Resource):
             return f'Invalid command "{command}". Valid commands are {", ".join(PP_COMMANDS)}', 400
         args = self.reqparse.parse_args()
         if command == PP_START:
-            if not self.__class__.pvserver:
-                self.__class__.pvserver = PvServer(**args)
             if self.__class__.pvserver.running:
                 return 'Postprocessing server is already running', 208
+            if self.__class__.pvserver:
+                self.__class__.pvserver = None
+            self.__class__.pvserver = PvServer(**args)
             self.__class__.pvserver.start()
         elif command == PP_STOP:
             self.__class__.pvserver.stop()

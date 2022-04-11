@@ -98,7 +98,7 @@ class DecomposeParDict:
         self.regions = regions if regions else []
         self.simple_coeffs = SimpleCoeffs(n, delta)
         self.hierarchical_coeffs = HierarchicalCoeffs(n, delta, order)
-        self._parse()
+        # self._parse()
 
     def _parse(self):
         """Parses decomposeParDict"""

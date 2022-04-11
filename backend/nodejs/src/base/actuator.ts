@@ -1,41 +1,36 @@
 /**
- * Actuator object module.
+ * Actuator Phyng module.
  *
  * @file   Contains an Actuator class that is used by actuator node-things in this application.
  * @author Anatolii Tsirkunenko
  * @since  29.11.2021
  */
-import {AbstractObject} from './object';
-import {ActuatorPropsCreated, ActuatorPropsTemplate, Size, Vector} from './interfaces';
+import {AbstractPhyng} from './phyng';
+import {ActuatorPropsCreated, ActuatorPropsStl, Size, Vector} from './interfaces';
 import {responseIsUnsuccessful} from "./helpers";
-import {reqPatch, reqPost} from './axios-requests';
-const FormData = require('form-data');
-const fs = require('fs');
+import {reqPatch} from './axios-requests';
 
 /**
- * An abstract actuator.
+ * An abstract actuator Phyng.
  *
  * Abstract class used by actuator node-things in this application.
  * @class Actuator
  * @abstract
  */
-export abstract class Actuator extends AbstractObject implements ActuatorPropsCreated, ActuatorPropsTemplate {
+export abstract class Actuator extends AbstractPhyng implements ActuatorPropsCreated, ActuatorPropsStl {
     /** Actuator dimensions. */
     protected _dimensions: Size;
     /** Actuator rotation. */
     protected _rotation: Vector;
-    /** Actuator was created from custom STL model. */
-    protected _custom: boolean;
-    /** Actuator template model name. */
-    protected _template: string;
+    /** Actuator geometry STL name. */
+    protected _stlName: string;
 
     protected constructor(host: string, wot: WoT.WoT, tm: any, caseName: string,
-                          props: ActuatorPropsCreated | ActuatorPropsTemplate) {
+                          props: ActuatorPropsCreated | ActuatorPropsStl) {
         super(host, wot, tm, caseName, props);
         this._rotation = 'rotation' in props && props.rotation ? props.rotation : [0, 0, 0];
         this._dimensions = 'dimensions' in props ? props.dimensions : [0, 0, 0];
-        this._custom = 'url' in props;
-        this._template = 'template' in props ? props.template : '';
+        this._stlName = 'stlName' in props ? props.stlName : '';
     }
 
     /**
@@ -81,30 +76,21 @@ export abstract class Actuator extends AbstractObject implements ActuatorPropsCr
     }
 
     /**
-     * Gets flag indicating if Phyng
-     * was created from custom STL.
-     * @return {boolean} true if custom.
-     */
-    public get custom(): boolean {
-        return this._custom;
-    }
-
-    /**
-     * Gets actuator Phyng template name.
+     * Gets actuator Phyng geometry STL name.
      * @return {string} template name of an actuator Phyng.
      */
-    public get template(): string {
-        return this._template;
+    public get stlName(): string {
+        return this._stlName;
     }
 
     /**
-     * Sets actuator template.
-     * @param {string} template: template to set.
+     * Sets actuator geometry STL name.
+     * @param {string} stlName: template to set.
      * @async
      */
-    public async setTemplate(template: string): Promise<void> {
-        this._template = template;
-        let response = await reqPatch(`${this.couplingUrl}`, { template });
+    public async setStlName(stlName: string): Promise<void> {
+        this._stlName = stlName;
+        let response = await reqPatch(`${this.couplingUrl}`, { stl_name: stlName });
         if (responseIsUnsuccessful(response.status)) {
             console.error(response.data);
         }
@@ -120,24 +106,15 @@ export abstract class Actuator extends AbstractObject implements ActuatorPropsCr
         this.thing.setPropertyWriteHandler('rotation', async (rotation) =>
             await this.setRotation(rotation)
         );
-        this.thing.setPropertyReadHandler('template', async () => this.dimensions);
-        this.thing.setPropertyWriteHandler('template', async (template) =>
-            await this.setTemplate(template)
+        this.thing.setPropertyReadHandler('stlName', async () => this.stlName);
+        this.thing.setPropertyWriteHandler('stlName', async (stlName) =>
+            await this.setStlName(stlName)
         );
     }
 
-    protected addActionHandlers() {
-        this.thing.setActionHandler('uploadSTL', async (data, options) => {
-            let formData = new FormData();
-            let filename = data.match(/filename="(.*\.stl)"/)[1];
-            let filePath = `${__dirname}/${filename}`;
-            fs.writeFile(filePath, data.match(/(solid(.|\n)*endsolid\s.*)/gm)[0], () => {});
-            formData.append('file', fs.createReadStream(filePath));
-            await reqPost(`${this.couplingUrl}`, formData,
-                {
-                    headers: formData.getHeaders()
-                });
-            fs.unlinkSync(filePath)
-        });
+    protected addActionHandlers(): void {
+    }
+
+    protected addEventHandlers(): void {
     }
 }

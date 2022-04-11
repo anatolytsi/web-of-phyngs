@@ -1,3 +1,4 @@
+import logging
 import os
 import math
 import re
@@ -11,6 +12,9 @@ from stl.stl import ASCII
 from .primitives import Num, Point, Line, Loop, Surface
 
 GMSH_INITIALIZED = False
+
+logger = logging.getLogger('wop')
+logger.setLevel(logging.DEBUG)
 
 
 class TriSurface:
@@ -82,6 +86,10 @@ class TriSurface:
             for point in list(set(face_points) - set(translated_point)):
                 point.translate(coords)
                 translated_point.append(point)
+
+    def remove(self):
+        for face in self.faces:
+            face.remove()
 
 
 class Box(TriSurface):
@@ -178,6 +186,10 @@ class Box(TriSurface):
             faces_z = faces_z | face_z
         return faces_x, faces_y, faces_z
 
+    def remove(self):
+        for face_name in self.faces.keys():
+            self.faces[face_name].remove()
+
 
 class STL:
     """
@@ -240,6 +252,9 @@ class STL:
         """
         points = numpy.around(numpy.unique(self.mesh.vectors.reshape([int(self.mesh.vectors.size / 3), 3]), axis=0), 2)
         return set(points[:, 0].tolist()), set(points[:, 1].tolist()), set(points[:, 2].tolist())
+
+    def remove(self):
+        del self.mesh
 
 
 class Model:
@@ -354,10 +369,9 @@ class Model:
         """
         # TODO: split this ifs into separate method for code readability
         if self.model_type == self._surface_type:
-            if all(self.dimensions):
-                raise ValueError(f'Model type {self._surface_type} must be 2D. Check your dimensions')
-            elif len([dim for dim in self.dimensions if dim]) <= 1:
-                raise ValueError(f'Model type {self._surface_type} must be 2D. Check your dimensions')
+            logger.info(f'Creating {self.name} surface')
+            if all(self.dimensions) or len([dim for dim in self.dimensions if dim]) <= 1:
+                raise ValueError(f'Model type {self._surface_type} must be 2D. Incorrect dimensions {self.dimensions}')
             else:
                 d = self.dimensions
                 l = self.location
@@ -388,6 +402,7 @@ class Model:
                 self.center = c
                 return s
         elif self.model_type == self._box_type:
+            logger.info(f'Creating {self.name} box')
             if not all(self.dimensions):
                 raise ValueError(f'Model type {self._box_type} must be 3D. Check your dimensions')
             else:
@@ -398,7 +413,9 @@ class Model:
                 b.rotate(self.rotation, self.center)
                 return b
         elif self.model_type == self._stl_type:
+            logger.info(f'Importing {self.name} STL')
             inst = STL(stl_path)
+            inst.translate(self.location)
             self.location = inst.get_location()
             self.dimensions = inst.calculate_dimensions()
             self.center = [self.location[0] + self.dimensions[0] / 2,
@@ -411,6 +428,7 @@ class Model:
         Rotates geometry
         :param rotation: rotation axis angles array [theta_x, theta_y, theta_z]
         """
+        logger.info(f'Rotating {self.name} geometry')
         self.rotation = [x1 + x2 for (x1, x2) in zip(self.rotation, rotation)]
         self.geometry.rotate(rotation, self.center)
 
@@ -419,6 +437,7 @@ class Model:
         Translates geometry by certain coordinates
         :param coords: coordinates [x, y, z]
         """
+        logger.info(f'Moving {self.name} geometry')
         self.location = [x1 + x2 for (x1, x2) in zip(self.location, coords)]
         self.geometry.translate(coords)
 
@@ -446,6 +465,9 @@ class Model:
             gmsh.write(file_path)
             self._finilize()
         rename_solid_stl(file_path, self.name)
+
+    def remove(self):
+        self.geometry.remove()
 
 
 def rename_solid_stl(stl_path: str, name: str):

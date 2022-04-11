@@ -10,7 +10,7 @@ from .case_base import OpenFoamCase
 from .cht_case import ChtCase
 from .exceptions import CaseTypeError, CaseNotFound, CaseAlreadyExists
 from .openfoam.common.filehandling import force_remove_dir, copy_tree
-from .variables import PY_BACKEND_DIR, CONFIG_PATH_KEY, CONFIG_TYPE_KEY, CUR_FILE_DIR, CONFIG_DEFAULTS, WOP_CONFIG_FILE
+from .variables import CASES_STORAGE, CONFIG_PATH_K, CONFIG_TYPE_K, CUR_FILE_DIR, CONFIG_DEFAULTS, WOP_CONFIG_FILE
 
 CASE_TYPES = {
     ChtCase.case_type: ChtCase,
@@ -27,7 +27,7 @@ CASE_INST_TYPE = Union[
 ]
 
 
-def load_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/{WOP_CONFIG_FILE}') -> CASE_INST_TYPE:
+def load_case(case_name: str, config_path: str = f'{CASES_STORAGE}/{WOP_CONFIG_FILE}') -> CASE_INST_TYPE:
     """
     Loads case from wop.config.json
     :param case_name: name of the loaded case
@@ -38,10 +38,10 @@ def load_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/{WOP_CONFIG_
         config = json.load(f)
     case_name = case_name if '.case' in case_name else f'{case_name}.case'
     if case_name in config.keys():
-        if not (CONFIG_PATH_KEY in config[case_name] and os.path.exists(path := config[case_name][CONFIG_PATH_KEY])):
+        if not (CONFIG_PATH_K in config[case_name] and os.path.exists(path := config[case_name][CONFIG_PATH_K])):
             raise CaseNotFound(f'Path for case "{case_name}" is not defined')
-        if CONFIG_TYPE_KEY in config[case_name] and \
-                (case_type_name := config[case_name][CONFIG_TYPE_KEY]) in CASE_TYPES.keys():
+        if CONFIG_TYPE_K in config[case_name] and \
+                (case_type_name := config[case_name][CONFIG_TYPE_K]) in CASE_TYPES.keys():
             case_cls: CASE_CLS_TYPES = CASE_TYPES[case_type_name]
         else:
             raise CaseTypeError(f'Case type is wrong or not specified! Expected one of: {", ".join(CASE_TYPES)}')
@@ -50,8 +50,8 @@ def load_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/{WOP_CONFIG_
     raise CaseNotFound(f'Case "{case_name}" is not defined in the config "{config_path}"')
 
 
-def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEND_DIR,
-                config_path: str = f'{PY_BACKEND_DIR}/{WOP_CONFIG_FILE}', replace_old: bool = False) -> CASE_INST_TYPE:
+def create_case(case_name: str, case_param: dict, case_dir_path: str = CASES_STORAGE,
+                config_path: str = f'{CASES_STORAGE}/{WOP_CONFIG_FILE}', replace_old: bool = False) -> CASE_INST_TYPE:
     """
     Creates a new WoP Simulator case by finding a OpenFOAM case template by a specified type, copying it to a path
     specified, and adding all this data to a wop.config.json.
@@ -62,10 +62,10 @@ def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEN
     :param replace_old: flag to replace the old project. Active -> files will be overwritten. Otherwise -> error
     :return: WoP Simulator class instance
     """
-    if case_param[CONFIG_TYPE_KEY] not in CASE_TYPES.keys():
+    if case_param[CONFIG_TYPE_K] not in CASE_TYPES.keys():
         raise CaseTypeError(f'Case type is wrong or not specified! '
-                            f'Got "{case_param[CONFIG_TYPE_KEY]}", expected one of: {", ".join(CASE_TYPES)}')
-    case_cls: CASE_CLS_TYPES = CASE_TYPES[case_param[CONFIG_TYPE_KEY]]
+                            f'Got "{case_param[CONFIG_TYPE_K]}", expected one of: {", ".join(CASE_TYPES)}')
+    case_cls: CASE_CLS_TYPES = CASE_TYPES[case_param[CONFIG_TYPE_K]]
 
     # Load/Create config
     Path(config_path).touch(exist_ok=True)
@@ -84,14 +84,14 @@ def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEN
             force_remove_dir(case_path)
         else:
             raise CaseAlreadyExists(f'Project with name "{case_name}" already exists!')
-    copy_tree(f'{CUR_FILE_DIR}/openfoam/cases/{case_param[CONFIG_TYPE_KEY]}', case_path)
+    copy_tree(f'{CUR_FILE_DIR}/openfoam/cases/{case_param[CONFIG_TYPE_K]}', case_path)
 
     # TODO: JSON schema validation
 
     case_config = CONFIG_DEFAULTS.copy()
     for key, value in case_param.items():
         case_config[key] = value
-    case_config[CONFIG_PATH_KEY] = case_path
+    case_config[CONFIG_PATH_K] = case_path
     config[case_name] = case_config
 
     with open(config_path, 'w') as f:
@@ -101,7 +101,7 @@ def create_case(case_name: str, case_param: dict, case_dir_path: str = PY_BACKEN
     return case
 
 
-def save_case(case_name: str, case: OpenFoamCase, config_path: str = f'{PY_BACKEND_DIR}/{WOP_CONFIG_FILE}'):
+def save_case(case_name: str, case: OpenFoamCase, config_path: str = f'{CASES_STORAGE}/{WOP_CONFIG_FILE}'):
     """
     Saves WoP Simulator case parameters into wop.config.json.
     :param case_name: name of the project to name a new copied case and to refer to from wop.config.json
@@ -122,7 +122,7 @@ def save_case(case_name: str, case: OpenFoamCase, config_path: str = f'{PY_BACKE
         json.dump(config_old, f, ensure_ascii=False, indent=2)
 
 
-def remove_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/{WOP_CONFIG_FILE}', remove_case_dir: bool = False):
+def remove_case(case_name: str, config_path: str = f'{CASES_STORAGE}/{WOP_CONFIG_FILE}', remove_case_dir: bool = False):
     """
     Removes case from wop.config.json (optionally OpenFOAM case dir as well)
     :param case_name: name of the case to remove
@@ -134,7 +134,7 @@ def remove_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/{WOP_CONFI
         config = json.load(f)
 
     case_name = case_name if '.case' in case_name else f'{case_name}.case'
-    if remove_case_dir and case_name in config and os.path.exists(case_path := config[case_name][CONFIG_PATH_KEY]):
+    if remove_case_dir and case_name in config and os.path.exists(case_path := config[case_name][CONFIG_PATH_K]):
         force_remove_dir(case_path)
     else:
         raise CaseNotFound(f'Case "{case_name}" is not defined in the config "{config_path}"')
@@ -144,16 +144,20 @@ def remove_case(case_name: str, config_path: str = f'{PY_BACKEND_DIR}/{WOP_CONFI
         json.dump(config, f, ensure_ascii=False, indent=4)
 
 
-def get_cases_names(config_path: str = f'{PY_BACKEND_DIR}/{WOP_CONFIG_FILE}'):
+def get_cases_names(config_path: str = f'{CASES_STORAGE}/{WOP_CONFIG_FILE}'):
     """
     Retrieve all available cases
     :param config_path: path to a wop.config.json. A __main__ script directory is taken by default
     :return: None
     """
-    with open(config_path, 'r') as f:
-        config = json.load(f)
-
-    return list(config.keys())
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        return list(config.keys())
+    except FileNotFoundError:
+        with open(config_path, 'w') as f:
+            f.write('{}\n')
+    return []
 
 
 def main():

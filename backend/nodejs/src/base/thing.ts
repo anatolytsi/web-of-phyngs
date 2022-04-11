@@ -7,6 +7,21 @@
  */
 import {AnyUri, FormElementRoot} from 'wot-thing-description-types';
 
+const path = require('path');
+const glob = require('glob')
+
+const TMS_PATH = path.resolve(`${__dirname}/../../tms`);
+const GLOB_PATTERN = `${TMS_PATH}/**/*.model.json`
+const TM_PATHS: { [file: string]: string } = {};
+
+let _tmPathsArr = glob.sync(GLOB_PATTERN, {});
+let _re = /.+\/(.+\.model\.json)/;
+_tmPathsArr.forEach((path: string) => {
+    let tmFile = path.match(_re);
+    if (!tmFile) return;
+    TM_PATHS[tmFile[1]] = path;
+});
+
 /**
  * An abstract thing.
  *
@@ -70,8 +85,13 @@ export abstract class AbstractThing {
         let extendedTm = {...tm};
         if ('links' in extendedTm) {
             for (const link of extendedTm.links) {
-                if (link.rel === 'tm:extends' && link.href.includes('file://')) {
-                    let filePath = link.href.replace('file://', '');
+                if (link.rel === 'tm:extends') {
+                    let filePath: string;
+                    if (link.href.includes('file://')) {
+                        filePath = link.href.replace('file://', '');
+                    } else {
+                        filePath = TM_PATHS[link.href];
+                    }
                     let parentTm = {...require(filePath)};
                     if ('links' in parentTm) {
                         parentTm = this.extendTmByLink(parentTm);

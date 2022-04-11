@@ -1,19 +1,25 @@
+import logging
 import random
 import datetime
 from abc import ABC, abstractmethod
 from typing import List, Union
 
-from .exceptions import ObjectNotFound
+from .exceptions import PhyngNotFound
 from .geometry.manipulator import combine_stls
-from .objects.wopthings import WopObject, WopSensor
+from .phyngs.base import Phyng
+from .phyngs.sensor import SensorPhyng
 from .openfoam.common.filehandling import get_latest_time, get_latest_time_parallel
 from .runtime_monitor import RunTimeMonitor
-from .variables import CONFIG_TYPE_KEY, CONFIG_PATH_KEY, CONFIG_BLOCKING_KEY, CONFIG_PARALLEL_KEY, \
-    CONFIG_CORES_KEY, CONFIG_INITIALIZED_KEY, CONFIG_MESH_QUALITY_KEY, CONFIG_CLEAN_LIMIT_KEY, CONFIG_OBJ_DIMENSIONS, \
-    CONFIG_OBJ_ROTATION, CONFIG_LOCATION, CONFIG_TEMPLATE, CONFIG_URL, CONFIG_SNS_FIELD, CONFIG_OBJ_NAME_KEY, \
-    CONFIG_STARTED_TIMESTAMP_KEY, CONFIG_REALTIME_KEY, CONFIG_END_TIME_KEY, CONFIG_CUSTOM
+from .variables import CONFIG_TYPE_K, CONFIG_PATH_K, CONFIG_BLOCKING_K, CONFIG_PARALLEL_K, \
+    CONFIG_CORES_K, CONFIG_INITIALIZED_K, CONFIG_MESH_QUALITY_K, CONFIG_CLEAN_LIMIT_K, CONFIG_PHYNG_DIMS_K, \
+    CONFIG_PHYNG_ROT_K, CONFIG_PHYNG_LOC_K, CONFIG_PHYNG_STL_K, CONFIG_PHYNG_FIELD_K, CONFIG_PHYNG_NAME_K, \
+    CONFIG_STARTED_TIMESTAMP_K, CONFIG_REALTIME_K, CONFIG_END_TIME_K, CONFIG_PHYNG_TYPE_K
 from .openfoam.interface import OpenFoamInterface
 from .openfoam.system.snappyhexmesh import SnappyRegion, SnappyPartitionedMesh, SnappyCellZoneMesh
+
+
+logger = logging.getLogger('wop')
+logger.setLevel(logging.DEBUG)
 
 
 class OpenFoamCase(OpenFoamInterface, ABC):
@@ -29,14 +35,15 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :param kwargs: OpenFOAM interface kwargs, i.e., case parameters
         """
         super(OpenFoamCase, self).__init__(*args, **kwargs)
-        self.objects = {}
+        self.phyngs = {}
         self._partitioned_mesh = None
         self.sensors = {}
-        self.start_time = kwargs[CONFIG_STARTED_TIMESTAMP_KEY] \
-            if CONFIG_STARTED_TIMESTAMP_KEY in kwargs and kwargs[CONFIG_STARTED_TIMESTAMP_KEY] else 0
-        runtime_enabled = kwargs[CONFIG_REALTIME_KEY] \
-            if CONFIG_REALTIME_KEY in kwargs and kwargs[CONFIG_REALTIME_KEY] else False
-        self._runtime_monitor = RunTimeMonitor(runtime_enabled, 5, self.run, self.stop, self.get_time_difference)
+        self.start_time = kwargs[CONFIG_STARTED_TIMESTAMP_K] \
+            if CONFIG_STARTED_TIMESTAMP_K in kwargs and kwargs[CONFIG_STARTED_TIMESTAMP_K] else 0
+        runtime_enabled = kwargs[CONFIG_REALTIME_K] \
+            if CONFIG_REALTIME_K in kwargs and kwargs[CONFIG_REALTIME_K] else False
+        self._runtime_monitor = RunTimeMonitor(runtime_enabled, 5, self.run, self.stop, self.get_time_difference,
+                                               lambda: self.solved)
         if loaded:
             if initialized:
                 self._setup_initialized_case(kwargs)
@@ -49,20 +56,23 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Setups the loaded initialized case
         :param case_param: loaded case parameters
         """
+        logger.info('Setting up initialized case')
         try:
-            self.run_reconstruct(all_regions=True, latest_time=True)
+            if self.parallel:
+                self.run_reconstruct(all_regions=True, latest_time=True)
         except Exception:
             pass
         self.extract_boundary_conditions()
-        self.load_initial_objects(case_param)
+        self.load_initial_phyngs(case_param)
         self.bind_boundary_conditions()
-        self.set_initial_objects(case_param)
+        self.set_initial_phyngs(case_param)
 
     def _setup_uninitialized_case(self, case_param: dict):
         """
         Setups the loaded uninitialized case
         :param case_param: loaded case parameters
         """
+        logger.info('Setting up uninitialized case')
         self.clean_case()
         self.remove_geometry()
 
@@ -71,14 +81,16 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Gets minimums and maximums of all axis
         :return: list of min and max, e.g., [(x_min, x_max), ...]
         """
+        logger.debug('Getting mesh dimensions')
         all_x, all_y, all_z = set(), set(), set()
-        for obj in self.objects.values():
-            obj_x, obj_y, obj_z = obj.model.geometry.get_used_coords()
-            all_x = all_x | obj_x
-            all_y = all_y | obj_y
-            all_z = all_z | obj_z
+        for phyng in self.phyngs.values():
+            phyng_x, phyng_y, phyng_z = phyng.model.geometry.get_used_coords()
+            all_x = all_x | phyng_x
+            all_y = all_y | phyng_y
+            all_z = all_z | phyng_z
         min_coords = [min(all_x), min(all_y), min(all_z)]
         max_coords = [max(all_x), max(all_y), max(all_z)]
+        logger.debug(f'Minimum coords: {min_coords}, Maximum coordinates {max_coords}')
         return list(zip(min_coords, max_coords))
 
     def _find_location_in_mesh(self, minmax_coords) -> [int, int, int]:
@@ -88,10 +100,12 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :param minmax_coords: dimensions of the mesh
         :return: x, y, z coordinates
         """
+        logger.debug(f'Finding location in mesh: {minmax_coords}')
         # Find the forbidden coordinates, i.e., all cell zones' coordinates
-        forbidden_coords = [{'min': obj.model.location,
-                             'max': [c1 + c2 for c1, c2 in zip(obj.model.location, obj.model.dimensions)]}
-                            for obj in self.objects.values() if type(obj.snappy) == SnappyCellZoneMesh]
+        forbidden_coords = [{'min': phyng.model.location,
+                             'max': [c1 + c2 for c1, c2 in zip(phyng.model.location, phyng.model.dimensions)]}
+                            for phyng in self.phyngs.values() if type(phyng.snappy) == SnappyCellZoneMesh]
+        logger.debug(f'Excluded coordinates: {forbidden_coords}')
         point_found = False
         coords_allowed = [False for _ in range(len(forbidden_coords))]
         # If there are no forbidden coordinates
@@ -109,6 +123,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
                                            coords['min'][1] < y < coords['max'][1] and
                                            coords['min'][2] < z < coords['max'][2])
             point_found = all(coords_allowed)
+        logger.debug(f'Found point [{x}, {y}, {z}]')
         return x, y, z
 
     def dump_case(self):
@@ -117,17 +132,17 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         :return: parameter dump dict
         """
         config = {
-            CONFIG_TYPE_KEY: self.case_type,
-            CONFIG_PATH_KEY: self.path,
-            CONFIG_BLOCKING_KEY: self.blocking,
-            CONFIG_PARALLEL_KEY: self.parallel,
-            CONFIG_CORES_KEY: self._cores,
-            CONFIG_INITIALIZED_KEY: self.initialized,
-            CONFIG_MESH_QUALITY_KEY: self.blockmesh_dict.mesh_quality,
-            CONFIG_CLEAN_LIMIT_KEY: self.clean_limit,
-            CONFIG_STARTED_TIMESTAMP_KEY: self.start_time,
-            CONFIG_REALTIME_KEY: self._runtime_monitor.enabled,
-            CONFIG_END_TIME_KEY: self.end_time
+            CONFIG_TYPE_K: self.case_type,
+            CONFIG_PATH_K: self.path,
+            CONFIG_BLOCKING_K: self.blocking,
+            CONFIG_PARALLEL_K: self.parallel,
+            CONFIG_CORES_K: self._cores,
+            CONFIG_INITIALIZED_K: self.initialized,
+            CONFIG_MESH_QUALITY_K: self.blockmesh_dict.mesh_quality,
+            CONFIG_CLEAN_LIMIT_K: self.clean_limit,
+            CONFIG_STARTED_TIMESTAMP_K: self.start_time,
+            CONFIG_REALTIME_K: self._runtime_monitor.enabled,
+            CONFIG_END_TIME_K: self.end_time
         }
         return config
 
@@ -137,123 +152,101 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         self.initialized = False
 
     @abstractmethod
-    def set_initial_objects(self, case_param: dict):
+    def set_initial_phyngs(self, case_param: dict):
         """
-        Method to set case objects parameters from case_param dict
+        Method to set case phyngs parameters from case_param dict
         Must be implemented in all child classes
         :param case_param: loaded case parameters
         """
         pass
 
     @abstractmethod
-    def load_initial_objects(self, case_param: dict):
+    def load_initial_phyngs(self, case_param: dict):
         """
-        Method to load case objects parameters from case_param dict
+        Method to load case phyngs parameters from case_param dict
         Must be implemented in all child classes
         :param case_param: loaded case parameters
         """
         pass
 
     @abstractmethod
-    def add_object(self, name: str, obj_type: str, url: str = '', custom=False, template: str = '',
-                   dimensions: List[float] = (0, 0, 0), location: List[float] = (0, 0, 0),
-                   rotation: List[float] = (0, 0, 0), sns_field: str = None, **kwargs):
+    def add_phyng(self, type: str, **kwargs):
         """
-        Adds WoP object/sensor to a case
-        :param name: name of the object
-        :param obj_type: type of an object, case specific
-        :param url: object URL
-        :param custom: object was created from URL
-        :param template: object template
-        :param dimensions: object dimensions
-        :param location: object location
-        :param rotation: object rotation
-        :param sns_field: field to monitor for sensor
+        Adds WoP phyng/sensor to a case
         """
         pass
 
-    def get_object(self, object_name) -> Union[WopObject, WopSensor]:
+    def get_phyng(self, phyng_name) -> Union[Phyng, SensorPhyng]:
         """
-        Gets object/sensor by its name
-        :param object_name: name of an object/sensor
-        :return: object/sensor instance
+        Gets phyng/sensor by its name
+        :param phyng_name: name of an phyng/sensor
+        :return: phyng/sensor instance
         """
-        if object_name in self.objects:
-            return self.objects[object_name]
-        elif object_name in self.sensors:
-            return self.sensors[object_name]
-        raise ObjectNotFound(f'Object with name {object_name} was not found')
+        logger.debug(f'Getting Phyng {phyng_name}')
+        if phyng_name in self.phyngs:
+            return self.phyngs[phyng_name]
+        elif phyng_name in self.sensors:
+            return self.sensors[phyng_name]
+        raise PhyngNotFound(f'Object with name {phyng_name} was not found')
 
-    def _reinit_sensor_from_parameters(self, sensor: WopSensor, params: dict):
+    def _reinit_sensor_from_parameters(self, sensor: SensorPhyng, params: dict):
         """
         Reinitializes sensor from given parameters
         :param sensor: sensor to reinitialize
         :param params: new parameters
         """
         new_params = {
-            CONFIG_OBJ_NAME_KEY: sensor.name,
-            CONFIG_LOCATION: params[CONFIG_LOCATION] if params[CONFIG_LOCATION] else sensor.location,
-            CONFIG_SNS_FIELD: params[CONFIG_SNS_FIELD] if params[CONFIG_SNS_FIELD] else sensor.field,
+            CONFIG_PHYNG_NAME_K: sensor.name,
+            CONFIG_PHYNG_LOC_K: params[CONFIG_PHYNG_LOC_K] if params[CONFIG_PHYNG_LOC_K] else sensor.location,
+            CONFIG_PHYNG_FIELD_K: params[CONFIG_PHYNG_FIELD_K] if params[CONFIG_PHYNG_FIELD_K] else sensor.field,
+            CONFIG_PHYNG_TYPE_K: sensor.type_name
         }
-        self.remove_object(sensor.name)
-        self.add_object(new_params[CONFIG_OBJ_NAME_KEY], sensor.type_name, location=new_params[CONFIG_LOCATION],
-                        sns_field=new_params[CONFIG_SNS_FIELD])
+        self.remove_phyng(sensor.name)
+        self.add_phyng(**new_params)
 
     @staticmethod
-    def _get_new_params(obj: WopObject, params: dict):
+    def _get_new_params(phyng: Phyng, params: dict):
         """
-        Gets new parameters of an object according to present key - values
-        :param obj: WoP object
+        Gets new parameters of a phyng according to present key - values
+        :param phyng: WoP phyng
         :param params: new parameters
         :return: new parameters combined with old dict
         """
         return {
-            CONFIG_OBJ_NAME_KEY: obj.name,
-            CONFIG_OBJ_DIMENSIONS: obj.model.dimensions,
-            CONFIG_LOCATION: params[CONFIG_LOCATION] if CONFIG_LOCATION in params and params[CONFIG_LOCATION] else obj.model.location,
-            CONFIG_OBJ_ROTATION: params[CONFIG_OBJ_ROTATION] if CONFIG_OBJ_ROTATION in params and params[CONFIG_OBJ_ROTATION] else obj.model.rotation,
-            CONFIG_TEMPLATE: obj.template,
-            CONFIG_URL: None
+            CONFIG_PHYNG_NAME_K: phyng.name,
+            CONFIG_PHYNG_DIMS_K: phyng.model.dimensions,
+            CONFIG_PHYNG_LOC_K: params[CONFIG_PHYNG_LOC_K]
+            if CONFIG_PHYNG_LOC_K in params and params[CONFIG_PHYNG_LOC_K] else phyng.model.location,
+            CONFIG_PHYNG_ROT_K: params[CONFIG_PHYNG_ROT_K]
+            if CONFIG_PHYNG_ROT_K in params and params[CONFIG_PHYNG_ROT_K] else phyng.model.rotation,
+            CONFIG_PHYNG_STL_K: phyng.stl_name
         }
 
-    def _add_obj_from_parameters(self, object_name, params: dict, custom: bool):
+    def _add_phyng_from_parameters(self, phyng_name, params: dict):
         """
-        Adds object from parameters
-        :param object_name: object name
-        :param params: object parameters
-        :param custom: is custom flag
+        Adds phyng from parameters
+        :param phyng_name: phyng name
+        :param params: phyng parameters
         """
-        self.add_object(params[CONFIG_OBJ_NAME_KEY], object_name, params[CONFIG_URL], custom, params[CONFIG_TEMPLATE],
-                        params[CONFIG_OBJ_DIMENSIONS], params[CONFIG_LOCATION], params[CONFIG_OBJ_ROTATION])
+        params = {**params, CONFIG_PHYNG_NAME_K: phyng_name}
+        self.add_phyng(**params)
 
-    def _reinit_object_from_parameters(self, obj: WopObject, params: dict):
+    def _reinit_phyng_from_parameters(self, phyng: Phyng, params: dict):
         """
-        Reinitializes object from given parameters
-        :param obj: object to reinitialize
+        Reinitializes phyng from given parameters
+        :param phyng: phyng to reinitialize
         :param params: new parameters
         """
-        new_params = self._get_new_params(obj, params)
-        custom = obj.custom
-        if CONFIG_OBJ_DIMENSIONS in params and params[CONFIG_OBJ_DIMENSIONS]:
-            new_params[CONFIG_OBJ_DIMENSIONS] = params[CONFIG_OBJ_DIMENSIONS]
-            new_params[CONFIG_TEMPLATE] = ''
-            custom = False
-        elif CONFIG_TEMPLATE in params and params[CONFIG_TEMPLATE]:
-            new_params[CONFIG_OBJ_DIMENSIONS] = [0, 0, 0]
-            new_params[CONFIG_TEMPLATE] = params[CONFIG_TEMPLATE]
-            custom = False
-        elif CONFIG_CUSTOM in params and params[CONFIG_CUSTOM]:
-            new_params[CONFIG_OBJ_DIMENSIONS] = [0, 0, 0]
-            new_params[CONFIG_TEMPLATE] = ''
-            custom = params[CONFIG_CUSTOM]
-        elif CONFIG_URL in params and params[CONFIG_URL]:
-            new_params[CONFIG_OBJ_DIMENSIONS] = [0, 0, 0]
-            new_params[CONFIG_TEMPLATE] = ''
-            new_params[CONFIG_URL] = params[CONFIG_URL]
-            custom = True
-        object_name = obj.name
-        self.remove_object(obj.name)
-        self._add_obj_from_parameters(object_name, new_params, custom)
+        new_params = self._get_new_params(phyng, params)
+        if CONFIG_PHYNG_DIMS_K in params and params[CONFIG_PHYNG_DIMS_K]:
+            new_params[CONFIG_PHYNG_DIMS_K] = params[CONFIG_PHYNG_DIMS_K]
+            new_params[CONFIG_PHYNG_STL_K] = ''
+        elif CONFIG_PHYNG_STL_K in params and params[CONFIG_PHYNG_STL_K]:
+            new_params[CONFIG_PHYNG_DIMS_K] = [0, 0, 0]
+            new_params[CONFIG_PHYNG_STL_K] = params[CONFIG_PHYNG_STL_K]
+        phyng_name = phyng.name
+        self.remove_phyng(phyng.name)
+        self._add_phyng_from_parameters(phyng_name, new_params)
 
     @staticmethod
     def _get_model_param_set():
@@ -261,58 +254,72 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Gets a set that defines model parameters
         :return: model parameters set
         """
-        return {CONFIG_OBJ_DIMENSIONS, CONFIG_OBJ_ROTATION, CONFIG_LOCATION, CONFIG_TEMPLATE, CONFIG_URL,
-                CONFIG_SNS_FIELD, CONFIG_CUSTOM}
+        return {
+            CONFIG_PHYNG_DIMS_K,
+            CONFIG_PHYNG_ROT_K,
+            CONFIG_PHYNG_LOC_K,
+            CONFIG_PHYNG_STL_K,
+            CONFIG_PHYNG_FIELD_K
+        }
 
-    def modify_object(self, object_name: str, params: dict):
+    def modify_phyng(self, phyng_name: str, params: dict):
         """
-        Modifies object by recreating it with new parameters
-        :param object_name: object name
-        :param params: object parameters to change, e.g., dimensions
+        Modifies phyng by recreating it with new parameters
+        :param phyng_name: phyng name
+        :param params: phyng parameters to change, e.g., dimensions
         """
         model_param_set = self._get_model_param_set()
         if not model_param_set.isdisjoint(params.keys()):
             self.stop()
             self.initialized = False
-            obj = self.get_object(object_name)
-            if obj.type_name == 'sensor':
-                self._reinit_sensor_from_parameters(obj, params)
+            phyng = self.get_phyng(phyng_name)
+            if phyng.type_name == 'sensor':
+                self._reinit_sensor_from_parameters(phyng, params)
             else:
-                self._reinit_object_from_parameters(obj, params)
+                self._reinit_phyng_from_parameters(phyng, params)
 
-    def remove_object(self, object_name):
+    def remove_phyng(self, phyng_name):
         """
-        Removes an object with a specified name from case
-        :param object_name: object name to remove
+        Removes an phyng with a specified name from case
+        :param phyng_name: phyng name to remove
         """
-        obj = self.get_object(object_name)
-        type_name = obj.type_name
-        obj.destroy()
+        phyng = self.get_phyng(phyng_name)
+        type_name = phyng.type_name
+        phyng.remove()
         if type_name == 'sensor':
-            del self.sensors[object_name]
+            del self.sensors[phyng_name]
             self._probe_parser_thread.remove_unused()
         else:
-            del self.objects[object_name]
+            del self.phyngs[phyng_name]
         self.initialized = False
 
-    def get_objects(self):
+    def get_phyngs(self):
         """
-        Gets all objects/sensors
-        :return: objects/sensors dict
+        Gets all phyngs
+        :return: phyngs dict
         """
-        return {**self.objects, **self.sensors}
+        return {**self.phyngs, **self.sensors}
 
     def prepare_geometry(self):
-        """Prepares each objects geometry"""
-        for obj in self.objects.values():
-            obj.prepare()
+        """Prepares each phyngs geometry"""
+        logger.debug('Preparing Phyngs geometries')
+        for phyng in self.phyngs.values():
+            logger.debug(f'Preparing {phyng.name} Phyng')
+            phyng.prepare()
 
     def partition_mesh(self, partition_name: str):
         """
         Partitions mesh by producing a partitioned mesh out of partition regions
         :param partition_name: partitioned mesh name
         """
-        regions = [obj.snappy for obj in self.objects.values() if type(obj.snappy) == SnappyRegion]
+        logger.debug(f'Partitioning mesh {partition_name}')
+        regions = []
+        for phyng in self.phyngs.values():
+            if isinstance(phyng.snappy, list):
+                snappies = [snappy for snappy in phyng.snappy if type(snappy) == SnappyRegion]
+                regions.extend(snappies)
+            elif type(phyng.snappy) == SnappyRegion:
+                regions.append(phyng.snappy)
         region_paths = [f'{self.path}/constant/triSurface/{region.name}.stl' for region in regions]
         combine_stls(f'{self.path}/constant/triSurface/{partition_name}.stl', region_paths)
         self._partitioned_mesh = SnappyPartitionedMesh(partition_name, f'{partition_name}.stl')
@@ -323,12 +330,21 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         Prepares partitioned mesh, i.e., adds it to snappyHexMeshDict and
         adds background mesh to blockMeshDict
         """
+        logger.debug('Preparing partioned mesh')
         # Get all partitions
-        partitions = [obj.snappy for obj in self.objects.values() if type(obj.snappy) == SnappyCellZoneMesh]
+        partitions = []
+        for phyng in self.phyngs.values():
+            if isinstance(phyng.snappy, list):
+                snappies = [snappy for snappy in phyng.snappy if type(snappy) == SnappyCellZoneMesh]
+                partitions.extend(snappies)
+            elif type(phyng.snappy) == SnappyCellZoneMesh:
+                partitions.append(phyng.snappy)
         partitions.insert(0, self._partitioned_mesh)
         for partition in partitions:
+            logger.debug(f'Coupling partitions {partition.name} material')
             self.material_props.add_object(partition.name, partition.material_type, partition.material)
         # Add partitions to snappyHexMeshDict, get dimensions and find a location in mesh
+        logger.debug(f'Adding partitions to snappyHexMeshDict')
         self.snappy_dict.add_meshes(partitions)
         minmax_coords = self._get_mesh_dimensions()
         self.snappy_dict.location_in_mesh = self._find_location_in_mesh(minmax_coords)
@@ -340,9 +356,9 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         self.decompose_dict.divide_domain([j - i for i, j in minmax_coords])
 
     def bind_boundary_conditions(self):
-        """Binds boundary conditions to objects"""
-        for obj in self.objects.values():
-            obj.bind_region_boundaries(self.boundaries)
+        """Binds boundary conditions to phyngs"""
+        for phyng in self.phyngs.values():
+            phyng.bind_region_boundaries(self.boundaries)
 
     def get_simulation_time_ms(self):
         """
@@ -401,7 +417,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         to keep simulation running at realtime
         """
         self._runtime_monitor.enabled = True
-        if self.running:
+        if self._running:
             self._runtime_monitor.start()
 
     def disable_realtime(self):
@@ -419,6 +435,10 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         else:
             self.disable_realtime()
 
+    @property
+    def running(self):
+        return super(OpenFoamCase, self).running or self._runtime_monitor.running
+
     def clean_case(self):
         """
         Removes old results and logs in the case directory.
@@ -427,13 +447,15 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         self.stop()
         self.start_time = 0
         super(OpenFoamCase, self).clean_case()
+        for phyng in self.phyngs.values():
+            phyng.reload_parameters()
 
     def run(self):
         """
         Runs solver and monitor threads
         Case must be setup before running
         """
-        if self.running:
+        if self._running:
             return
         if not self.initialized:
             self.clean_case()
@@ -441,7 +463,7 @@ class OpenFoamCase(OpenFoamInterface, ABC):
         get_time = get_latest_time
         if self.parallel:
             get_time = get_latest_time_parallel
-        if not get_time(self.path):
+        if not self.start_time:
             self.start_time, _ = self.get_current_time()
         super(OpenFoamCase, self).run()
         self._runtime_monitor.start()
@@ -457,15 +479,16 @@ class OpenFoamCase(OpenFoamInterface, ABC):
 
     def __setitem__(self, key, value):
         """Allow to set attributes of a class as in dictionary"""
-        if key not in (CONFIG_CLEAN_LIMIT_KEY, CONFIG_REALTIME_KEY, CONFIG_END_TIME_KEY):
+        if key not in (CONFIG_CLEAN_LIMIT_K, CONFIG_REALTIME_K, CONFIG_END_TIME_K):
             self.initialized = False
             self.stop()
-        if key == CONFIG_MESH_QUALITY_KEY:
+        if key == CONFIG_MESH_QUALITY_K:
             self.blockmesh_dict.mesh_quality = value
         else:
             setattr(self, key, value)
-        if key == CONFIG_END_TIME_KEY:
+        if key == CONFIG_END_TIME_K:
             self.control_dict.save()
+        logger.info(f'Set "{key}" to {value}')
 
     def __iter__(self):
         """Allow to iterate over attribute names of a class"""
@@ -475,3 +498,11 @@ class OpenFoamCase(OpenFoamInterface, ABC):
     def __delitem__(self, key):
         """Allow to delete individual attributes of a class"""
         del self.__dict__[key]
+
+    def remove(self):
+        for phyng_name in self.phyngs.keys():
+            self.phyngs[phyng_name].remove()
+        self.phyngs = None
+        self._runtime_monitor.stop()
+        self._runtime_monitor = None
+        super(OpenFoamCase, self).remove()

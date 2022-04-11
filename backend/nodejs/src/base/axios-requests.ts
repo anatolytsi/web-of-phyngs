@@ -8,6 +8,15 @@ import axios, {AxiosRequestConfig, AxiosResponse} from 'axios';
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
+ * Axios interceptor for catching error response.
+ */
+axios.interceptors.response.use(response => {
+    return response;
+}, error => {
+    return error.response;
+});
+
+/**
  * Try reaching the given URL with given request for given amount of seconds.
  * @param {AxiosRequestConfig} config Request config.
  * @param {number} tries Number of tries.
@@ -18,9 +27,7 @@ async function tryReaching(config: AxiosRequestConfig, tries: number): Promise<A
     for (let i = 0; i < tries; i++) {
         try {
             let response: AxiosResponse = await makeRequest(config, false);
-            if ('data' in response) {
-                return response;
-            }
+            if (response) return response;
         } catch {
             await delay(1000);
         }
@@ -38,12 +45,14 @@ async function tryReaching(config: AxiosRequestConfig, tries: number): Promise<A
  */
 export async function makeRequest(config: AxiosRequestConfig, retry: boolean = true): Promise<AxiosResponse> {
     try {
-        return await axios.request(config);
-    } catch (e) {
+        let response = await axios.request(config);
+        if (response) return response;
+        throw Error(`Host ${config.url} was not reached`)
+    } catch (e: any) {
         if (retry) {
             return await tryReaching(config, 5);
         }
-        throw Error(`Host ${config.url} was not reached`)
+        throw Error(e)
     }
 }
 

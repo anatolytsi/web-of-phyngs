@@ -1,0 +1,43 @@
+{
+  "@type": "ac",
+  "@context": "https://www.w3.org/2019/wot/td/v1",
+  "security": "nosec_sc",
+  "securityDefinitions": {
+    "nosec_sc": {
+      "scheme": "nosec"
+    }
+  },
+  "title": "ac",
+  "phyProperties": {
+    "dimensions": [
+      0.5,
+      0.8,
+      0.5
+    ],
+    "location": [
+      0.5,
+      0.8,
+      2
+    ],
+    "dimensionsIn": [
+      0.4,
+      0.6,
+      0
+    ],
+    "locationIn": [
+      0.55,
+      0.9,
+      2.5
+    ],
+    "dimensionsOut": [
+      0,
+      0.6,
+      0.3
+    ],
+    "locationOut": [
+      1.0,
+      0.9,
+      2.1
+    ]
+  }
+}
